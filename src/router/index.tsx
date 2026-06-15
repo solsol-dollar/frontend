@@ -1,0 +1,82 @@
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { Layout } from '@/components/common/Layout'
+
+// Onboarding
+import { OnboardingPage } from '@/features/onboarding/pages/OnboardingPage'
+
+// Home
+import { HomePage } from '@/features/home/pages/HomePage'
+import { TransferPage } from '@/features/home/pages/TransferPage'
+import { TransferConfirmPage } from '@/features/home/pages/TransferConfirmPage'
+import { TransferCompletePage } from '@/features/home/pages/TransferCompletePage'
+import { TransferHistoryPage } from '@/features/home/pages/TransferHistoryPage'
+
+// IPO
+import { IpoCalendarPage } from '@/features/ipo/pages/IpoCalendarPage'
+import { IpoDetailPage } from '@/features/ipo/pages/IpoDetailPage'
+import { IpoGuidePage } from '@/features/ipo/pages/IpoGuidePage'
+import { SubscribePage } from '@/features/ipo/pages/SubscribePage'
+import { SubscribeExchangePage } from '@/features/ipo/pages/SubscribeExchangePage'
+import { SubscriptionHistoryPage } from '@/features/ipo/pages/SubscriptionHistoryPage'
+import { InvestmentProfilePage } from '@/features/ipo/pages/InvestmentProfilePage'
+
+// Return Plan
+import { ReturnPlanPage } from '@/features/return-plan/pages/ReturnPlanPage'
+import { ReturnPlanSettingsPage } from '@/features/return-plan/pages/ReturnPlanSettingsPage'
+
+// Securities
+import { SecuritiesPage } from '@/features/securities/pages/SecuritiesPage'
+import { StockDetailPage } from '@/features/securities/pages/StockDetailPage'
+import { EtfPage } from '@/features/securities/pages/EtfPage'
+
+// Mypage
+import { MyPage } from '@/features/mypage/pages/MyPage'
+import { NotificationsPage } from '@/features/mypage/pages/NotificationsPage'
+import { NotificationSettingsPage } from '@/features/mypage/pages/NotificationSettingsPage'
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Navigate to="/home" replace />,
+  },
+  {
+    path: '/onboarding',
+    element: <OnboardingPage />,
+  },
+  {
+    element: <Layout />,
+    children: [
+      // Home
+      { path: '/home', element: <HomePage /> },
+      { path: '/home/transfer', element: <TransferPage /> },
+      { path: '/home/transfer/confirm', element: <TransferConfirmPage /> },
+      { path: '/home/transfer/complete', element: <TransferCompletePage /> },
+      { path: '/home/transfer/history', element: <TransferHistoryPage /> },
+
+      // IPO
+      { path: '/ipo', element: <IpoCalendarPage /> },
+      { path: '/ipo/guide', element: <IpoGuidePage /> },
+      { path: '/ipo/history', element: <SubscriptionHistoryPage /> },
+      { path: '/ipo/profile', element: <InvestmentProfilePage /> },
+      { path: '/ipo/:id', element: <IpoDetailPage /> },
+      { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
+      { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
+
+      // Return Plan
+      { path: '/return-plan', element: <ReturnPlanPage /> },
+      { path: '/return-plan/settings', element: <ReturnPlanSettingsPage /> },
+
+      // Securities
+      { path: '/securities', element: <SecuritiesPage /> },
+      { path: '/securities/stocks/:ticker', element: <StockDetailPage /> },
+      { path: '/securities/etf', element: <EtfPage /> },
+
+      // Mypage
+      { path: '/mypage', element: <MyPage /> },
+
+      // Notifications
+      { path: '/notifications', element: <NotificationsPage /> },
+      { path: '/notifications/settings', element: <NotificationSettingsPage /> },
+    ],
+  },
+])

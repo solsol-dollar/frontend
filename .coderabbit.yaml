@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: "ko-KR"
+
+reviews:
+  profile: "chill"
+  auto_review:
+    enabled: true
+    drafts: false
+
+  # 리뷰 불필요 파일 제외
+  path_filters:
+    - "!pnpm-lock.yaml"
+    - "!**/.gitkeep"
+    - "!public/firebase-messaging-sw.js"  # 수동 설정 파일
+    - "!src/components/ui/**"             # shadcn/ui 자동생성 파일
+
+  path_instructions:
+    # 전체 TypeScript/TSX 파일 공통 규칙
+    - path: "**/*.{ts,tsx}"
+      instructions: |
+        아래 프로젝트 컨벤션을 기준으로 리뷰합니다.
+
+        [exports]
+        - 반드시 named export를 사용합니다. default export는 금지입니다.
+        - 예: export function HomePage() { ... }
+
+        [imports]
+        - 내부 모듈은 반드시 @/ 경로 별칭을 사용합니다. 상대경로(../../) 금지.
+        - 예: import { cn } from '@/lib/utils'
+
+        [styling]
+        - 스타일은 Tailwind CSS 클래스만 사용합니다.
+        - 클래스 조합은 반드시 cn() 유틸리티를 사용합니다.
+        - 동적 색상(IPO 아바타 배경 등) 예외를 제외하면 inline style 사용을 지양합니다.
+        - 디자인 토큰(primary, surface, text-primary 등)을 사용하고 HEX 하드코딩을 피합니다.
+
+        [TypeScript]
+        - Props 타입은 interface보다 type을 권장합니다.
+        - any 타입 사용을 금지합니다. unknown 또는 구체적 타입을 사용합니다.
+        - 함수형 컴포넌트만 사용하며, React.FC 타입 선언은 생략합니다.
+
+    # features/ 도메인 모듈 규칙
+    - path: "src/features/**"
+      instructions: |
+        [구조]
+        - pages/: 라우터에서 직접 렌더링하는 컴포넌트만 위치합니다.
+        - hooks/: API 호출(React Query)과 비즈니스 로직을 담당합니다.
+        - components/: 해당 도메인에서만 쓰는 UI 컴포넌트입니다.
+        - pages/ 컴포넌트에 API 호출 로직을 직접 작성하면 안 됩니다. hooks/로 분리하세요.
+
+        [상태 관리 분리]
+        - 서버 데이터(API 응답): TanStack Query (useQuery, useMutation)
+        - 클라이언트 상태(인증, FCM 토큰): Zustand useUserStore
+        - 두 역할을 혼용하지 않습니다.
+
+    # API 레이어 규칙
+    - path: "src/lib/axios.ts"
+      instructions: |
+        - ledgerApi (8080): 청약, 리턴플랜, 계좌 관리, 증권 주문 등 자금 이동 API
+        - serviceApi (8081): IPO 탐색, 증권 시세 조회, AI 분석, 홈 대시보드 API
+        - 두 인스턴스 모두 요청 인터셉터에서 X-User-Id 헤더를 주입해야 합니다.
+        - 어떤 API를 어느 인스턴스에 연결했는지 잘못된 경우 지적합니다.
+
+    # 금융 도메인 — IPO
+    - path: "src/features/ipo/**"
+      instructions: |
+        [금융 정확성]
+        - 청약 금액(USD), 환율 변환(USD → KRW), D-day 계산의 정확성을 중점 검토합니다.
+        - 청약 마감일 경계값(마감 당일 포함/미포함) 처리를 확인합니다.
+        - 금액 표시는 소수점 2자리까지 고정합니다 (toFixed(2) 또는 Intl.NumberFormat).
+
+    # 금융 도메인 — 홈/송금
+    - path: "src/features/home/**"
+      instructions: |
+        [금융 정확성]
+        - 송금 금액 계산 시 부동소수점 오류 가능성을 확인합니다.
+        - 잔액 부족 케이스(입력 금액 > 보유 잔액)의 유효성 검사가 있는지 확인합니다.
+
+    # 금융 도메인 — 리턴플랜
+    - path: "src/features/return-plan/**"
+      instructions: |
+        - 계좌 배분 비율의 합이 100%를 초과하지 않는지 검증 로직을 확인합니다.
+
+    # 공통 컴포넌트
+    - path: "src/components/common/**"
+      instructions: |
+        - Header, BottomNav, Layout은 앱 전체에서 공유하는 컴포넌트입니다.
+        - 특정 도메인에 종속된 로직이나 스타일을 넣지 않습니다.
+        - Header의 뒤로가기(showBack=true) 시 타이틀이 절대 중앙 정렬되는지 확인합니다.
+
+  finishing_touches:
+    docstrings:
+      enabled: false  # 주석 자동 생성 불필요
+
+chat:
+  auto_reply: true
