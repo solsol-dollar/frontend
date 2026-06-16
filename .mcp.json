@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "figma": {
+      "command": "figma-developer-mcp",
+      "env": {
+        "FIGMA_API_KEY": "figd_4OO1DC3b2i1DcIzlifR61OCgzpT91Osp2j0zqVQZ"
+      }
+    }
+  }
+}

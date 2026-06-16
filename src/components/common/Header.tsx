@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 interface HeaderProps {
   title?: string
+  titleAction?: React.ReactNode
   showBack?: boolean
   showNotification?: boolean
   showMypage?: boolean
@@ -13,6 +14,7 @@ interface HeaderProps {
 
 export function Header({
   title,
+  titleAction,
   showBack = false,
   showNotification = true,
   showMypage = true,
@@ -22,10 +24,9 @@ export function Header({
 }: HeaderProps) {
   const navigate = useNavigate()
 
-  // 뒤로가기 + 타이틀: 타이틀을 절대 중앙 정렬
   if (showBack) {
     return (
-      <header className="sticky top-0 z-10 bg-white relative flex items-center justify-between px-4 h-14">
+      <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-14">
         <button onClick={() => navigate(-1)} className="p-1 -ml-1 z-10">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -60,10 +61,9 @@ export function Header({
     )
   }
 
-  // 기본 헤더: 로고 or 타이틀 좌측, 액션 우측
   return (
     <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-14">
-      <div className="flex items-center">
+      <div className="flex items-center gap-1">
         {title ? (
           <span className="text-lg font-bold text-text-primary">{title}</span>
         ) : (
@@ -71,9 +71,11 @@ export function Header({
             <span className="text-primary">SOL SOL</span> 달러
           </span>
         )}
+        {titleAction}
       </div>
 
       <div className="flex items-center gap-3">
+        {rightAction}
         {showSearch && (
           <button className="p-1">
             <Search size={20} className="text-text-primary" />
