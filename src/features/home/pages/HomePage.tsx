@@ -78,7 +78,7 @@ export function HomePage() {
       <section className="mx-4 mt-5">
         <p className="text-xs text-text-secondary mb-2 px-1">이번 달 소비</p>
         <div className="bg-white rounded-xl px-4 py-4 flex items-center gap-4">
-      <img src={changeupCard} className='w-8 h-15 object-cover'/>
+      <img src={changeupCard} className='w-8 h-15 object-cover' alt="이번 달 소비 카드 이미지"/>
 
           <div className="flex-1 min-w-0">
             <p className="text-xs text-text-secondary truncate">신한카드 Change-up 체크</p>
