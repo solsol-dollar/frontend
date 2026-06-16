@@ -1,4 +1,4 @@
-import { Bell, Settings, Search } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 interface HeaderProps {
@@ -26,7 +26,7 @@ export function Header({
 
   if (showBack) {
     return (
-      <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-14">
+      <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-[56px]">
         <button onClick={() => navigate(-1)} className="p-1 -ml-1 z-10">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -39,21 +39,21 @@ export function Header({
           </span>
         )}
 
-        <div className="flex items-center gap-2 z-10">
+        <div className="flex items-center gap-4 z-10">
           {rightAction}
           {showSettings && (
             <button onClick={() => navigate('/notifications/settings')} className="p-1">
               <Settings size={20} className="text-text-primary" />
             </button>
           )}
-          {showSearch && (
-            <button className="p-1">
-              <Search size={20} className="text-text-primary" />
+          {showNotification && (
+            <button onClick={() => navigate('/notifications')}>
+              <img src="/icons/Bell.svg" width={25} height={25} alt="" />
             </button>
           )}
-          {showNotification && (
-            <button onClick={() => navigate('/notifications')} className="p-1">
-              <Bell size={22} className="text-text-primary" />
+          {showSearch && (
+            <button>
+              <img src="/icons/search.svg" width={19} height={19} alt="" />
             </button>
           )}
         </div>
@@ -62,7 +62,7 @@ export function Header({
   }
 
   return (
-    <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-14">
+    <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-[56px]">
       <div className="flex items-center gap-1">
         {title ? (
           <span className="text-lg font-bold text-text-primary">{title}</span>
@@ -74,16 +74,16 @@ export function Header({
         {titleAction}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {rightAction}
         {showSearch && (
-          <button className="p-1">
-            <Search size={20} className="text-text-primary" />
+          <button>
+            <img src="/icons/search.svg" width={19} height={19} alt="" />
           </button>
         )}
         {showNotification && (
-          <button onClick={() => navigate('/notifications')} className="p-1">
-            <Bell size={22} className="text-text-primary" />
+          <button onClick={() => navigate('/notifications')}>
+            <img src="/icons/Bell.svg" width={25} height={25} alt="" />
           </button>
         )}
         {showMypage && (

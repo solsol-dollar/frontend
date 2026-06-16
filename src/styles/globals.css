@@ -6,19 +6,18 @@
   :root {
     --radius: 0.75rem;
 
-    --color-primary: #1C1FE8;
-    --color-primary-light: #4A90FF;
-    --color-orange: #FF6830;
+    /* Design Tokens */
+    --color-primary: #0922AC;
     --color-sky-blue: #29A9F5;
     --color-pink: #FF4B8B;
     --color-teal: #00C0A0;
     --color-up: #E53935;
     --color-down: #1565C0;
-    --color-surface: #F5F6F8;
-    --color-border: #EEEEEE;
-    --color-text-primary: #111111;
-    --color-text-secondary: #666666;
-    --color-text-tertiary: #999999;
+    --color-surface: #E8EDFB;
+    --color-border: #E5E7EB;
+    --color-text-primary: #111827;
+    --color-text-secondary: #6B7280;
+    --color-text-tertiary: #9CA3AF;
   }
 
   * {
@@ -28,10 +27,12 @@
 
   body {
     @apply bg-white text-text-primary font-sans;
+    /* 모바일 스크롤 최적화 */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: none;
   }
 
+  /* 모바일 앱처럼 텍스트 선택 방지 (버튼, 탭 등) */
   button, a {
     -webkit-user-select: none;
     user-select: none;
@@ -39,14 +40,17 @@
 }
 
 @layer utilities {
+  /* 모바일 중심 레이아웃 - 데스크탑에서 중앙 정렬 */
   .mobile-container {
     @apply mx-auto w-full max-w-mobile min-h-screen relative;
   }
 
+  /* 바텀 탭 높이만큼 패딩 */
   .page-content {
     @apply pb-20;
   }
 
+  /* 금액 표시용 */
   .amount-positive {
     color: var(--color-up);
   }

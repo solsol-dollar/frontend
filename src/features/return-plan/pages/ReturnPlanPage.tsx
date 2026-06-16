@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 
 const MONTHS = ['4월', '5월', '6월']
@@ -17,15 +17,10 @@ export function ReturnPlanPage() {
   return (
     <div className="page-content">
       <Header
-        showNotification={false}
+        title="리턴 플랜"
+        showNotification
         showMypage={false}
         showSearch
-        rightAction={
-          <button className="p-1">
-            <Search size={20} className="text-text-primary" />
-          </button>
-        }
-        title="리턴 플랜"
       />
 
       {/* 현재 활성 IPO 요약 */}

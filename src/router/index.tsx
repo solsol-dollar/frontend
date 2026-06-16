@@ -43,15 +43,17 @@ export const router = createBrowserRouter([
     path: '/onboarding',
     element: <OnboardingPage />,
   },
+  // Transfer — 자체 헤더, 바텀탭 없음
+  { path: '/home/transfer', element: <TransferPage /> },
+  { path: '/home/transfer/confirm', element: <TransferConfirmPage /> },
+  { path: '/home/transfer/complete', element: <TransferCompletePage /> },
+  { path: '/home/transfer/history', element: <TransferHistoryPage /> },
+
   {
     element: <Layout />,
     children: [
       // Home
       { path: '/home', element: <HomePage /> },
-      { path: '/home/transfer', element: <TransferPage /> },
-      { path: '/home/transfer/confirm', element: <TransferConfirmPage /> },
-      { path: '/home/transfer/complete', element: <TransferCompletePage /> },
-      { path: '/home/transfer/history', element: <TransferHistoryPage /> },
 
       // IPO
       { path: '/ipo', element: <IpoCalendarPage /> },

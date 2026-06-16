@@ -31,8 +31,9 @@ const config: Config = {
         surface: {
           DEFAULT: '#E8EDFB',
           light: '#F0F3FD',
-          bg: '#F5F7FE',
+          bg: '#F6F6F9',
           subtle: '#FAFBFF',
+          neutral: '#F8FAFC',
         },
         success: '#16A34A',
         danger: '#DC2626',
@@ -43,7 +44,8 @@ const config: Config = {
         border: '#E5E7EB',
         text: {
           primary: '#111827',
-          secondary: '#6B7280',
+          secondary: '#374151',
+          sub: '#6B7280',
           tertiary: '#9CA3AF',
         },
       },
@@ -54,6 +56,15 @@ const config: Config = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      animation: {
+        blink: 'blink 1.2s ease-in-out infinite',
+      },
+      keyframes: {
+        blink: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0' },
+        },
       },
     },
   },
