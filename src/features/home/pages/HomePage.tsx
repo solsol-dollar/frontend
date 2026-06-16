@@ -40,7 +40,7 @@ export function HomePage() {
           onClick={() => {}}
         >
           <div className='bg-blue-100 px-2 py-2 rounded-3xl'>
-          <span className="text-2xl leading-none"><img src={sleepingIcon} /></span>
+          <span className="text-2xl leading-none"><img src={sleepingIcon} alt="쉬는 달러 감지 아이콘"/></span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-text-primary">쉬는 달러 감지</p>
