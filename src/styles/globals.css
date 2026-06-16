@@ -7,19 +7,17 @@
     --radius: 0.75rem;
 
     /* Design Tokens */
-    --color-primary: #1C1FE8;
-    --color-primary-light: #4A90FF;
-    --color-orange: #FF6830;
+    --color-primary: #0922AC;
     --color-sky-blue: #29A9F5;
     --color-pink: #FF4B8B;
     --color-teal: #00C0A0;
     --color-up: #E53935;
     --color-down: #1565C0;
-    --color-surface: #F5F6F8;
-    --color-border: #EEEEEE;
-    --color-text-primary: #111111;
-    --color-text-secondary: #666666;
-    --color-text-tertiary: #999999;
+    --color-surface: #E8EDFB;
+    --color-border: #E5E7EB;
+    --color-text-primary: #111827;
+    --color-text-secondary: #6B7280;
+    --color-text-tertiary: #9CA3AF;
   }
 
   * {
