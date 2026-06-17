@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import dollarIcon from '@/assets/home/dollarIconGreen.svg';
 import wonIcon from '@/assets/home/wonIconBlue.svg';
@@ -8,6 +9,13 @@ interface Props {
 }
 
 export function ExchangeSheet({ open, onClose }: Props) {
+  const navigate = useNavigate()
+
+  const handleSelect = (direction: 'dollar-to-won' | 'won-to-dollar') => {
+    onClose()
+    navigate('/home/exchange', { state: { direction } })
+  }
+
   return (
     <>
       <div
@@ -28,14 +36,14 @@ export function ExchangeSheet({ open, onClose }: Props) {
         </div>
         <div className="px-6 pt-3 pb-7">
           <p className="text-lg font-semibold text-text-primary mb-6">어떻게 환전할까요?</p>
-          <button className="w-full flex items-center gap-4 py-4">
+          <button onClick={() => handleSelect('won-to-dollar')} className="w-full flex items-center gap-4 py-4">
             <div className="w-10 h-10 rounded-full flex items-center justify-center">
               <img className="w-6" src={dollarIcon} alt='달러아이콘'/>
             </div>
             <span className="text-lg text-text-primary">달러로 환전하기</span>
           </button>
-          <button className="w-full flex items-center gap-4 py-4">
-            <div className="w-10 h-10 rounded-full  flex items-center justify-center">
+          <button onClick={() => handleSelect('dollar-to-won')} className="w-full flex items-center gap-4 py-4">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center">
             <img className="w-6" src={wonIcon} alt='원아이콘'/>
             </div>
             <span className="text-lg text-text-primary">원화로 환전하기</span>
