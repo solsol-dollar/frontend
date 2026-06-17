@@ -71,20 +71,20 @@
   }
 
   .week-slide-left {
-    animation: weekSlideLeft 0.4s ease-out;
+    animation: week-slide-left 0.4s ease-out;
   }
 
   .week-slide-right {
-    animation: weekSlideRight 0.4s ease-out;
+    animation: week-slide-right 0.4s ease-out;
   }
 }
 
-@keyframes weekSlideLeft {
+@keyframes week-slide-left {
   from { transform: translateX(30px); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
 }
 
-@keyframes weekSlideRight {
+@keyframes week-slide-right {
   from { transform: translateX(-30px); opacity: 0; }
   to   { transform: translateX(0);     opacity: 1; }
 }
