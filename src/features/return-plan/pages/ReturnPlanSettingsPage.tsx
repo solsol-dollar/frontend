@@ -22,7 +22,7 @@ export function ReturnPlanSettingsPage() {
     <div className="mobile-container flex flex-col h-screen">
       <Header showBack title="리턴 플랜 설정" showNotification={false} showMypage={false} />
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
         {/* IPO 정보 */}
         <section className="px-4 pt-5 pb-4 bg-white">
           <p className="text-xs text-text-tertiary">{ipoName} 후 수령 금액 예상</p>

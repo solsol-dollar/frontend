@@ -25,11 +25,19 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  html, body {
+    overflow: hidden;
+    height: 100%;
+  }
+
   body {
     @apply bg-white text-text-primary font-sans;
-    /* 모바일 스크롤 최적화 */
-    -webkit-overflow-scrolling: touch;
     overscroll-behavior: none;
+    scrollbar-width: none;
+  }
+
+  body::-webkit-scrollbar {
+    display: none;
   }
 
   /* 모바일 앱처럼 텍스트 선택 방지 (버튼, 탭 등) */
@@ -57,4 +65,26 @@
   .amount-negative {
     color: var(--color-down);
   }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .week-slide-left {
+    animation: week-slide-left 0.4s ease-out;
+  }
+
+  .week-slide-right {
+    animation: week-slide-right 0.4s ease-out;
+  }
+}
+
+@keyframes week-slide-left {
+  from { transform: translateX(30px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes week-slide-right {
+  from { transform: translateX(-30px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
