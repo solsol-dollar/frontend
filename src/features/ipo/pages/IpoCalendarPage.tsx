@@ -172,45 +172,54 @@ function getMonthWeeks(month: dayjs.Dayjs): dayjs.Dayjs[][] {
   return weeks
 }
 
-function MonthlyCalendarView({ month, events }: { month: dayjs.Dayjs; events: CalendarEvent[] }) {
+function MonthlyCalendarView({ month, events, todayStr }: { month: dayjs.Dayjs; events: CalendarEvent[]; todayStr: string }) {
   const weeks = getMonthWeeks(month)
   return (
     <div className="pb-[10px]">
-      <div className="flex items-center gap-2 my-[10px]">
-        <div className="flex-1 h-px bg-[#D9DBE0]" />
-        <span className="text-[11px] font-medium text-[#9AA0AB] whitespace-nowrap">
+      <div className="relative my-[10px] flex items-center justify-center">
+        <img src="/icons/Line.svg" className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full" alt="" />
+        <span className="relative bg-white px-2 text-[14px] font-medium text-[#9AA0AB]">
           {month.format('YYYY년 M월')}
         </span>
-        <div className="flex-1 h-px bg-[#D9DBE0]" />
       </div>
       {weeks.map((week, wi) => (
-        <div key={wi} className="grid grid-cols-5 h-[100px]">
+        <div key={wi} className={cn('grid grid-cols-5 h-[100px]', wi > 0 && 'border-t border-[#f0f1f4]')}>
           {week.map((day) => {
             const dateStr = day.format('YYYY-MM-DD')
             const isCurrentMonth = day.month() === month.month()
+            const isToday = dateStr === todayStr
             const dayEvents = events.filter((e) => e.date === dateStr)
             const hasEvents = dayEvents.length > 0
             return (
               <div key={dateStr} className="flex flex-col pt-[10px] min-w-0">
                 {isCurrentMonth && (
                   <>
-                    <span className={cn(
-                      'text-[16px] font-semibold mb-[6px] leading-none',
-                      hasEvents ? 'text-[#1A1A1A]' : 'text-[#C8CBD2]',
-                    )}>
-                      {day.date()}
-                    </span>
+                    <div className="flex justify-center mb-[6px]">
+                      <span className={cn(
+                        'text-[16px] font-semibold leading-none w-[28px] h-[28px] flex items-center justify-center rounded-[6px]',
+                        isToday ? 'bg-[#E8E9EC] text-[#1A1A1A]' : hasEvents ? 'text-[#1A1A1A]' : 'text-[#C8CBD2]',
+                      )}>
+                        {day.date()}
+                      </span>
+                    </div>
                     {dayEvents.map((event, i) => (
                       <div
                         key={i}
-                        className="flex items-center rounded-[3px] overflow-hidden h-[17px] mb-[2px] mr-[4px]"
+                        className="flex items-center rounded-[5px] overflow-hidden h-[17px] mb-[2px] mr-[4px]"
                         style={{ backgroundColor: EVENT_COLORS[event.type].bg }}
                       >
                         <div
                           className="w-[2px] h-[11px] mx-[3px] shrink-0 rounded-[1px]"
                           style={{ backgroundColor: EVENT_COLORS[event.type].bar }}
                         />
-                        <span className="text-[10px] font-medium text-[#1A1A1A] truncate">
+                        <span
+                          className="text-[10px] font-medium flex-1 min-w-0"
+                          style={{
+                            color: EVENT_COLORS[event.type].bar,
+                            WebkitMaskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
+                            maskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
+                          }}
+                        >
                           {event.name}
                         </span>
                       </div>
@@ -269,7 +278,7 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
   const abbr = getAbbr(ipo.company)
 
   return (
-    <button onClick={onClick} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left">
+    <button onClick={onClick} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none">
       <div className="flex items-center justify-between mb-[13px]">
         <div className="flex items-center gap-[18px]">
           <div
@@ -328,7 +337,7 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
     : null
 
   return (
-    <button onClick={onClick} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left">
+    <button onClick={onClick} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none">
       <img src="/icons/IPO_end.svg" width={50} height={17} alt="청약종료" className="absolute top-[17.5px] right-[17px] translate-x-[3px]" />
       <div className="flex items-center mb-[13px]">
         <div className="flex items-center gap-[18px]">
@@ -403,6 +412,10 @@ export function IpoCalendarPage() {
 
   const dateSectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const monthlyContainerRef = useRef<HTMLDivElement>(null)
+  const monthlyHeaderRef = useRef<HTMLDivElement>(null)
+  const currentMonthSectionRef = useRef<HTMLDivElement | null>(null)
+  const todayMonthRef = useRef<HTMLDivElement | null>(null)
   const touchStartX = useRef<number>(0)
 
   const scrollToDate = (dateStr: string) => {
@@ -424,20 +437,40 @@ export function IpoCalendarPage() {
   const [dragOffset, setDragOffset] = useState(0)
   const [snapping, setSnapping] = useState(false)
   const isSwipingRef = useRef(false)
+  const touchStartY = useRef<number>(0)
+  const swipeDirectionRef = useRef<'horizontal' | 'vertical' | null>(null)
 
   const handleWeekTouchStart = (e: React.TouchEvent) => {
     if (snapping) return
     isSwipingRef.current = true
     touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+    swipeDirectionRef.current = null
   }
 
   const handleWeekTouchMove = (e: React.TouchEvent) => {
     if (snapping) return
-    setDragOffset(e.touches[0].clientX - touchStartX.current)
+    const deltaX = e.touches[0].clientX - touchStartX.current
+    const deltaY = e.touches[0].clientY - touchStartY.current
+    if (swipeDirectionRef.current === null && (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)) {
+      swipeDirectionRef.current = Math.abs(deltaX) >= Math.abs(deltaY) ? 'horizontal' : 'vertical'
+    }
+    if (swipeDirectionRef.current === 'horizontal') {
+      setDragOffset(deltaX)
+    }
   }
 
   const handleWeekTouchEnd = (e: React.TouchEvent) => {
     if (snapping) return
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current
+    if (swipeDirectionRef.current === 'vertical') {
+      isSwipingRef.current = false
+      if (deltaY > 50) {
+        setCalendarView('monthly')
+        setCurrentMonth(displayWeekStart.startOf('month'))
+      }
+      return
+    }
     const delta = e.changedTouches[0].clientX - touchStartX.current
     const width = weekContainerRef.current?.offsetWidth ?? 375
     if (Math.abs(delta) < 50) {
@@ -496,8 +529,16 @@ export function IpoCalendarPage() {
     }))
   }
 
-  const calendarEvents = deriveCalendarEvents(IPOS)
   const filteredIpos = bottomFilter === '전체' ? IPOS : IPOS.filter((ipo) => wishlistedIds.has(ipo.id))
+  const calendarEvents = deriveCalendarEvents(filteredIpos)
+
+  const scrollToTodayMonth = () => {
+    const container = monthlyContainerRef.current
+    const section = todayMonthRef.current
+    if (!container || !section) return
+    const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
+    container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 30
+  }
 
   const allIpoDates = filteredIpos.map((ipo) => ipo.subscription_start)
   const uniqueDates = bottomFilter === '관심'
@@ -550,7 +591,19 @@ export function IpoCalendarPage() {
       container.removeEventListener('scroll', handleScroll)
       if (rafId !== null) cancelAnimationFrame(rafId)
     }
-  }, [])
+  }, [calendarView])
+
+  useEffect(() => {
+    if (calendarView !== 'monthly') return
+    requestAnimationFrame(() => {
+      const container = monthlyContainerRef.current
+      const section = currentMonthSectionRef.current
+      if (container && section) {
+        const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
+        container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 30
+      }
+    })
+  }, [calendarView])
 
   return (
     <div className="h-dvh flex flex-col bg-[#F6F6F9]">
@@ -588,7 +641,10 @@ export function IpoCalendarPage() {
 
       {tab === '청약 일정' && (
         <>
-          <div className="relative z-[1] bg-white px-4 pt-[9px] pb-[17px] rounded-b-[20px] shadow-[0_1px_10px_rgba(0,0,0,0.2)] shrink-0">
+          <div ref={monthlyContainerRef} className={cn(
+            'relative z-[1] bg-white px-4 pb-[17px] rounded-b-[20px] shadow-[0_1px_10px_rgba(0,0,0,0.2)]',
+            calendarView === 'monthly' ? 'flex-1 overflow-y-auto scrollbar-hide' : 'shrink-0 pt-[9px]',
+          )} style={calendarView === 'monthly' ? { scrollbarWidth: 'none' } : undefined}>
             {calendarView === 'weekly' ? (
               <>
                 <div className="flex justify-end items-center gap-4 mb-[17px] pr-1">
@@ -649,23 +705,35 @@ export function IpoCalendarPage() {
               </>
             ) : (
               <>
-                <div className="flex items-center justify-between mb-[14px] pr-1">
-                  <div className="flex items-center gap-[10px]">
-                    {([['청약시작', '#E2468B'], ['청약마감', '#3660AC'], ['상장(예정)일', '#019989']] as const).map(([label, color]) => (
-                      <div key={label} className="flex items-center gap-[4px]">
-                        <div className="w-[5px] h-[5px] rounded-full" style={{ backgroundColor: color }} />
-                        <span className="text-[10px] text-[#1A1A1A]">{label}</span>
-                      </div>
-                    ))}
+                <div ref={monthlyHeaderRef} className="sticky top-0 bg-white z-10 pt-[9px] pb-[9px]">
+                  <div className="flex items-center justify-between pr-1">
+                    <div className="flex items-center gap-[10px] mt-[2px]">
+                      {([['청약시작', '#E2468B'], ['청약마감', '#3660AC'], ['상장(예정)일', '#019989']] as const).map(([label, color]) => (
+                        <div key={label} className="flex items-center gap-[4px]">
+                          <div className="w-[5px] h-[5px] rounded-full" style={{ backgroundColor: color }} />
+                          <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={scrollToTodayMonth}>오늘</button>
+                      <span className="w-px h-[14px] bg-[#D9DBE0]" />
+                      <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={() => setCalendarView('weekly')}>주별보기</button>
+                    </div>
                   </div>
-                  <button
-                    className="text-[10px] font-medium text-[#1A1A1A]"
-                    onClick={() => setCalendarView('weekly')}
-                  >
-                    주별보기
-                  </button>
                 </div>
-                <MonthlyCalendarView month={currentMonth} events={calendarEvents} />
+                {Array.from({ length: 10 }, (_, i) => currentMonth.subtract(3 - i, 'month')).map((month) => {
+                  const isCurrentMonthSection = month.isSame(currentMonth, 'month')
+                  const isTodayMonth = month.isSame(dayjs().startOf('month'), 'month')
+                  return (
+                    <div key={month.format('YYYY-MM')} ref={(el) => {
+                      if (isCurrentMonthSection) currentMonthSectionRef.current = el
+                      if (isTodayMonth) todayMonthRef.current = el
+                    }}>
+                      <MonthlyCalendarView month={month} events={calendarEvents} todayStr={todayStr} />
+                    </div>
+                  )
+                })}
               </>
             )}
           </div>
