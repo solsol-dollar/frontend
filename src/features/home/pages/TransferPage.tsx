@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { Header } from '@/components/common/Header'
+
+const SOURCE = { label: '내 외화 통장', balance: '$3,850.00' }
 
 const DEST_ACCOUNTS = [
   { id: 'cma', displayName: '내 CMA(RP형)', name: '신한 Value-up 외화적립예금', number: '270-14-164537', balance: '$8,200.00' },
@@ -12,8 +14,6 @@ const KEYS = ['1','2','3','4','5','6','7','8','9','.','0','←']
 
 export function TransferPage() {
   const navigate = useNavigate()
-  const { state } = useLocation()
-  const source = { label: state?.sourceName ?? '내 외화 통장', balance: state?.sourceBalance ?? '$3,850.00' }
   const [showSheet, setShowSheet] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [amount, setAmount] = useState('')
@@ -37,10 +37,10 @@ export function TransferPage() {
         {/* 출금 계좌 */}
         <div className="mb-5">
           <p className="text-lg leading-snug">
-            <span className="font-bold text-text-primary">{source.label}</span>
+            <span className="font-bold text-text-primary">{SOURCE.label}</span>
             <span className="text-text-secondary"> 에서</span>
           </p>
-          <p className="text-sm text-text-tertiary mt-1">잔액 {source.balance}</p>
+          <p className="text-sm text-text-tertiary mt-1">잔액 {SOURCE.balance}</p>
         </div>
 
         {/* 입금 계좌 — 높이 고정 */}
