@@ -25,7 +25,7 @@ export function Header({
   // 뒤로가기 + 타이틀: 타이틀을 절대 중앙 정렬
   if (showBack) {
     return (
-      <header className="sticky top-0 z-10 bg-white relative flex items-center justify-between px-4 h-14">
+      <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-14">
         <button onClick={() => navigate(-1)} className="p-1 -ml-1 z-10">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
