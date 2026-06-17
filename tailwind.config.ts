@@ -44,7 +44,7 @@ const config: Config = {
         border: '#E5E7EB',
         text: {
           primary: '#111827',
-          secondary: '#374151',
+          secondary: '#6B7280',
           sub: '#6B7280',
           tertiary: '#9CA3AF',
         },
