@@ -57,4 +57,26 @@
   .amount-negative {
     color: var(--color-down);
   }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .week-slide-left {
+    animation: weekSlideLeft 0.4s ease-out;
+  }
+
+  .week-slide-right {
+    animation: weekSlideRight 0.4s ease-out;
+  }
+}
+
+@keyframes weekSlideLeft {
+  from { transform: translateX(30px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes weekSlideRight {
+  from { transform: translateX(-30px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
