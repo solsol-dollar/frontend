@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 
 interface HeaderProps {
   title?: string
-  titleAction?: React.ReactNode
   showBack?: boolean
   showNotification?: boolean
   showMypage?: boolean
@@ -14,7 +13,6 @@ interface HeaderProps {
 
 export function Header({
   title,
-  titleAction,
   showBack = false,
   showNotification = true,
   showMypage = true,
@@ -24,6 +22,7 @@ export function Header({
 }: HeaderProps) {
   const navigate = useNavigate()
 
+  // 뒤로가기 + 타이틀: 타이틀을 절대 중앙 정렬
   if (showBack) {
     return (
       <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-[56px]">
@@ -61,9 +60,10 @@ export function Header({
     )
   }
 
+  // 기본 헤더: 로고 or 타이틀 좌측, 액션 우측
   return (
-    <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-[56px]">
-      <div className="flex items-center gap-1">
+    <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-14">
+      <div className="flex items-center">
         {title ? (
           <span className="text-lg font-bold text-text-primary">{title}</span>
         ) : (
@@ -71,11 +71,9 @@ export function Header({
             <span className="text-primary">SOL SOL</span> 달러
           </span>
         )}
-        {titleAction}
       </div>
 
-      <div className="flex items-center gap-4">
-        {rightAction}
+      <div className="flex items-center gap-3">
         {showSearch && (
           <button>
             <img src="/icons/search.svg" width={19} height={19} alt="" />

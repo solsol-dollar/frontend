@@ -1,12 +1,12 @@
-import { ChevronRight, Heart } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import sleepingIcon from '@/assets/home/sleeping.svg'
 import changeupCard from '@/assets/home/changeup-card.png'
 
 const ACCOUNTS = [
-  { id: 1, name: '신한투자증권 CMA 계좌', balance: '$8,200.00' },
-  { id: 2, name: '신한 Value-up 외화적립예금', balance: '$6,280.50' },
-  { id: 3, name: '신한 외화 체인지업 예금', balance: '$3,850.50' },
+  { id: 1, name: '신한투자증권 CMA 계좌', balance: '$8,200.00', type: 'cma' },
+  { id: 2, name: '신한 Value-up 외화적립예금', balance: '$6,280.50', type: 'valueup' },
+  { id: 3, name: '신한 외화 체인지업 예금', balance: '$3,850.50', type: 'changeup' },
 ]
 
 const INTEREST_IPOS = [
@@ -55,7 +55,11 @@ export function HomePage() {
         <p className="text-xs text-text-secondary mb-2 px-1">내 계좌</p>
         <div className="bg-white rounded-xl ">
           {ACCOUNTS.map((acc) => (
-            <div key={acc.id} className="flex items-center gap-4 px-4 py-4">
+            <button
+              key={acc.id}
+              onClick={() => navigate('/home/transfer/history', { state: { accountType: acc.type } })}
+              className="w-full flex items-center gap-4 px-4 py-4 text-left"
+            >
               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                 <span className="text-white text-[9px] font-bold leading-none">SOL</span>
               </div>
@@ -64,12 +68,12 @@ export function HomePage() {
                 <p className="text-sm font-bold text-text-primary mt-0.5">{acc.balance}</p>
               </div>
               <button
-                onClick={() => navigate('/home/transfer')}
+                onClick={(e) => { e.stopPropagation(); navigate('/home/transfer', { state: { sourceName: acc.name, sourceBalance: acc.balance } }) }}
                 className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary"
               >
                 송금
               </button>
-            </div>
+            </button>
           ))}
         </div>
       </section>

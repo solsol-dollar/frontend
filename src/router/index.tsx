@@ -10,6 +10,8 @@ import { TransferPage } from '@/features/home/pages/TransferPage'
 import { TransferConfirmPage } from '@/features/home/pages/TransferConfirmPage'
 import { TransferCompletePage } from '@/features/home/pages/TransferCompletePage'
 import { TransferHistoryPage } from '@/features/home/pages/TransferHistoryPage'
+import { FillPage } from '@/features/home/pages/FillPage'
+import { ExchangePage } from '@/features/home/pages/ExchangePage'
 
 // IPO
 import { IpoCalendarPage } from '@/features/ipo/pages/IpoCalendarPage'
@@ -48,6 +50,12 @@ export const router = createBrowserRouter([
   { path: '/home/transfer/confirm', element: <TransferConfirmPage /> },
   { path: '/home/transfer/complete', element: <TransferCompletePage /> },
   { path: '/home/transfer/history', element: <TransferHistoryPage /> },
+  { path: '/home/fill', element: <FillPage /> },
+  { path: '/home/exchange', element: <ExchangePage /> },
+
+  // IPO 청약 플로우 — 바텀탭 없음
+  { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
+  { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
 
   {
     element: <Layout />,
@@ -61,8 +69,6 @@ export const router = createBrowserRouter([
       { path: '/ipo/history', element: <SubscriptionHistoryPage /> },
       { path: '/ipo/profile', element: <InvestmentProfilePage /> },
       { path: '/ipo/:id', element: <IpoDetailPage /> },
-      { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
-      { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
 
       // Return Plan
       { path: '/return-plan', element: <ReturnPlanPage /> },
