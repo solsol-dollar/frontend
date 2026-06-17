@@ -10,6 +10,7 @@ import { TransferPage } from '@/features/home/pages/TransferPage'
 import { TransferConfirmPage } from '@/features/home/pages/TransferConfirmPage'
 import { TransferCompletePage } from '@/features/home/pages/TransferCompletePage'
 import { TransferHistoryPage } from '@/features/home/pages/TransferHistoryPage'
+import { FillPage } from '@/features/home/pages/FillPage'
 
 // IPO
 import { IpoCalendarPage } from '@/features/ipo/pages/IpoCalendarPage'
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
   { path: '/home/transfer/confirm', element: <TransferConfirmPage /> },
   { path: '/home/transfer/complete', element: <TransferCompletePage /> },
   { path: '/home/transfer/history', element: <TransferHistoryPage /> },
+  { path: '/home/fill', element: <FillPage /> },
 
   {
     element: <Layout />,
