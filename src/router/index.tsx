@@ -51,6 +51,10 @@ export const router = createBrowserRouter([
   { path: '/home/transfer/history', element: <TransferHistoryPage /> },
   { path: '/home/fill', element: <FillPage /> },
 
+  // IPO 청약 플로우 — 바텀탭 없음
+  { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
+  { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
+
   {
     element: <Layout />,
     children: [
@@ -63,8 +67,6 @@ export const router = createBrowserRouter([
       { path: '/ipo/history', element: <SubscriptionHistoryPage /> },
       { path: '/ipo/profile', element: <InvestmentProfilePage /> },
       { path: '/ipo/:id', element: <IpoDetailPage /> },
-      { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
-      { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
 
       // Return Plan
       { path: '/return-plan', element: <ReturnPlanPage /> },
