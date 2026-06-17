@@ -3,12 +3,35 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Heart, Minus, Plus, X } from "lucide-react";
 import { Header } from "@/components/common/Header";
 
+function parseMilestoneDate(str: string): Date {
+  return new Date(str.replace(/\./g, "-"));
+}
+
+function getSubscriptionStatus(milestones: { label: string; date: string }[]) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = parseMilestoneDate(milestones[0].date);
+  const end = parseMilestoneDate(milestones[1].date);
+  if (today < start) return "청약예정";
+  if (today <= end) return "청약가능";
+  return "청약종료";
+}
+
+function getDday(milestones: { label: string; date: string }[]) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = parseMilestoneDate(milestones[0].date);
+  const end = parseMilestoneDate(milestones[1].date);
+  const target = today < start ? start : end;
+  const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diff === 0) return "D-Day";
+  return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+}
+
 const MOCK_SUBSCRIPTION = {
   ticker: "CRWV",
   name: "CoreWeave",
   color: "#FF6830",
-  status: "청약가능",
-  dday: "D-2",
   offeringPrice: "USD 20.000",
   pricePerShare: 20,
   milestones: [
@@ -38,6 +61,8 @@ export function SubscribePage() {
   const [pullAmount, setPullAmount] = useState("");
 
   const ipo = MOCK_SUBSCRIPTION;
+  const status = getSubscriptionStatus(ipo.milestones);
+  const dday = getDday(ipo.milestones);
 
   const numericAmount = Number(amount || 0);
   const maxSubscribable = Math.floor(ipo.availableAmount / 1.01);
@@ -68,7 +93,11 @@ return (
         showNotification={false}
         showMypage={false}
         rightAction={
-          <button onClick={() => setLiked((v) => !v)} className="p-1">
+          <button
+            onClick={() => setLiked((v) => !v)}
+            aria-label={liked ? "관심 해제" : "관심 등록"}
+            className="p-1"
+          >
             <Heart
               size={22}
               className={liked ? "text-heart fill-heart" : "text-text-tertiary"}
@@ -103,10 +132,10 @@ return (
             "
             >
               <span className="px-2 py-0.5 rounded-full border border-warning text-warning text-xs font-semibold">
-                {ipo.status}
+                {status}
               </span>
               <span className="text-sm text-warning font-bold mr-2">
-                {ipo.dday}
+                {dday}
               </span>
             </div>
           </div>
@@ -186,6 +215,7 @@ return (
                 <button
                   onClick={() => adjustAmount(-1)}
                   disabled={!amount || numericAmount <= 100}
+                  aria-label="금액 감소"
                   className="px-3 py-2.5 text-text-secondary active:bg-surface disabled:opacity-30"
                 >
                   <Minus size={14} />
@@ -216,6 +246,7 @@ return (
                 <button
                   onClick={() => adjustAmount(1)}
                   disabled={numericAmount >= maxSubscribable}
+                  aria-label="금액 증가"
                   className="px-3 py-2.5 text-text-secondary active:bg-surface disabled:opacity-30"
                 >
                   <Plus size={14} />
@@ -319,6 +350,7 @@ return (
               <h2 className="text-base font-bold text-text-primary">환전하기</h2>
               <button
                 onClick={() => setShowExchangeModal(false)}
+                aria-label="닫기"
                 className="p-1 text-text-tertiary"
               >
                 <X size={20} />
@@ -341,7 +373,10 @@ return (
                   type="text"
                   inputMode="numeric"
                   value={exchangeKrw}
-                  onChange={(e) => setExchangeKrw(e.target.value.replace(/\D/g, ""))}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "");
+                    if (Number(v) <= ipo.cmaBalanceKrw) setExchangeKrw(v);
+                  }}
                   placeholder="금액 입력"
                   className="w-full text-base font-semibold text-text-primary outline-none bg-transparent"
                 />
@@ -366,8 +401,9 @@ return (
                 취소
               </button>
               <button
+                disabled={!exchangeKrw || Number(exchangeKrw) <= 0}
                 onClick={() => setShowExchangeModal(false)}
-                className="flex-1 bg-primary text-white py-4 rounded-xl font-semibold"
+                className="flex-1 bg-primary disabled:bg-border text-white py-4 rounded-xl font-semibold"
               >
                 환전하기
               </button>
