@@ -2,6 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import sleepingIcon from '@/assets/home/sleeping.svg'
 import changeupCard from '@/assets/home/changeup-card.png'
+import { Header } from '@/components/common/Header'
 
 const ACCOUNTS = [
   { id: 1, name: '신한투자증권 CMA 계좌', balance: '$8,200.00', type: 'cma' },
@@ -19,6 +20,7 @@ export function HomePage() {
 
   return (
     <div className="page-content bg-surface-bg">
+      <Header />
 
       {/* 총 자산 — 배경 흰색 풀너비 */}
       <section className="bg-white px-4 pt-5 pb-7">
@@ -37,7 +39,7 @@ export function HomePage() {
       <section className="mx-4 mt-5">
         <button
           className="w-full bg-white rounded-xl px-4 py-4 flex items-center gap-4 text-left"
-          onClick={() => {}}
+          onClick={() => navigate('/home/sleeping-dollar')}
         >
           <div className='bg-blue-100 px-2 py-2 rounded-3xl'>
           <span className="text-2xl leading-none"><img src={sleepingIcon} alt="쉬는 달러 감지 아이콘"/></span>
