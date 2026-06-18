@@ -40,6 +40,14 @@
     display: none;
   }
 
+  * {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
   /* 모바일 앱처럼 텍스트 선택 방지 (버튼, 탭 등) */
   button, a {
     -webkit-user-select: none;

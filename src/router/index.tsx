@@ -56,6 +56,7 @@ export const router = createBrowserRouter([
   { path: '/home/sleeping-dollar', element: <SleepingDollarPage /> },
 
   // IPO 청약 플로우 — 바텀탭 없음
+  { path: '/ipo/:id', element: <IpoDetailPage /> },
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
   { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
 
@@ -70,7 +71,6 @@ export const router = createBrowserRouter([
       { path: '/ipo/guide', element: <IpoGuidePage /> },
       { path: '/ipo/history', element: <SubscriptionHistoryPage /> },
       { path: '/ipo/profile', element: <InvestmentProfilePage /> },
-      { path: '/ipo/:id', element: <IpoDetailPage /> },
 
       // Return Plan
       { path: '/return-plan', element: <ReturnPlanPage /> },
