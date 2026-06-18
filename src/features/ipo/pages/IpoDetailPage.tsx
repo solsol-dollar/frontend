@@ -4,22 +4,42 @@ import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Header } from '@/components/common/Header'
 
+const parseMilestoneDate = (dateStr: string) => {
+  const [year, month, day] = dateStr.split('.').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+const today = new Date()
+today.setHours(0, 0, 0, 0)
+
+const MOCK_IPO_MILESTONES = [
+  { label: '청약시작일', date: '2026.06.24' },
+  { label: '청약마감일', date: '2026.09.04' },
+  { label: '환불(예정)일', date: '2026.09.05' },
+  { label: '상장(예정)일', date: '2026.09.06' },
+]
+
+const subscriptionCloseDate = parseMilestoneDate(
+  MOCK_IPO_MILESTONES.find((m) => m.label === '청약마감일')!.date,
+)
+const diffDays = Math.ceil(
+  (subscriptionCloseDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+)
+
 const MOCK_IPO = {
   id: 1,
   ticker: 'CRWV',
   name: 'CoreWeave',
   abbr: 'CR',
   color: '#FF6830',
-  status: '청약가능',
-  dday: 'D-2',
-  offeringPrice: 'USD 20.000',
+  status: diffDays >= 0 ? '청약가능' : '청약마감',
+  dday: diffDays >= 0 ? `D-${diffDays}` : `D+${Math.abs(diffDays)}`,
+  offeringPrice: 'USD 20.00',
   offeringShares: '10,000,000 주',
-  milestones: [
-    { label: '청약시작일', date: '2026.06.24', active: true },
-    { label: '청약마감일', date: '2026.09.04', active: true },
-    { label: '환불(예정)일', date: '2026.09.05', active: false },
-    { label: '상장(예정)일', date: '2026.09.06', active: false },
-  ],
+  milestones: MOCK_IPO_MILESTONES.map((m) => ({
+    ...m,
+    active: today >= parseMilestoneDate(m.date),
+  })),
   performance: {
     asOf: '2025.12',
     stats: [
@@ -48,7 +68,7 @@ export function IpoDetailPage() {
         showNotification={false}
         showMypage={false}
         rightAction={
-          <button onClick={() => setLiked((v) => !v)}>
+          <button onClick={() => setLiked((v) => !v)} aria-label="관심 종목" aria-pressed={liked}>
             <Heart
               size={22}
               className={liked ? 'text-red-500 fill-red-500' : 'text-text-tertiary'}
