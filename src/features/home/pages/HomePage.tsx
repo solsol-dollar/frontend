@@ -2,6 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import sleepingIcon from '@/assets/home/sleeping.svg'
 import changeupCard from '@/assets/home/changeup-card.png'
+import { Header } from '@/components/common/Header'
 
 const ACCOUNTS = [
   { id: 1, name: '신한투자증권 CMA 계좌', balance: '$8,200.00', type: 'cma' },
@@ -19,6 +20,7 @@ export function HomePage() {
 
   return (
     <div className="page-content bg-surface-bg">
+      <Header />
 
       {/* 총 자산 — 배경 흰색 풀너비 */}
       <section className="bg-white px-4 pt-5 pb-7">
