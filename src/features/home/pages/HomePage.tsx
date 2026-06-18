@@ -37,7 +37,7 @@ export function HomePage() {
       <section className="mx-4 mt-5">
         <button
           className="w-full bg-white rounded-xl px-4 py-4 flex items-center gap-4 text-left"
-          onClick={() => {}}
+          onClick={() => navigate('/home/sleeping-dollar')}
         >
           <div className='bg-blue-100 px-2 py-2 rounded-3xl'>
           <span className="text-2xl leading-none"><img src={sleepingIcon} alt="쉬는 달러 감지 아이콘"/></span>
