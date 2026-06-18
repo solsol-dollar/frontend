@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PinKeypad } from '../components/PinKeypad'
-import { LoadingStep } from '../components/LoadingStep'
-import { AccountSelectStep } from '../components/AccountSelectStep'
+import { PinKeypad } from '@/features/onboarding/components/PinKeypad'
+import { LoadingStep } from '@/features/onboarding/components/LoadingStep'
+import { AccountSelectStep } from '@/features/onboarding/components/AccountSelectStep'
 
 type Step = 'splash' | 'pin' | 'loading' | 'accounts'
 

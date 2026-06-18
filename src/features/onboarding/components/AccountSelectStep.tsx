@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import changeupCard from '@/assets/home/changeup-card.png'
-import { ConsentSheet } from './ConsentSheet'
+import { ConsentSheet } from '@/features/onboarding/components/ConsentSheet'
 
 const MOCK_ACCOUNTS = [
   { id: 'cma', label: '신한\nSOL\n증권', name: '신한투자증권 CMA 계좌', balance: '$8,200.00', required: true, isCard: false },

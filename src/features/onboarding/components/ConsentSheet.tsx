@@ -28,7 +28,10 @@ export function ConsentSheet({ onConfirm, onClose }: Props) {
   const [visible, setVisible] = useState(false)
   const allChecked = CONSENTS.every((c) => checked.has(c.id))
 
-  useEffect(() => { requestAnimationFrame(() => setVisible(true)) }, [])
+  useEffect(() => {
+    const rafId = requestAnimationFrame(() => setVisible(true))
+    return () => cancelAnimationFrame(rafId)
+  }, [])
 
   const toggleAll = () => {
     setChecked(allChecked ? new Set() : new Set(CONSENTS.map((c) => c.id)))
