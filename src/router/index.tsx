@@ -59,10 +59,6 @@ export const router = createBrowserRouter([
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
   { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
 
-  // IPO 청약 플로우 — 바텀탭 없음
-  { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
-  { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
-
   {
     element: <Layout />,
     children: [
