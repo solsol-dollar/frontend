@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Heart, Minus, Plus, X } from "lucide-react";
 import { Header } from "@/components/common/Header";
 import { cn } from "@/lib/utils";
+import shinhanBankIcon from "@/assets/common/shinhan-bank.svg";
 
 function parseMilestoneDate(str: string): Date {
   return new Date(str.replace(/\./g, "-"));
@@ -342,6 +343,8 @@ return (
         onClick={() => setShowConfirmModal(false)}
       />
       <div
+        aria-hidden={!showConfirmModal}
+        {...(!showConfirmModal ? { inert: '' } : {})}
         className={cn("fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[60] transition-transform duration-300 ease-out", showConfirmModal ? "translate-y-0" : "translate-y-[calc(100%+1rem)]")}
       >
         <div className="flex justify-center pt-3 pb-2">
@@ -406,6 +409,8 @@ return (
         onClick={() => setShowPullModal(false)}
       />
       <div
+        aria-hidden={!showPullModal}
+        {...(!showPullModal ? { inert: '' } : {})}
         className={cn(
           'fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-30 transition-transform duration-300 ease-out',
           showPullModal ? 'translate-y-0' : 'translate-y-[calc(100%+1rem)]',
@@ -419,7 +424,7 @@ return (
 
           <div className="flex flex-col items-center text-center gap-4 mb-8">
             <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center p-2">
-              <img src="/src/assets/common/shinhan-bank.svg" alt="신한은행" className="w-full h-full" />
+              <img src={shinhanBankIcon} alt="신한은행" className="w-full h-full" />
             </div>
             <div>
               <p className="text-base font-bold text-text-primary mb-1">신한 슈퍼SOL로 이동합니다</p>

@@ -885,6 +885,8 @@ export function SubscriptionHistory() {
         onClick={() => setScratchTarget(null)}
       />
       <div
+        aria-hidden={scratchTarget === null}
+        {...(scratchTarget === null ? { inert: '' } : {})}
         className={cn("fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[60] transition-transform duration-300 ease-out", scratchTarget !== null ? "translate-y-0" : "translate-y-[calc(100%+1rem)]")}
       >
         <div className="flex justify-center pt-3 pb-2">
@@ -898,6 +900,7 @@ export function SubscriptionHistory() {
             {scratchItem?.company}
           </p>
           <ScratchCard
+            key={scratchItem?.id ?? 'none'}
             allocatedQty={scratchItem?.allocatedQty ?? 0}
             logoColor={scratchItem?.logoColor ?? ''}
             abbr={getAbbr(scratchItem?.company ?? '')}
@@ -971,7 +974,7 @@ export function SubscriptionHistory() {
           <div className="space-y-4 mb-7">
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-secondary">환불 금액</span>
-              <span className="text-sm font-semibold text-text-primary">$3,022.50</span>
+              <span className="text-sm font-semibold text-text-primary">{cancelItem?.amount}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-secondary">환불계좌</span>

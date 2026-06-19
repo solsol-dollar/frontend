@@ -570,7 +570,10 @@ function IpoCard({
 export function IpoCalendarPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [tab, setTab] = useState<Tab>((location.state as { tab?: Tab } | null)?.tab ?? "청약 일정");
+  const [tab, setTab] = useState<Tab>(() => {
+    const stateTab = (location.state as { tab?: string } | null)?.tab;
+    return stateTab === "청약 일정" || stateTab === "청약내역/취소" ? stateTab : "청약 일정";
+  });
   const [bottomFilter, setBottomFilter] = useState<BottomFilter>("전체");
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(
     () => new Set(IPOS.filter((ipo) => ipo.is_favorite).map((ipo) => ipo.id)),
