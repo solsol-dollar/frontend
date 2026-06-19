@@ -22,6 +22,7 @@ import { SubscribePage } from '@/features/ipo/pages/SubscribePage'
 import { SubscribeExchangePage } from '@/features/ipo/pages/SubscribeExchangePage'
 import { SubscriptionHistoryPage } from '@/features/ipo/pages/SubscriptionHistoryPage'
 import { InvestmentProfilePage } from '@/features/ipo/pages/InvestmentProfilePage'
+import { AllocationResultPage } from '@/features/ipo/pages/AllocationResultPage'
 
 // Return Plan
 import { ReturnPlanPage } from '@/features/return-plan/pages/ReturnPlanPage'
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
   { path: '/ipo/:id', element: <IpoDetailPage /> },
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
   { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
+  { path: '/ipo/:id/result', element: <AllocationResultPage /> },
 
   {
     element: <Layout />,

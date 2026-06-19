@@ -375,6 +375,11 @@ export function SubscriptionHistory() {
   const [cancelTarget, setCancelTarget] = useState<number | null>(null)
   const cancelItem = SUBSCRIPTIONS.find((s) => s.id === cancelTarget)
 
+  // 청약확정등록 확인 모달
+  const [confirmRegTarget, setConfirmRegTarget] = useState<number | null>(null)
+  const [confirmedRegIds, setConfirmedRegIds] = useState<Set<number>>(new Set())
+  const confirmRegItem = SUBSCRIPTIONS.find((s) => s.id === confirmRegTarget)
+
   // 배정결과 스크래치
   const [scratchTarget, setScratchTarget] = useState<number | null>(null)
   const [confirmedIds, setConfirmedIds] = useState<Set<number>>(new Set())
@@ -556,7 +561,7 @@ export function SubscriptionHistory() {
                 {/* 버튼 영역 */}
                 {sub.status === '청약신청' && (() => {
                   const inPeriod = isInSubscriptionPeriod(sub)
-                  const needsConfirm = needsReconfirmation(sub)
+                  const needsConfirm = needsReconfirmation(sub) && !confirmedRegIds.has(sub.id)
                   if (!inPeriod && !needsConfirm) return null
                   return (
                     <div className="px-4 pb-4 flex gap-2">
@@ -569,7 +574,10 @@ export function SubscriptionHistory() {
                         </button>
                       )}
                       {needsConfirm && (
-                        <button className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-primary">
+                        <button
+                          onClick={() => setConfirmRegTarget(sub.id)}
+                          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-primary"
+                        >
                           청약확정등록
                         </button>
                       )}
@@ -579,20 +587,21 @@ export function SubscriptionHistory() {
 
                 {sub.status === '배정완료' && (
                   <div className="px-4 pb-4 flex gap-2">
-                    {!isRevealed && (
+                    {!isRevealed ? (
                       <button
                         onClick={() => setScratchTarget(sub.id)}
                         className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-primary"
                       >
                         배정결과 보기
                       </button>
+                    ) : (
+                      <button
+                        onClick={() => navigate(`/ipo/${sub.id}/result`)}
+                        className="flex-1 py-3 rounded-xl text-sm font-semibold text-text-secondary bg-[#F0F1F4]"
+                      >
+                        상세보기
+                      </button>
                     )}
-                    <button
-                      onClick={() => navigate(`/ipo/${sub.id}`)}
-                      className="flex-1 py-3 rounded-xl text-sm font-semibold text-text-secondary bg-[#F0F1F4]"
-                    >
-                      상세보기
-                    </button>
                   </div>
                 )}
 
@@ -900,6 +909,36 @@ export function SubscriptionHistory() {
 
       {/* ── 축하 효과 ── */}
       {showConfetti && <Confetti />}
+
+      {/* ── 청약확정등록 확인 모달 ── */}
+      {confirmRegTarget !== null && confirmRegItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmRegTarget(null)} />
+          <div className="relative bg-white rounded-2xl px-5 pt-7 pb-6 w-full max-w-xs">
+            <p className="text-base font-bold text-text-primary text-center mb-2">
+              청약확정등록을 하시겠습니까?
+            </p>
+            <p className="text-sm text-text-secondary text-center mb-7">{confirmRegItem.company}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmRegTarget(null)}
+                className="flex-1 py-3.5 bg-[#F0F1F4] rounded-xl text-sm font-semibold text-text-secondary"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  setConfirmedRegIds((prev) => new Set([...prev, confirmRegTarget]))
+                  setConfirmRegTarget(null)
+                }}
+                className="flex-1 py-3.5 bg-primary text-white rounded-xl text-sm font-semibold"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── 취소 확인 시트 ── */}
       {cancelTarget && cancelItem && (
