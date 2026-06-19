@@ -953,7 +953,7 @@ export function SubscriptionHistory() {
             <div className="space-y-4 mb-7">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-text-secondary">환불 금액</span>
-                <span className="text-sm font-semibold text-text-primary">$3,022.50</span>
+                <span className="text-sm font-semibold text-text-primary">{cancelItem.amount}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-text-secondary">환불계좌</span>

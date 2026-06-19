@@ -1,5 +1,5 @@
 import { Header } from "@/components/common/Header";
-import { SubscriptionHistory } from "../components/SubscriptionHistory";
+import { SubscriptionHistory } from "@/features/ipo/components/SubscriptionHistory";
 
 export function SubscriptionHistoryPage() {
   return (
