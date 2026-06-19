@@ -19,8 +19,9 @@ export function HomePage() {
   const navigate = useNavigate()
 
   return (
-    <div className="page-content bg-surface-bg">
+    <div className="flex flex-col h-screen overflow-hidden">
       <Header />
+      <div className="flex-1 overflow-y-auto bg-surface-bg pb-20">
 
       {/* 총 자산 — 배경 흰색 풀너비 */}
       <section className="bg-white px-4 pt-5 pb-7">
@@ -132,6 +133,8 @@ export function HomePage() {
         </div>
       </section>
 
+      <div className="h-6" />
+      </div>
     </div>
   )
 }
