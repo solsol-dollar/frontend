@@ -337,57 +337,64 @@ return (
       </div>
 
       {/* 청약 신청 확인 모달 */}
-      {showConfirmModal && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowConfirmModal(false)} />
-          <div className="relative bg-white rounded-t-2xl px-5 pt-5 pb-10">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-base font-bold text-text-primary">청약 신청</h2>
-              <button onClick={() => setShowConfirmModal(false)} className="p-1 text-text-tertiary">
-                <X size={20} />
-              </button>
+      <div
+        className={cn("fixed inset-0 z-50 bg-black/40 transition-opacity duration-300", showConfirmModal ? "opacity-100" : "opacity-0 pointer-events-none")}
+        onClick={() => setShowConfirmModal(false)}
+      />
+      <div
+        className={cn("fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[60] transition-transform duration-300 ease-out", showConfirmModal ? "translate-y-0" : "translate-y-[calc(100%+1rem)]")}
+      >
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+        <div className="px-5 pt-3 pb-7">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-base font-bold text-text-primary">청약 신청</h2>
+            <button onClick={() => setShowConfirmModal(false)} className="p-1 text-text-tertiary">
+              <X size={20} />
+            </button>
+          </div>
+
+          <p className="text-lg font-bold text-text-primary text-center mb-6">
+            청약을 신청하시겠습니까?
+          </p>
+
+          <div className="space-y-3 mb-8">
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">종목</span>
+              <span className="font-semibold text-text-primary">{ipo.name} ({ipo.ticker})</span>
             </div>
-
-            <p className="text-lg font-bold text-text-primary text-center mb-6">
-              청약을 신청하시겠습니까?
-            </p>
-
-            <div className="space-y-3 mb-8">
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">종목</span>
-                <span className="font-semibold text-text-primary">{ipo.name} ({ipo.ticker})</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">공모(예정)가</span>
-                <span className="font-semibold text-text-primary">{ipo.offeringPrice}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">청약신청금액</span>
-                <span className="font-semibold text-text-primary">USD {numericAmount.toLocaleString("en-US")}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">청약대행증거금</span>
-                <span className="font-semibold text-text-primary">USD {subscriptionFee.toLocaleString("en-US")}</span>
-              </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">공모(예정)가</span>
+              <span className="font-semibold text-text-primary">{ipo.offeringPrice}</span>
             </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="flex-1 py-4 bg-surface text-text-primary rounded-xl font-semibold"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => navigate('/ipo', { state: { tab: '청약내역/취소' } })}
-                className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold"
-              >
-                확인
-              </button>
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">청약신청금액</span>
+              <span className="font-semibold text-text-primary">USD {numericAmount.toLocaleString("en-US")}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">청약대행증거금</span>
+              <span className="font-semibold text-text-primary">USD {subscriptionFee.toLocaleString("en-US")}</span>
             </div>
           </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowConfirmModal(false)}
+              className="flex-1 py-4 bg-surface text-text-primary rounded-xl font-semibold"
+            >
+              취소
+            </button>
+            <button
+              onClick={() => navigate('/ipo', { state: { tab: '청약내역/취소' } })}
+              className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold"
+            >
+              확인
+            </button>
+          </div>
         </div>
-      )}
+      </div>
+
 
 
       {/* 외화통장에서 끌어오기 안내 시트 */}
