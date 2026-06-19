@@ -15,74 +15,10 @@ function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
-const C = {
-  up:            cssVar('--color-up'),
-  down:          cssVar('--color-down'),
-  border:        cssVar('--color-border'),
-  textSecondary: cssVar('--color-text-secondary'),
-  textTertiary:  cssVar('--color-text-tertiary'),
+const TIME_SCALE_BASE = {
+  fixRightEdge: true,
+  rightOffset: 2,
 } as const
-
-const AREA_CHART_OPTIONS = {
-  layout: {
-    background: { color: 'transparent' },
-    textColor: C.textTertiary,
-    fontSize: 10,
-  },
-  grid: {
-    vertLines: { visible: false },
-    horzLines: { color: C.border },
-  },
-  crosshair: { mode: CrosshairMode.Normal },
-  rightPriceScale: {
-    borderVisible: false,
-    scaleMargins: { top: 0.1, bottom: 0.1 },
-  },
-  timeScale: {
-    borderVisible: false,
-    timeVisible: false,
-    fixRightEdge: true,
-    rightOffset: 2,
-  },
-  handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
-  handleScale: { pinch: true, mouseWheel: false, axisPressedMouseMove: false },
-} as const
-
-const CHART_OPTIONS = {
-  layout: {
-    background: { color: 'transparent' },
-    textColor: C.textSecondary,
-    fontSize: 11,
-  },
-  grid: {
-    vertLines: { color: C.border },
-    horzLines: { color: C.border },
-  },
-  crosshair: { mode: CrosshairMode.Normal },
-  rightPriceScale: { borderColor: C.border },
-  timeScale: {
-    borderColor: C.border,
-    timeVisible: true,
-    secondsVisible: false,
-    fixRightEdge: true,
-    rightOffset: 2,
-  },
-  handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
-  handleScale: { pinch: true, mouseWheel: false, axisPressedMouseMove: false },
-} as const
-
-const SERIES_OPTIONS = {
-  upColor:        C.up,
-  downColor:      C.down,
-  borderUpColor:  C.up,
-  borderDownColor: C.down,
-  wickUpColor:    C.up,
-  wickDownColor:  C.down,
-} as const
-
-// --color-up / --color-down 기반 에어리어 그라디언트 (15% 불투명도)
-const AREA_UP_COLOR   = 'rgba(229,57,53,0.15)'
-const AREA_DOWN_COLOR = 'rgba(21,101,192,0.15)'
 
 function toTime(candle: ChartCandle): Time {
   if (candle.time) {
@@ -107,17 +43,46 @@ export function PriceChart({ productId, period, className }: PriceChartProps) {
   useEffect(() => {
     if (!containerRef.current || !data?.candles?.length) return
 
+    // CSS 변수는 DOM이 완전히 준비된 useEffect 내에서 resolve
+    const C = {
+      up:            cssVar('--color-up'),
+      down:          cssVar('--color-down'),
+      border:        cssVar('--color-border'),
+      textSecondary: cssVar('--color-text-secondary'),
+      textTertiary:  cssVar('--color-text-tertiary'),
+    }
+
     const candles = data.candles
     const isUp = Number(candles[candles.length - 1].close) >= Number(candles[0].close)
 
     if (detailed) {
       const chart = createChart(containerRef.current, {
-        ...CHART_OPTIONS,
+        layout: {
+          background: { color: 'transparent' },
+          textColor: C.textSecondary,
+          fontSize: 11,
+        },
+        grid: {
+          vertLines: { color: C.border },
+          horzLines: { color: C.border },
+        },
+        crosshair: { mode: CrosshairMode.Normal },
+        rightPriceScale: { borderColor: C.border },
+        timeScale: { borderColor: C.border, timeVisible: true, secondsVisible: false, ...TIME_SCALE_BASE },
+        handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
+        handleScale: { pinch: true, mouseWheel: false, axisPressedMouseMove: false },
         width: containerRef.current.clientWidth,
         height: containerRef.current.clientHeight,
       })
 
-      const series = chart.addSeries(CandlestickSeries, SERIES_OPTIONS)
+      const series = chart.addSeries(CandlestickSeries, {
+        upColor:         C.up,
+        downColor:       C.down,
+        borderUpColor:   C.up,
+        borderDownColor: C.down,
+        wickUpColor:     C.up,
+        wickDownColor:   C.down,
+      })
 
       const chartData = candles
         .map((c) => ({
@@ -144,7 +109,20 @@ export function PriceChart({ productId, period, className }: PriceChartProps) {
       return () => { ro.disconnect(); chart.remove() }
     } else {
       const chart = createChart(containerRef.current, {
-        ...AREA_CHART_OPTIONS,
+        layout: {
+          background: { color: 'transparent' },
+          textColor: C.textTertiary,
+          fontSize: 10,
+        },
+        grid: {
+          vertLines: { visible: false },
+          horzLines: { color: C.border },
+        },
+        crosshair: { mode: CrosshairMode.Normal },
+        rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.1 } },
+        timeScale: { borderVisible: false, timeVisible: false, ...TIME_SCALE_BASE },
+        handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
+        handleScale: { pinch: true, mouseWheel: false, axisPressedMouseMove: false },
         width: containerRef.current.clientWidth,
         height: containerRef.current.clientHeight,
       })
@@ -158,7 +136,8 @@ export function PriceChart({ productId, period, className }: PriceChartProps) {
 
       const series = chart.addSeries(AreaSeries, {
         lineColor:   isUp ? C.up : C.down,
-        topColor:    isUp ? AREA_UP_COLOR : AREA_DOWN_COLOR,
+        // --color-up / --color-down 기반 15% 불투명도 그라디언트
+        topColor:    isUp ? 'rgba(229,57,53,0.15)' : 'rgba(21,101,192,0.15)',
         bottomColor: 'rgba(0,0,0,0)',
         lineWidth: 2,
         crosshairMarkerVisible: true,
