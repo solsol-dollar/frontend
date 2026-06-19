@@ -29,6 +29,8 @@ const AREA_CHART_OPTIONS = {
   timeScale: {
     borderVisible: false,
     timeVisible: false,
+    fixRightEdge: true,
+    rightOffset: 2,
   },
   handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
   handleScale: { pinch: true, mouseWheel: false, axisPressedMouseMove: false },
@@ -50,6 +52,8 @@ const CHART_OPTIONS = {
     borderColor: '#E5E7EB',
     timeVisible: true,
     secondsVisible: false,
+    fixRightEdge: true,
+    rightOffset: 2,
   },
   handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
   handleScale: { pinch: true, mouseWheel: false, axisPressedMouseMove: false },
