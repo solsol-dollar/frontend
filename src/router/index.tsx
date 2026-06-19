@@ -78,7 +78,7 @@ export const router = createBrowserRouter([
 
       // Securities
       { path: '/securities', element: <SecuritiesPage /> },
-      { path: '/securities/stocks/:ticker', element: <StockDetailPage /> },
+      { path: '/securities/stocks/:id', element: <StockDetailPage /> },
       { path: '/securities/etf', element: <EtfPage /> },
 
       // Mypage
