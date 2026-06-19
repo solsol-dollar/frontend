@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { cn } from '@/lib/utils'
-
-type Period = '1일' | '1주' | '1달' | '3달' | '1년'
+import { PriceChart } from '../components/PriceChart'
+import { type UiPeriod, PERIOD_MAP } from '../types/chart'
 
 const ORDER_BOOK = [
   { price: '$1,024.10', qty: 1, up: false },
@@ -15,11 +15,11 @@ const ORDER_BOOK = [
 ]
 
 export function StockDetailPage() {
-  const { ticker } = useParams()
-  const [period, setPeriod] = useState<Period>('1달')
+  const { id } = useParams()
+  const [period, setPeriod] = useState<UiPeriod>('일')
   const [buyOpen, setBuyOpen] = useState(false)
   const [qty, setQty] = useState('')
-  const periods: Period[] = ['1일', '1주', '1달', '3달', '1년']
+  const periods: UiPeriod[] = ['5분', '일', '주', '월']
 
   const unitPrice = 2084.47
   const totalAmount = parseFloat(qty || '0') * unitPrice
@@ -37,9 +37,9 @@ export function StockDetailPage() {
       <section className="px-4 pt-4 pb-5 bg-white">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center">
-            <span className="text-xs font-bold text-text-secondary">{(ticker ?? 'MS').slice(0, 2)}</span>
+            <span className="text-xs font-bold text-text-secondary">{(id ?? 'MS').slice(0, 2)}</span>
           </div>
-          <p className="text-sm text-text-secondary">{ticker ?? 'MSFT'} · 마이크로소프트</p>
+          <p className="text-sm text-text-secondary">{id ?? 'MSFT'} · 마이크로소프트</p>
         </div>
         <p className="text-2xl font-bold text-text-primary">$2,084.47</p>
         <p className="text-sm text-up mt-0.5">+$24.13 · +1.17%</p>
@@ -60,8 +60,8 @@ export function StockDetailPage() {
           ))}
         </div>
 
-        {/* 차트 placeholder */}
-        <div className="mt-3 h-32 bg-surface rounded-xl" />
+        {/* 주가 차트 */}
+        <PriceChart productId={id ?? ''} period={PERIOD_MAP[period]} className="mt-3" />
       </section>
 
       {/* 호가 */}
@@ -101,7 +101,7 @@ export function StockDetailPage() {
         <div className="fixed inset-0 bg-black/40 flex items-end z-50" onClick={() => setBuyOpen(false)}>
           <div className="w-full bg-white rounded-t-3xl px-4 pt-6 pb-8" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-base font-bold text-text-primary mb-1">몇 주 구매할까요?</h3>
-            <p className="text-xs text-text-secondary mb-4">{ticker ?? 'MSFT'} · $2,084.47</p>
+            <p className="text-xs text-text-secondary mb-4">{id ?? 'MSFT'} · $2,084.47</p>
 
             {/* 수량 입력 */}
             <div className="flex items-center gap-3 mb-4">
