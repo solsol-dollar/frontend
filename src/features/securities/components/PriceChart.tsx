@@ -5,21 +5,33 @@ import { cn } from '@/lib/utils'
 import { useChartData } from '../hooks/useChartData'
 import type { ChartCandle, ChartPeriod } from '../types/chart'
 
-interface PriceChartProps {
+type PriceChartProps = {
   productId: string
   period: ChartPeriod
   className?: string
 }
 
+function cssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+const C = {
+  up:            cssVar('--color-up'),
+  down:          cssVar('--color-down'),
+  border:        cssVar('--color-border'),
+  textSecondary: cssVar('--color-text-secondary'),
+  textTertiary:  cssVar('--color-text-tertiary'),
+} as const
+
 const AREA_CHART_OPTIONS = {
   layout: {
     background: { color: 'transparent' },
-    textColor: '#9CA3AF',
+    textColor: C.textTertiary,
     fontSize: 10,
   },
   grid: {
     vertLines: { visible: false },
-    horzLines: { color: '#F3F4F6' },
+    horzLines: { color: C.border },
   },
   crosshair: { mode: CrosshairMode.Normal },
   rightPriceScale: {
@@ -39,17 +51,17 @@ const AREA_CHART_OPTIONS = {
 const CHART_OPTIONS = {
   layout: {
     background: { color: 'transparent' },
-    textColor: '#6B7280',
+    textColor: C.textSecondary,
     fontSize: 11,
   },
   grid: {
-    vertLines: { color: '#E5E7EB' },
-    horzLines: { color: '#E5E7EB' },
+    vertLines: { color: C.border },
+    horzLines: { color: C.border },
   },
   crosshair: { mode: CrosshairMode.Normal },
-  rightPriceScale: { borderColor: '#E5E7EB' },
+  rightPriceScale: { borderColor: C.border },
   timeScale: {
-    borderColor: '#E5E7EB',
+    borderColor: C.border,
     timeVisible: true,
     secondsVisible: false,
     fixRightEdge: true,
@@ -60,33 +72,30 @@ const CHART_OPTIONS = {
 } as const
 
 const SERIES_OPTIONS = {
-  upColor: '#E53935',        // --color-up (한국 관습: 빨강=상승)
-  downColor: '#1565C0',      // --color-down (파랑=하락)
-  borderUpColor: '#E53935',
-  borderDownColor: '#1565C0',
-  wickUpColor: '#E53935',
-  wickDownColor: '#1565C0',
+  upColor:        C.up,
+  downColor:      C.down,
+  borderUpColor:  C.up,
+  borderDownColor: C.down,
+  wickUpColor:    C.up,
+  wickDownColor:  C.down,
 } as const
 
-/**
- * ChartCandle → lightweight-charts Time 변환
- *
- * - 1D(분봉): date(YYYYMMDD) + time(HHMMSS) → ET(EDT -04:00) 기준 UTC Unix 초
- * - DAY/WEEK/MONTH: "20260618" → "2026-06-18" 문자열 (LWC BusinessDay)
- */
+// --color-up / --color-down 기반 에어리어 그라디언트 (15% 불투명도)
+const AREA_UP_COLOR   = 'rgba(229,57,53,0.15)'
+const AREA_DOWN_COLOR = 'rgba(21,101,192,0.15)'
+
 function toTime(candle: ChartCandle): Time {
   if (candle.time) {
-    const y = candle.date.slice(0, 4)
+    const y  = candle.date.slice(0, 4)
     const mo = candle.date.slice(4, 6)
-    const d = candle.date.slice(6, 8)
-    const h = candle.time.slice(0, 2)
+    const d  = candle.date.slice(6, 8)
+    const h  = candle.time.slice(0, 2)
     const mi = candle.time.slice(2, 4)
-    const s = candle.time.slice(4, 6)
-    // KIS 분봉 시간은 미국 동부(현지) 기준, EDT = UTC-4 (MVP: EDT 고정)
+    const s  = candle.time.slice(4, 6)
+    // KIS 분봉은 미국 동부 현지 시각(EDT = UTC-4) 기준
     const etDate = new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}-04:00`)
     return Math.floor(etDate.getTime() / 1000) as Time
   }
-  // 일봉/주봉/월봉: "20260618" → "2026-06-18"
   return `${candle.date.slice(0, 4)}-${candle.date.slice(4, 6)}-${candle.date.slice(6, 8)}` as Time
 }
 
@@ -99,16 +108,9 @@ export function PriceChart({ productId, period, className }: PriceChartProps) {
     if (!containerRef.current || !data?.candles?.length) return
 
     const candles = data.candles
-
-    // 상승/하락 판단
-    const isUp =
-      Number(candles[candles.length - 1].close) >= Number(candles[0].close)
-    const lineColor   = isUp ? '#E53935' : '#1565C0'
-    const topColor    = isUp ? 'rgba(229,57,53,0.15)' : 'rgba(21,101,192,0.15)'
-    const bottomColor = 'rgba(0,0,0,0)'
+    const isUp = Number(candles[candles.length - 1].close) >= Number(candles[0].close)
 
     if (detailed) {
-      // CandlestickSeries (자세히 보기)
       const chart = createChart(containerRef.current, {
         ...CHART_OPTIONS,
         width: containerRef.current.clientWidth,
@@ -135,18 +137,12 @@ export function PriceChart({ productId, period, className }: PriceChartProps) {
       chart.timeScale().fitContent()
 
       const ro = new ResizeObserver(() => {
-        if (containerRef.current) {
-          chart.applyOptions({ width: containerRef.current.clientWidth })
-        }
+        if (containerRef.current) chart.applyOptions({ width: containerRef.current.clientWidth })
       })
       ro.observe(containerRef.current)
 
-      return () => {
-        ro.disconnect()
-        chart.remove()
-      }
+      return () => { ro.disconnect(); chart.remove() }
     } else {
-      // AreaSeries (기본 뷰 — 토스 스타일)
       const chart = createChart(containerRef.current, {
         ...AREA_CHART_OPTIONS,
         width: containerRef.current.clientWidth,
@@ -161,9 +157,9 @@ export function PriceChart({ productId, period, className }: PriceChartProps) {
         )
 
       const series = chart.addSeries(AreaSeries, {
-        lineColor,
-        topColor,
-        bottomColor,
+        lineColor:   isUp ? C.up : C.down,
+        topColor:    isUp ? AREA_UP_COLOR : AREA_DOWN_COLOR,
+        bottomColor: 'rgba(0,0,0,0)',
         lineWidth: 2,
         crosshairMarkerVisible: true,
         crosshairMarkerRadius: 4,
@@ -172,16 +168,11 @@ export function PriceChart({ productId, period, className }: PriceChartProps) {
       chart.timeScale().fitContent()
 
       const ro = new ResizeObserver(() => {
-        if (containerRef.current) {
-          chart.applyOptions({ width: containerRef.current.clientWidth })
-        }
+        if (containerRef.current) chart.applyOptions({ width: containerRef.current.clientWidth })
       })
       ro.observe(containerRef.current)
 
-      return () => {
-        ro.disconnect()
-        chart.remove()
-      }
+      return () => { ro.disconnect(); chart.remove() }
     }
   }, [data, detailed])
 
