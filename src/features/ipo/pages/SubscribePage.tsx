@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Heart, Minus, Plus, X } from "lucide-react";
 import { Header } from "@/components/common/Header";
+import { cn } from "@/lib/utils";
+import shinhanBankIcon from "@/assets/common/shinhan-bank.svg";
 
 function parseMilestoneDate(str: string): Date {
   return new Date(str.replace(/\./g, "-"));
@@ -54,11 +56,9 @@ export function SubscribePage() {
   useParams();
   const [liked, setLiked] = useState(false);
   const [amount, setAmount] = useState("");
-  const [showExchangeModal, setShowExchangeModal] = useState(false);
-  const [exchangeKrw, setExchangeKrw] = useState("");
   const [showForeignModal, setShowForeignModal] = useState(false);
   const [showPullModal, setShowPullModal] = useState(false);
-  const [pullAmount, setPullAmount] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const ipo = MOCK_SUBSCRIPTION;
   const status = getSubscriptionStatus(ipo.milestones);
@@ -300,7 +300,7 @@ return (
               </p>
             </button>
             <button
-              onClick={() => setShowExchangeModal(true)}
+              onClick={() => navigate('/home/exchange', { state: { direction: 'won-to-dollar' } })}
               className="p-3 border border-border rounded-xl text-left"
             >
               <div className="flex items-center gap-1">
@@ -329,162 +329,128 @@ return (
           취소
         </button>
         <button
-          onClick={() => setShowForeignModal(true)}
+          onClick={() => setShowConfirmModal(true)}
           disabled={!isValidAmount}
           className="flex-1 bg-primary disabled:bg-border text-white py-4 rounded-xl font-semibold"
         >
-          청약신청
+          확인
         </button>
       </div>
 
-      {/* 환전 모달 */}
-      {showExchangeModal && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowExchangeModal(false)}
-          />
-          <div className="relative bg-white rounded-t-2xl px-4 pt-5 pb-10">
-            {/* 헤더 */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-base font-bold text-text-primary">환전하기</h2>
-              <button
-                onClick={() => setShowExchangeModal(false)}
-                aria-label="닫기"
-                className="p-1 text-text-tertiary"
-              >
-                <X size={20} />
-              </button>
+      {/* 청약 신청 확인 모달 */}
+      <div
+        className={cn("fixed inset-0 z-50 bg-black/40 transition-opacity duration-300", showConfirmModal ? "opacity-100" : "opacity-0 pointer-events-none")}
+        onClick={() => setShowConfirmModal(false)}
+      />
+      <div
+        aria-hidden={!showConfirmModal}
+        {...(!showConfirmModal ? { inert: '' } : {})}
+        className={cn("fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[60] transition-transform duration-300 ease-out", showConfirmModal ? "translate-y-0" : "translate-y-[calc(100%+1rem)]")}
+      >
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+        <div className="px-5 pt-3 pb-7">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-base font-bold text-text-primary">청약 신청</h2>
+            <button onClick={() => setShowConfirmModal(false)} className="p-1 text-text-tertiary">
+              <X size={20} />
+            </button>
+          </div>
+
+          <p className="text-lg font-bold text-text-primary text-center mb-6">
+            청약을 신청하시겠습니까?
+          </p>
+
+          <div className="space-y-3 mb-8">
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">종목</span>
+              <span className="font-semibold text-text-primary">{ipo.name} ({ipo.ticker})</span>
             </div>
-
-            {/* CMA 원화 잔액 */}
-            <div className="bg-surface rounded-xl px-4 py-3 mb-5">
-              <p className="text-xs text-text-tertiary mb-1">{ipo.account} 원화 잔액</p>
-              <p className="text-xl font-bold text-text-primary">
-                {ipo.cmaBalanceKrw.toLocaleString("ko-KR")}원
-              </p>
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">공모(예정)가</span>
+              <span className="font-semibold text-text-primary">{ipo.offeringPrice}</span>
             </div>
-
-            {/* 환전 금액 입력 */}
-            <div className="space-y-3">
-              <div className="border border-border rounded-xl px-4 py-3">
-                <p className="text-xs text-text-tertiary mb-1">환전할 금액 (원)</p>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={exchangeKrw}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, "");
-                    if (Number(v) <= ipo.cmaBalanceKrw) setExchangeKrw(v);
-                  }}
-                  placeholder="금액 입력"
-                  className="w-full text-base font-semibold text-text-primary outline-none bg-transparent"
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-sm px-1">
-                <span className="text-text-tertiary">1달러 = {ipo.exchangeRate.toLocaleString("ko-KR")}원</span>
-                <span className="font-semibold text-text-primary">
-                  ≈ USD{" "}
-                  {exchangeKrw
-                    ? (Number(exchangeKrw) / ipo.exchangeRate).toFixed(2)
-                    : "0.00"}
-                </span>
-              </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">청약신청금액</span>
+              <span className="font-semibold text-text-primary">USD {numericAmount.toLocaleString("en-US")}</span>
             </div>
-
-            <div className="flex gap-3 mt-8">
-              <button
-                onClick={() => setShowExchangeModal(false)}
-                className="flex-1 bg-surface text-text-primary py-4 rounded-xl font-semibold"
-              >
-                취소
-              </button>
-              <button
-                disabled={!exchangeKrw || Number(exchangeKrw) <= 0}
-                onClick={() => setShowExchangeModal(false)}
-                className="flex-1 bg-primary disabled:bg-border text-white py-4 rounded-xl font-semibold"
-              >
-                환전하기
-              </button>
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">청약대행증거금</span>
+              <span className="font-semibold text-text-primary">USD {subscriptionFee.toLocaleString("en-US")}</span>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* 외화통장에서 끌어오기 모달 */}
-      {showPullModal && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowPullModal(false)}
-          />
-          <div className="relative bg-white rounded-t-2xl px-4 pt-5 pb-10">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-base font-bold text-text-primary">외화통장에서 끌어오기</h2>
-              <button onClick={() => setShowPullModal(false)} className="p-1 text-text-tertiary">
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* 외화통장 잔액 */}
-            <div className="bg-surface rounded-xl px-4 py-3 mb-5">
-              <p className="text-xs text-text-tertiary mb-1">외화통장 잔액</p>
-              <p className="text-xl font-bold text-text-primary">
-                ${ipo.foreignBalance.toLocaleString("en-US")}
-              </p>
-            </div>
-
-            {/* 끌어올 금액 입력 */}
-            <div className="border border-border rounded-xl px-4 py-3 mb-2">
-              <p className="text-xs text-text-tertiary mb-1">끌어올 금액 (USD)</p>
-              <div className="flex items-center gap-2">
-                <span className="text-base font-semibold text-text-secondary">$</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={pullAmount}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, "");
-                    if (Number(v) <= ipo.foreignBalance) setPullAmount(v);
-                  }}
-                  placeholder="0"
-                  className="flex-1 text-base font-semibold text-text-primary outline-none bg-transparent"
-                />
-                <button
-                  onClick={() => setPullAmount(String(ipo.foreignBalance))}
-                  className="text-xs text-text-secondary px-2 py-0.5 bg-surface rounded"
-                >
-                  전액
-                </button>
-              </div>
-            </div>
-            <p className="text-xs text-text-tertiary px-1 mb-6">
-              최대 ${ipo.foreignBalance.toLocaleString("en-US")} 까지 가능해요
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowPullModal(false)}
-                className="flex-1 bg-surface text-text-primary py-4 rounded-xl font-semibold"
-              >
-                취소
-              </button>
-              <button
-                disabled={!pullAmount || Number(pullAmount) <= 0}
-                onClick={() => {
-                  setAmount(String(Number(amount || 0) + Number(pullAmount)));
-                  setPullAmount("");
-                  setShowPullModal(false);
-                }}
-                className="flex-1 bg-primary disabled:bg-border text-white py-4 rounded-xl font-semibold"
-              >
-                끌어오기
-              </button>
-            </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowConfirmModal(false)}
+              className="flex-1 py-4 bg-surface text-text-primary rounded-xl font-semibold"
+            >
+              취소
+            </button>
+            <button
+              onClick={() => navigate('/ipo', { state: { tab: '청약내역/취소' } })}
+              className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold"
+            >
+              확인
+            </button>
           </div>
         </div>
-      )}
+      </div>
+
+
+
+      {/* 외화통장에서 끌어오기 안내 시트 */}
+      <div
+        className={cn(
+          'fixed inset-0 z-20 bg-black/20 transition-opacity duration-300',
+          showPullModal ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        )}
+        onClick={() => setShowPullModal(false)}
+      />
+      <div
+        aria-hidden={!showPullModal}
+        {...(!showPullModal ? { inert: '' } : {})}
+        className={cn(
+          'fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-30 transition-transform duration-300 ease-out',
+          showPullModal ? 'translate-y-0' : 'translate-y-[calc(100%+1rem)]',
+        )}
+      >
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+        <div className="px-6 pt-3 pb-7">
+          <p className="text-lg font-semibold text-text-primary mb-6">외화통장에서 끌어오기</p>
+
+          <div className="flex flex-col items-center text-center gap-4 mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center p-2">
+              <img src={shinhanBankIcon} alt="신한은행" className="w-full h-full" />
+            </div>
+            <div>
+              <p className="text-base font-bold text-text-primary mb-1">신한 슈퍼SOL로 이동합니다</p>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                외화통장 자금을 끌어오려면<br />신한 슈퍼SOL 앱에서 진행해 주세요.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowPullModal(false)}
+              className="flex-1 py-4 bg-surface text-text-secondary rounded-xl font-semibold"
+            >
+              취소
+            </button>
+            <button
+              onClick={() => setShowPullModal(false)}
+              className="flex-1 py-4 text-white rounded-xl font-semibold"
+              style={{ backgroundColor: '#0046FF' }}
+            >
+              앱 열기
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* 외화통장 모달 (청약신청 확인) */}
       {showForeignModal && (

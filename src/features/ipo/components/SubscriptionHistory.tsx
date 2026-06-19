@@ -880,103 +880,123 @@ export function SubscriptionHistory() {
       )}
 
       {/* ── 배정결과 스크래치 모달 ── */}
-      {scratchTarget !== null && scratchItem && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setScratchTarget(null)} />
-          <div className="relative bg-white rounded-t-3xl px-5 pt-3 pb-10 flex flex-col items-center">
-            <div className="w-10 h-1 rounded-full bg-[#E5E7EB] mb-6" />
-            <p className="text-lg font-bold text-text-primary mb-1 text-center">
-              청약에 몇 주 성공했을까요?
-            </p>
-            <p className="text-sm text-text-secondary mb-7 text-center">
-              {scratchItem.company}
-            </p>
-            <ScratchCard
-              allocatedQty={scratchItem.allocatedQty ?? 0}
-              logoColor={scratchItem.logoColor}
-              abbr={getAbbr(scratchItem.company)}
-              onFullyScratch={triggerConfetti}
-            />
-            <button
-              onClick={confirmScratch}
-              className="w-full mt-7 py-4 bg-primary text-white rounded-2xl text-sm font-semibold"
-            >
-              확인
-            </button>
-          </div>
+      <div
+        className={cn("fixed inset-0 z-50 bg-black/50 transition-opacity duration-300", scratchTarget !== null ? "opacity-100" : "opacity-0 pointer-events-none")}
+        onClick={() => setScratchTarget(null)}
+      />
+      <div
+        aria-hidden={scratchTarget === null}
+        {...(scratchTarget === null ? { inert: '' } : {})}
+        className={cn("fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[60] transition-transform duration-300 ease-out", scratchTarget !== null ? "translate-y-0" : "translate-y-[calc(100%+1rem)]")}
+      >
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full bg-[#E5E7EB]" />
         </div>
-      )}
+        <div className="px-5 pb-7 pt-3 flex flex-col items-center">
+          <p className="text-lg font-bold text-text-primary mb-1 text-center">
+            청약에 몇 주 성공했을까요?
+          </p>
+          <p className="text-sm text-text-secondary mb-7 text-center">
+            {scratchItem?.company}
+          </p>
+          <ScratchCard
+            key={scratchItem?.id ?? 'none'}
+            allocatedQty={scratchItem?.allocatedQty ?? 0}
+            logoColor={scratchItem?.logoColor ?? ''}
+            abbr={getAbbr(scratchItem?.company ?? '')}
+            onFullyScratch={triggerConfetti}
+          />
+          <button
+            onClick={confirmScratch}
+            className="w-full mt-7 py-4 bg-primary text-white rounded-2xl text-sm font-semibold"
+          >
+            확인
+          </button>
+        </div>
+      </div>
 
       {/* ── 축하 효과 ── */}
       {showConfetti && <Confetti />}
 
       {/* ── 청약확정등록 확인 모달 ── */}
-      {confirmRegTarget !== null && confirmRegItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmRegTarget(null)} />
-          <div className="relative bg-white rounded-2xl px-5 pt-7 pb-6 w-full max-w-xs">
-            <p className="text-base font-bold text-text-primary text-center mb-2">
-              청약확정등록을 하시겠습니까?
-            </p>
-            <p className="text-sm text-text-secondary text-center mb-7">{confirmRegItem.company}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmRegTarget(null)}
-                className="flex-1 py-3.5 bg-[#F0F1F4] rounded-xl text-sm font-semibold text-text-secondary"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => {
-                  setConfirmedRegIds((prev) => new Set([...prev, confirmRegTarget]))
-                  setConfirmRegTarget(null)
-                }}
-                className="flex-1 py-3.5 bg-primary text-white rounded-xl text-sm font-semibold"
-              >
-                확인
-              </button>
-            </div>
+      <div
+        className={cn("fixed inset-0 z-50 bg-black/40 transition-opacity duration-300", confirmRegTarget !== null ? "opacity-100" : "opacity-0 pointer-events-none")}
+        onClick={() => setConfirmRegTarget(null)}
+      />
+      <div
+        className={cn("fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[60] transition-transform duration-300 ease-out", confirmRegTarget !== null ? "translate-y-0" : "translate-y-[calc(100%+1rem)]")}
+      >
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+        <div className="px-5 pt-3 pb-7">
+          <p className="text-base font-bold text-text-primary text-center mb-2">
+            청약확정등록을 하시겠습니까?
+          </p>
+          <p className="text-sm text-text-secondary text-center mb-7">{confirmRegItem?.company}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setConfirmRegTarget(null)}
+              className="flex-1 py-3.5 bg-[#F0F1F4] rounded-xl text-sm font-semibold text-text-secondary"
+            >
+              취소
+            </button>
+            <button
+              onClick={() => {
+                if (confirmRegTarget !== null) setConfirmedRegIds((prev) => new Set([...prev, confirmRegTarget]))
+                setConfirmRegTarget(null)
+              }}
+              className="flex-1 py-3.5 bg-primary text-white rounded-xl text-sm font-semibold"
+            >
+              확인
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* ── 취소 확인 시트 ── */}
-      {cancelTarget && cancelItem && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setCancelTarget(null)} />
-          <div className="relative bg-white rounded-t-2xl px-5 pt-6 pb-10">
-            <p className="text-sm text-text-secondary text-center mb-1">{cancelItem.company}</p>
-            <h3 className="text-xl font-bold text-text-primary text-center mb-4">
-              청약 신청을 취소할까요?
-            </h3>
-            <div className="border-t border-border mb-5" />
-            <div className="space-y-4 mb-7">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-text-secondary">환불 금액</span>
-                <span className="text-sm font-semibold text-text-primary">$3,022.50</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-text-secondary">환불계좌</span>
-                <span className="text-sm font-medium text-text-primary">270-91-175039[01] CMA</span>
-              </div>
+      <div
+        className={cn("fixed inset-0 z-50 bg-black/40 transition-opacity duration-300", cancelTarget !== null ? "opacity-100" : "opacity-0 pointer-events-none")}
+        onClick={() => setCancelTarget(null)}
+      />
+      <div
+        className={cn("fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[60] transition-transform duration-300 ease-out", cancelTarget !== null ? "translate-y-0" : "translate-y-[calc(100%+1rem)]")}
+      >
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+        <div className="px-5 pt-3 pb-7">
+          <p className="text-sm text-text-secondary text-center mb-1">{cancelItem?.company}</p>
+          <h3 className="text-xl font-bold text-text-primary text-center mb-4">
+            청약 신청을 취소할까요?
+          </h3>
+          <div className="border-t border-border mb-5" />
+          <div className="space-y-4 mb-7">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-text-secondary">환불 금액</span>
+              <span className="text-sm font-semibold text-text-primary">{cancelItem?.amount}</span>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setCancelTarget(null)}
-                className="flex-1 py-4 bg-[#F0F1F4] rounded-xl text-sm font-semibold text-text-secondary"
-              >
-                돌아가기
-              </button>
-              <button
-                onClick={() => setCancelTarget(null)}
-                className="flex-1 py-4 bg-primary text-white rounded-xl text-sm font-semibold"
-              >
-                취소확정
-              </button>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-text-secondary">환불계좌</span>
+              <span className="text-sm font-medium text-text-primary">270-91-175039[01] CMA</span>
             </div>
           </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setCancelTarget(null)}
+              className="flex-1 py-4 bg-[#F0F1F4] rounded-xl text-sm font-semibold text-text-secondary"
+            >
+              돌아가기
+            </button>
+            <button
+              onClick={() => setCancelTarget(null)}
+              className="flex-1 py-4 bg-primary text-white rounded-xl text-sm font-semibold"
+            >
+              취소확정
+            </button>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
