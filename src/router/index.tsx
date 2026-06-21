@@ -31,6 +31,12 @@ import { ReturnPlanSettingsPage } from '@/features/return-plan/pages/ReturnPlanS
 import { SecuritiesPage } from '@/features/securities/pages/SecuritiesPage'
 import { StockDetailPage } from '@/features/securities/pages/StockDetailPage'
 import { EtfPage } from '@/features/securities/pages/EtfPage'
+import { MyInvestmentsPage } from '@/features/securities/pages/MyInvestmentsPage'
+import { OrderHistoryPage } from '@/features/securities/pages/OrderHistoryPage'
+import { SellProfitsPage } from '@/features/securities/pages/SellProfitsPage'
+import { BuyPage } from '@/features/securities/pages/BuyPage'
+import { SellPage } from '@/features/securities/pages/SellPage'
+import { StockSearchPage } from '@/features/securities/pages/StockSearchPage'
 
 // Mypage
 import { MyPage } from '@/features/mypage/pages/MyPage'
@@ -55,6 +61,12 @@ export const router = createBrowserRouter([
   { path: '/home/exchange', element: <ExchangePage /> },
   { path: '/home/sleeping-dollar', element: <SleepingDollarPage /> },
 
+  // Securities 서브 플로우 — 바텀탭 없음
+  { path: '/securities/stocks/:id', element: <StockDetailPage /> },
+  { path: '/securities/stocks/:id/buy', element: <BuyPage /> },
+  { path: '/securities/stocks/:id/sell', element: <SellPage /> },
+  { path: '/securities/search', element: <StockSearchPage /> },
+
   // IPO 청약 플로우 — 바텀탭 없음
   { path: '/ipo/:id', element: <IpoDetailPage /> },
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
@@ -78,7 +90,9 @@ export const router = createBrowserRouter([
 
       // Securities
       { path: '/securities', element: <SecuritiesPage /> },
-      { path: '/securities/stocks/:id', element: <StockDetailPage /> },
+      { path: '/securities/my', element: <MyInvestmentsPage /> },
+      { path: '/securities/orders', element: <OrderHistoryPage /> },
+      { path: '/securities/profits', element: <SellProfitsPage /> },
       { path: '/securities/etf', element: <EtfPage /> },
 
       // Mypage

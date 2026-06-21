@@ -50,7 +50,7 @@ const config: Config = {
         },
       },
       maxWidth: {
-        mobile: '430px',
+        mobile: '360px',
       },
       borderRadius: {
         lg: 'var(--radius)',

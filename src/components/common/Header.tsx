@@ -9,6 +9,7 @@ interface HeaderProps {
   showSearch?: boolean
   showSettings?: boolean
   rightAction?: React.ReactNode
+  onSearchClick?: () => void
 }
 
 export function Header({
@@ -19,6 +20,7 @@ export function Header({
   showSearch = false,
   showSettings = false,
   rightAction,
+  onSearchClick,
 }: HeaderProps) {
   const navigate = useNavigate()
 
@@ -51,7 +53,7 @@ export function Header({
             </button>
           )}
           {showSearch && (
-            <button>
+            <button onClick={onSearchClick}>
               <img src="/icons/search.svg" width={19} height={19} alt="" />
             </button>
           )}
