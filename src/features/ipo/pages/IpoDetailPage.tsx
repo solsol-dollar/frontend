@@ -1,16 +1,16 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Header } from '@/components/common/Header'
-
-const parseMilestoneDate = (dateStr: string) => {
-  const [year, month, day] = dateStr.split('.').map(Number)
-  return new Date(year, month - 1, day)
-}
-
-const today = new Date()
-today.setHours(0, 0, 0, 0)
+import { IpoStockHeader } from '@/features/ipo/components/IpoStockHeader'
+import { IpoOfferingInfo } from '@/features/ipo/components/IpoOfferingInfo'
+import {
+  getSubscriptionDday,
+  getSubscriptionStatus,
+  getSubscriptionStatusBadgeClass,
+  getSubscriptionStatusTextClass,
+} from '@/features/ipo/utils/subscriptionStatus'
 
 const MOCK_IPO_MILESTONES = [
   { label: '청약시작일', date: '2026.06.24' },
@@ -19,27 +19,17 @@ const MOCK_IPO_MILESTONES = [
   { label: '상장(예정)일', date: '2026.09.06' },
 ]
 
-const subscriptionCloseDate = parseMilestoneDate(
-  MOCK_IPO_MILESTONES.find((m) => m.label === '청약마감일')!.date,
-)
-const diffDays = Math.ceil(
-  (subscriptionCloseDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-)
-
 const MOCK_IPO = {
   id: 1,
   ticker: 'CRWV',
   name: 'CoreWeave',
   abbr: 'CR',
   color: '#FF6830',
-  status: diffDays >= 0 ? '청약가능' : '청약마감',
-  dday: diffDays >= 0 ? `D-${diffDays}` : `D+${Math.abs(diffDays)}`,
+  status: getSubscriptionStatus(MOCK_IPO_MILESTONES),
+  dday: getSubscriptionDday(MOCK_IPO_MILESTONES),
   offeringPrice: 'USD 20.00',
   offeringShares: '10,000,000 주',
-  milestones: MOCK_IPO_MILESTONES.map((m) => ({
-    ...m,
-    active: today >= parseMilestoneDate(m.date),
-  })),
+  milestones: MOCK_IPO_MILESTONES,
   performance: {
     asOf: '2025.12',
     stats: [
@@ -59,6 +49,7 @@ const MOCK_IPO = {
 
 export function IpoDetailPage() {
   const navigate = useNavigate()
+  const { id } = useParams()
   const [liked, setLiked] = useState(false)
 
   return (
@@ -68,10 +59,10 @@ export function IpoDetailPage() {
         showNotification={false}
         showMypage={false}
         rightAction={
-          <button onClick={() => setLiked((v) => !v)} aria-label="관심 종목" aria-pressed={liked}>
+          <button onClick={() => setLiked((v) => !v)} aria-label="관심 종목" aria-pressed={liked} className="p-1">
             <Heart
               size={22}
-              className={liked ? 'text-red-500 fill-red-500' : 'text-text-tertiary'}
+              className={liked ? 'text-heart fill-heart' : 'text-text-tertiary'}
             />
           </button>
         }
@@ -80,77 +71,27 @@ export function IpoDetailPage() {
       <div className="flex-1 overflow-y-auto scrollbar-hide">
 
         <section className="px-5 py-6 bg-white">
-          <div className="flex items-center justify-between mb-7">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-white text-base font-bold flex-shrink-0"
-                style={{ backgroundColor: MOCK_IPO.color }}
-              >
-                {MOCK_IPO.abbr}
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-text-primary">{MOCK_IPO.name}</h1>
-                <p className="text-xs text-text-tertiary mt-0.5">{MOCK_IPO.ticker}</p>
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <span className="text-xs border border-primary text-primary rounded px-2 py-0.5">
-                {MOCK_IPO.status}
-              </span>
-              <span className="text-sm font-bold text-primary">{MOCK_IPO.dday}</span>
-            </div>
+          <div className="mb-7">
+            <IpoStockHeader
+              avatarText={MOCK_IPO.abbr}
+              avatarColor={MOCK_IPO.color}
+              name={MOCK_IPO.name}
+              ticker={MOCK_IPO.ticker}
+              status={MOCK_IPO.status}
+              statusClassName={getSubscriptionStatusBadgeClass(MOCK_IPO.status)}
+              secondaryText={MOCK_IPO.dday}
+              secondaryClassName={getSubscriptionStatusTextClass(MOCK_IPO.status)}
+            />
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <span className="text-sm text-text-secondary w-24 flex-shrink-0">공모(예정)가</span>
-              <span className="text-sm font-semibold text-text-primary">{MOCK_IPO.offeringPrice}</span>
-            </div>
-            <div className="flex items-center">
-              <span className="text-sm text-text-secondary w-24 flex-shrink-0">공모주식수</span>
-              <span className="text-sm font-semibold text-text-primary">{MOCK_IPO.offeringShares}</span>
-            </div>
+          <div className="h-2 bg-surface-bg -mx-5 mb-4" />
 
-            <div className="flex items-start">
-              <span className="text-sm text-text-secondary w-24 flex-shrink-0 pt-0.5">청약일정</span>
-              <div className="flex-1">
-                {MOCK_IPO.milestones.map((m, i) => (
-                  <div key={i} className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={cn(
-                          'w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5',
-                          m.active ? 'bg-primary' : 'border-2 border-border bg-white',
-                        )}
-                      />
-                      {i < MOCK_IPO.milestones.length - 1 && (
-                        <div
-                          className={cn(
-                            'w-px flex-1 mt-1',
-                            m.active && MOCK_IPO.milestones[i + 1].active
-                              ? 'bg-primary'
-                              : 'bg-[#C8CAD0]',
-                          )}
-                        />
-                      )}
-                    </div>
-                    <p
-                      className={cn(
-                        'text-sm pb-4 leading-5',
-                        m.active ? 'font-semibold text-text-primary' : 'text-text-tertiary',
-                      )}
-                    >
-                      {m.date} {m.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <p className="text-xs text-text-tertiary text-right mt-3">
-            ※ 일정은 사전 고지없이 변경될 수 있습니다.
-          </p>
+          <IpoOfferingInfo
+            offeringPrice={MOCK_IPO.offeringPrice}
+            offeringShares={MOCK_IPO.offeringShares}
+            milestones={MOCK_IPO.milestones}
+            footnote="※ 일정은 사전 고지없이 변경될 수 있습니다."
+          />
         </section>
 
         <section className="px-5 py-6 bg-white mt-2">
@@ -199,7 +140,7 @@ export function IpoDetailPage() {
 
       <div className="px-5 py-4 bg-white border-t border-border shrink-0">
         <button
-          onClick={() => navigate(`/ipo/${MOCK_IPO.id}/subscribe`)}
+          onClick={() => navigate(`/ipo/${id}/subscribe`)}
           className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-base"
         >
           청약신청

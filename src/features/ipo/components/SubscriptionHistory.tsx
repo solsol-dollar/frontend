@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Info, SlidersHorizontal, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { IpoStockHeader } from './IpoStockHeader'
 import dayjs, { Dayjs } from 'dayjs'
 
 type StatusType = '청약신청' | '취소완료' | '배정완료' | '상장완료'
@@ -10,10 +11,10 @@ type PeriodPreset = '1주일' | '1개월' | '3개월' | '6개월' | '직접설�
 type TypeFilter = '전체' | '청약신청/취소완료' | '배정완료' | '상장완료'
 
 const STATUS_BADGE: Record<StatusType, string> = {
-  청약신청: 'border border-primary text-primary',
-  취소완료: 'border border-border text-text-secondary',
-  배정완료: 'border border-primary text-primary',
-  상장완료: 'border border-up text-up',
+  청약신청: 'border-primary text-primary',
+  취소완료: 'border-border text-text-secondary',
+  배정완료: 'border-primary text-primary',
+  상장완료: 'border-up text-up',
 }
 
 const QUICK_PRESETS = ['1주일', '1개월', '3개월', '6개월'] as const
@@ -503,29 +504,19 @@ export function SubscriptionHistory() {
             return (
               <div key={sub.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-4">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                        style={{ backgroundColor: sub.logoColor }}
-                      >
-                        {getAbbr(sub.company)}
-                      </div>
-                      <div>
-                        <p className="text-base font-bold text-text-primary">{sub.company}</p>
-                        <p className="text-xs text-text-tertiary mt-0.5">{sub.ticker}</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className={cn('text-xs px-3 py-0.5 rounded-full', STATUS_BADGE[sub.status])}>
-                        {sub.status}
-                      </span>
-                      {sub.returnRate && (
-                        <span className={cn('text-sm font-bold', sub.returnPositive ? 'text-up' : 'text-down')}>
-                          {sub.returnRate}
-                        </span>
-                      )}
-                    </div>
+                  <div className="mb-4">
+                    <IpoStockHeader
+                      avatarText={getAbbr(sub.company)}
+                      avatarColor={sub.logoColor}
+                      name={sub.company}
+                      ticker={sub.ticker}
+                      status={sub.status}
+                      statusClassName={STATUS_BADGE[sub.status]}
+                      secondaryText={sub.returnRate}
+                      secondaryClassName={sub.returnPositive ? 'text-up' : 'text-down'}
+                      align="start"
+                      size="sm"
+                    />
                   </div>
 
                   <div className="space-y-2 pl-[52px]">
