@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Info, SlidersHorizontal, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { IpoStockHeader } from './IpoStockHeader'
+import { IpoStockHeader } from '@/features/ipo/components/IpoStockHeader'
 import dayjs, { Dayjs } from 'dayjs'
 
 type StatusType = '청약신청' | '취소완료' | '배정완료' | '상장완료'

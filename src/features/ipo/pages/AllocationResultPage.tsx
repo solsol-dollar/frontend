@@ -41,21 +41,21 @@ const ETF_RECOMMENDATIONS = [
     id: "msft1",
     name: "마이크로소프트",
     sector: "무자산업",
-    price: "935.8900",
+    price: "935.89",
     change: "+1.6%",
   },
   {
     id: "msft2",
     name: "마이크로소프트",
     sector: "무자산업",
-    price: "935.8900",
+    price: "935.89",
     change: "+1.6%",
   },
   {
     id: "msft3",
     name: "마이크로소프트",
     sector: "무자산업",
-    price: "935.8900",
+    price: "935.89",
     change: "+1.6%",
   },
 ] as const;
@@ -642,7 +642,7 @@ export function AllocationResultPage() {
           <button
             onClick={() => {
               setShowEtfSheet(false);
-              navigate("/ipo");
+              navigate("/ipo", { state: { tab: "청약내역/취소" } });
             }}
             className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
           >

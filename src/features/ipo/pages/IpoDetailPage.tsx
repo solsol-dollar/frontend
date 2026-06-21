@@ -49,8 +49,10 @@ const MOCK_IPO = {
 
 export function IpoDetailPage() {
   const navigate = useNavigate()
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
   const [liked, setLiked] = useState(false)
+
+  if (!id) return null
 
   return (
     <div className="mobile-container flex flex-col h-screen bg-[#F6F6F9]">

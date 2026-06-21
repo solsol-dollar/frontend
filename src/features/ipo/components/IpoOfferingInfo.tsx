@@ -17,15 +17,14 @@ function parseMilestoneDate(dateStr: string): Date {
   return new Date(year, month - 1, day)
 }
 
-const today = new Date()
-today.setHours(0, 0, 0, 0)
-
 export function IpoOfferingInfo({
   offeringPrice,
   offeringShares,
   milestones,
   footnote,
 }: IpoOfferingInfoProps) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const activeFlags = milestones.map((m) => today >= parseMilestoneDate(m.date))
 
   return (
