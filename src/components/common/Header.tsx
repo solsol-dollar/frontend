@@ -76,14 +76,14 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-3">
-        {showSearch && (
-          <button>
-            <img src="/icons/search.svg" width={19} height={19} alt="" />
-          </button>
-        )}
         {showNotification && (
           <button onClick={() => navigate('/notifications')}>
             <img src="/icons/Bell.svg" width={25} height={25} alt="" />
+          </button>
+        )}
+        {showSearch && (
+          <button>
+            <img src="/icons/search.svg" width={19} height={19} alt="" />
           </button>
         )}
         {showMypage && (

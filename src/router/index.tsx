@@ -26,6 +26,9 @@ import { AllocationResultPage } from '@/features/ipo/pages/AllocationResultPage'
 // Return Plan
 import { ReturnPlanPage } from '@/features/return-plan/pages/ReturnPlanPage'
 import { ReturnPlanSettingsPage } from '@/features/return-plan/pages/ReturnPlanSettingsPage'
+import { ReturnPlanHistoryPage } from '@/features/return-plan/pages/ReturnPlanHistoryPage'
+import { ReturnPlanResultDetailPage } from '@/features/return-plan/pages/ReturnPlanResultDetailPage'
+import { ReturnPlanPendingPage } from '@/features/return-plan/pages/ReturnPlanPendingPage'
 
 // Securities
 import { SecuritiesPage } from '@/features/securities/pages/SecuritiesPage'
@@ -72,6 +75,10 @@ export const router = createBrowserRouter([
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
   { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
   { path: '/ipo/:id/result', element: <AllocationResultPage /> },
+  { path: '/return-plan/history', element: <ReturnPlanHistoryPage /> },
+  { path: '/return-plan/pending/:id', element: <ReturnPlanPendingPage /> },
+  { path: '/return-plan/result/:id', element: <ReturnPlanResultDetailPage /> },
+  { path: '/return-plan/allocation', element: <ReturnPlanSettingsPage /> },
 
   {
     element: <Layout />,
@@ -86,7 +93,6 @@ export const router = createBrowserRouter([
 
       // Return Plan
       { path: '/return-plan', element: <ReturnPlanPage /> },
-      { path: '/return-plan/settings', element: <ReturnPlanSettingsPage /> },
 
       // Securities
       { path: '/securities', element: <SecuritiesPage /> },
