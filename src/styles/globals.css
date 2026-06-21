@@ -90,6 +90,10 @@
   .week-slide-right {
     animation: week-slide-right 0.4s ease-out;
   }
+
+  .fade-slide-up {
+    animation: fade-slide-up 0.4s ease-out both;
+  }
 }
 
 @keyframes week-slide-left {
@@ -100,6 +104,11 @@
 @keyframes week-slide-right {
   from { transform: translateX(-30px); opacity: 0; }
   to   { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes fade-slide-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 @keyframes confetti-fall {

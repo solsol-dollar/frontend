@@ -614,16 +614,20 @@ export function SubscriptionHistory() {
       </div>
 
       {/* ── 조회 조건 설정 시트 ── */}
-      {showSheet && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowSheet(false)} />
-          <div className="relative bg-white rounded-t-2xl px-4 pt-5 pb-8 h-[70dvh] flex flex-col">
-            <div className="flex items-center justify-between mb-5">
-              <p className="text-base font-bold text-text-primary">조회 조건 설정</p>
-              <button onClick={() => setShowSheet(false)}>
-                <X size={18} className="text-text-secondary" />
-              </button>
-            </div>
+      <div
+        className={cn("fixed inset-0 z-50 bg-black/40 transition-opacity duration-300", showSheet ? "opacity-100" : "opacity-0 pointer-events-none")}
+        onClick={() => setShowSheet(false)}
+      />
+      <div
+        aria-hidden={!showSheet}
+        {...(!showSheet ? { inert: '' } : {})}
+        className={cn("fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-2xl z-[60] transition-transform duration-300 ease-out h-[70dvh] flex flex-col", showSheet ? "translate-y-0" : "translate-y-full")}
+      >
+        <div className="flex justify-center pt-3 pb-2 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+        <div className="px-4 pb-8 flex-1 flex flex-col overflow-hidden">
+          <p className="text-base font-bold text-text-primary mb-5 shrink-0">조회 조건 설정</p>
 
             <div className="flex-1 overflow-y-auto">
               <p className="text-xs font-semibold text-text-secondary mb-2">조회기간</p>
@@ -726,21 +730,20 @@ export function SubscriptionHistory() {
               </div>
             </div>
 
-            <button
-              onClick={applyFilter}
-              className="w-full py-3.5 bg-primary text-white rounded-xl text-sm font-semibold shrink-0"
-            >
-              조회
-            </button>
-          </div>
+          <button
+            onClick={applyFilter}
+            className="w-full py-3.5 bg-primary text-white rounded-xl text-sm font-semibold shrink-0"
+          >
+            조회
+          </button>
         </div>
-      )}
+      </div>
 
       {/* ── 날짜 범위 피커 ── */}
       {showRangePicker && (
-        <div className="fixed inset-0 z-[60] flex flex-col justify-end">
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowRangePicker(false)} />
-          <div className="relative bg-white rounded-t-2xl px-4 pt-5 pb-8">
+          <div className="relative w-full max-w-mobile bg-white rounded-t-2xl px-4 pt-5 pb-8">
             <div className="flex items-center justify-between mb-4">
               <p className="text-base font-bold text-text-primary">날짜 범위 선택</p>
               <button onClick={() => setShowRangePicker(false)}>
@@ -832,43 +835,48 @@ export function SubscriptionHistory() {
       )}
 
       {/* ── 월 선택 피커 모달 ── */}
-      {showMonthPicker && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowMonthPicker(false)} />
-          <div className="relative bg-white rounded-2xl px-5 pt-5 pb-5 w-full max-w-xs">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-bold text-text-primary">조회 월 선택</p>
-              <button onClick={() => setShowMonthPicker(false)}>
-                <X size={18} className="text-text-secondary" />
-              </button>
-            </div>
-            <div className="relative">
-              <div
-                className="absolute left-0 right-0 bg-[#F0F1F4] rounded-xl pointer-events-none"
-                style={{ top: ITEM_H, height: ITEM_H }}
-              />
-              <div className="flex overflow-hidden">
-                <ScrollPicker
-                  items={YEARS.map((y) => `${y}년`)}
-                  selectedIndex={YEARS.indexOf(pickerYear)}
-                  onChange={(i) => setPickerYear(YEARS[i])}
-                />
-                <ScrollPicker
-                  items={MONTHS.map((m) => `${String(m).padStart(2, '0')}월`)}
-                  selectedIndex={pickerMonth - 1}
-                  onChange={(i) => setPickerMonth(i + 1)}
-                />
-              </div>
-            </div>
-            <button
-              onClick={confirmMonthPicker}
-              className="w-full mt-4 py-3.5 bg-primary text-white rounded-xl text-sm font-semibold"
-            >
-              조회
-            </button>
-          </div>
+      <div
+        className={cn("fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300", showMonthPicker ? "opacity-100" : "opacity-0 pointer-events-none")}
+        onClick={() => setShowMonthPicker(false)}
+      />
+      <div
+        aria-hidden={!showMonthPicker}
+        {...(!showMonthPicker ? { inert: '' } : {})}
+        className={cn("fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[70] transition-transform duration-300 ease-out", showMonthPicker ? "translate-y-0" : "translate-y-[calc(100%+1rem)]")}
+      >
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-10 h-1 rounded-full bg-border" />
         </div>
-      )}
+        <div className="px-5 pb-7 pt-3">
+          <p className="text-sm font-bold text-text-primary mb-4">조회 월 선택</p>
+          <div className="relative">
+            <div
+              className="absolute left-0 right-0 -z-10 bg-[#F0F1F4] rounded-xl pointer-events-none"
+              style={{ top: ITEM_H, height: ITEM_H }}
+            />
+            <div className="flex overflow-hidden">
+              <ScrollPicker
+                key={`year-${showMonthPicker}`}
+                items={YEARS.map((y) => `${y}년`)}
+                selectedIndex={YEARS.indexOf(pickerYear)}
+                onChange={(i) => setPickerYear(YEARS[i])}
+              />
+              <ScrollPicker
+                key={`month-${showMonthPicker}`}
+                items={MONTHS.map((m) => `${String(m).padStart(2, '0')}월`)}
+                selectedIndex={pickerMonth - 1}
+                onChange={(i) => setPickerMonth(i + 1)}
+              />
+            </div>
+          </div>
+          <button
+            onClick={confirmMonthPicker}
+            className="w-full mt-4 py-3.5 bg-primary text-white rounded-xl text-sm font-semibold"
+          >
+            조회
+          </button>
+        </div>
+      </div>
 
       {/* ── 배정결과 스크래치 모달 ── */}
       <div
