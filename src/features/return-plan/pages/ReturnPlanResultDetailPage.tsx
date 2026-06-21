@@ -1,6 +1,7 @@
 import { Header } from '@/components/common/Header'
 import solBankIcon from '@/assets/common/shinhan-bank.svg'
-import { DonutGauge, ZONE_COLORS } from '../components/DonutGauge'
+import { DonutGauge } from '../components/DonutGauge'
+import { ZONE_COLORS } from '../constants'
 
 const RESULT = {
   name: 'Rubrik',

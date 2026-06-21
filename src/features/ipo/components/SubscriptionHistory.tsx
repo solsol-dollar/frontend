@@ -619,6 +619,8 @@ export function SubscriptionHistory() {
         onClick={() => setShowSheet(false)}
       />
       <div
+        aria-hidden={!showSheet}
+        {...(!showSheet ? { inert: '' } : {})}
         className={cn("fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-2xl z-[60] transition-transform duration-300 ease-out h-[70dvh] flex flex-col", showSheet ? "translate-y-0" : "translate-y-full")}
       >
         <div className="flex justify-center pt-3 pb-2 shrink-0">
@@ -838,6 +840,8 @@ export function SubscriptionHistory() {
         onClick={() => setShowMonthPicker(false)}
       />
       <div
+        aria-hidden={!showMonthPicker}
+        {...(!showMonthPicker ? { inert: '' } : {})}
         className={cn("fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[70] transition-transform duration-300 ease-out", showMonthPicker ? "translate-y-0" : "translate-y-[calc(100%+1rem)]")}
       >
         <div className="flex justify-center pt-3 pb-2">

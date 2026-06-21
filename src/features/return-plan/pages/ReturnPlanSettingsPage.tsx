@@ -29,7 +29,7 @@ const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
   },
 ];
 
-const REFUND_AMOUNT = 2108;
+const REFUND_AMOUNT = 2108.5;
 
 export function ReturnPlanSettingsPage() {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ export function ReturnPlanSettingsPage() {
             <>
               증권 예수금{" "}
               <span className="text-primary font-semibold">
-                ${REFUND_AMOUNT.toLocaleString("en-US")}.50
+                ${REFUND_AMOUNT.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               를 리턴플랜으로 분배해드려요
             </>

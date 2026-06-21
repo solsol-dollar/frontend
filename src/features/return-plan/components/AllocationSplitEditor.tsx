@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react'
 import archiveTickIcon from '@/assets/common/archive-tick.svg'
-
-export const ZONE_COLORS = ['#4F46E5', '#7C3AED', '#0D9488']
+import { ZONE_COLORS } from '../constants'
 const ZONES = ['투자 집중', '안정 저축', '균형 분배']
 const ZONE_PRESETS: [number, number, number][] = [
   [70, 20, 10],

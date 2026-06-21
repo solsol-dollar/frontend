@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Info } from "lucide-react";
 import { Header } from "@/components/common/Header";
-import { DonutGauge, ZONE_COLORS } from "../components/DonutGauge";
+import { DonutGauge } from "../components/DonutGauge";
+import { ZONE_COLORS } from "../constants";
 import {
   ReturnPlanAllocationSection,
   type AllocationAccount,

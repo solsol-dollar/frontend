@@ -1,6 +1,5 @@
 import { useCountUp } from '../hooks/useCountUp'
-
-export const ZONE_COLORS = ['#4F46E5', '#7C3AED', '#0D9488']
+import { ZONE_COLORS } from '../constants'
 
 interface Props {
   ratios: [number, number, number]
@@ -30,7 +29,7 @@ export function DonutGauge({ ratios, amount, message }: Props) {
 
       <div className="absolute inset-x-0 bottom-0 text-center pb-1">
         <p className="text-xl font-bold text-text-primary">
-          ${amount.toLocaleString('en-US')}.00
+          ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           <span className="text-sm font-medium text-text-tertiary"> 가</span>
         </p>
         <p className="text-lg font-bold text-primary">{message}</p>

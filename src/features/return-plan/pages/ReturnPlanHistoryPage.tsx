@@ -24,9 +24,13 @@ export function ReturnPlanHistoryPage() {
   const [tab, setTab] = useState<'DONE' | 'UPCOMING'>('DONE')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [year, setYear] = useState(2025)
-  const [month, setMonth] = useState(6)
+  const [month, setMonth] = useState(5)
 
-  const grouped = HISTORY.filter((item) => item.status === tab).reduce<Record<string, typeof HISTORY[number][]>>(
+  const grouped = HISTORY.filter((item) => {
+    if (item.status !== tab) return false
+    const [itemYear, itemMonth] = item.date.split('.').map(Number)
+    return itemYear === year && itemMonth === month
+  }).reduce<Record<string, typeof HISTORY[number][]>>(
     (acc, item) => {
       if (!acc[item.date]) acc[item.date] = []
       acc[item.date].push(item)

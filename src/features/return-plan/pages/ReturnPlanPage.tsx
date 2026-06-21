@@ -33,12 +33,22 @@ export function ReturnPlanPage() {
     (a, b) => new Date(a.date.replace(/\./g, '-')).getTime() - new Date(b.date.replace(/\./g, '-')).getTime(),
   )[0]
 
+  const nextPendingDday = nextPending
+    ? (() => {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const target = new Date(nextPending.date.replace(/\./g, '-'))
+        const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        return diff === 0 ? 'D-Day' : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
+      })()
+    : null
+
   return (
     <div className="page-content flex flex-col min-h-screen">
       <Header showNotification showMypage={false} showSearch />
 
       <section className="px-4 pt-2 pb-5 bg-white">
-        <p className="text-sm text-text-tertiary">최근 환불금 · ${Math.round(refundCount).toLocaleString('en-US')}</p>
+        <p className="text-sm text-text-tertiary">최근 환불금 · {formatUsd(refundCount)}</p>
 
         <div className="flex items-center justify-between mt-2">
           <h2 className="text-2xl font-bold text-text-primary">CoreWeave IPO</h2>
@@ -65,7 +75,9 @@ export function ReturnPlanPage() {
             className="flex-1 bg-white rounded-2xl p-4 py-5 text-left"
           >
             <p className="text-sm text-text-tertiary mb-1">다음 IPO 환불일</p>
-            <p className="text-base font-bold text-text-primary mb-3">Klarna · D-3</p>
+            <p className="text-base font-bold text-text-primary mb-3">
+              {nextPending ? `${nextPending.name} · ${nextPendingDday}` : '예정된 환불 없음'}
+            </p>
             <div className="flex items-center justify-between">
               <img src="/icons/Calendar.svg" width={32} height={32} alt="" />
               <ChevronRight size={18} className="text-text-tertiary" />
