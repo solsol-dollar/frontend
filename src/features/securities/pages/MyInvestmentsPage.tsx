@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { Header } from '@/components/common/Header'
 import { useMyInvestments } from '../hooks/useMyInvestments'
+import { TickerLogo } from '../components/TickerLogo'
 import type { HoldingItem } from '../types/securities'
 
 type PriceMode = 'current' | 'avg'
@@ -14,8 +15,9 @@ export function MyInvestmentsPage() {
   const [priceMode, setPriceMode] = useState<PriceMode>('current')
   const [currencyMode, setCurrencyMode] = useState<CurrencyMode>('usd')
 
-  const stocks = data?.holdings.filter((h) => h.productType === 'OVERSEAS') ?? []
-  const etfs = data?.holdings.filter((h) => h.productType === 'ETF') ?? []
+  const holdings: HoldingItem[] = data?.holdings ?? []
+  const stocks = holdings.filter((h) => h.productType === 'OVERSEAS')
+  const etfs = holdings.filter((h) => h.productType === 'ETF')
   const totalValue = data?.totalCurrentValueUsd ?? 1
 
   const HoldingRow = ({ h }: { h: HoldingItem }) => {
@@ -29,9 +31,7 @@ export function MyInvestmentsPage() {
         onClick={() => navigate(`/securities/stocks/${h.productId}`)}
         className="w-full flex items-center gap-3 py-3 text-left"
       >
-        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-xs font-bold">{h.ticker.slice(0, 2)}</span>
-        </div>
+        <TickerLogo ticker={h.ticker} size="md" className="w-10 h-10" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-text-primary">{h.productName}</p>
           <div className="flex items-center gap-1.5 mt-1">

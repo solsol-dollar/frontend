@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Header } from '@/components/common/Header'
 import { useSellProfits } from '../hooks/useSellProfits'
-import type { ProductType } from '../types/securities'
+import { TickerLogo } from '../components/TickerLogo'
+import type { ProductType, SellProfitItem } from '../types/securities'
 
 type Filter = 'ALL' | ProductType
 
@@ -16,7 +17,8 @@ export function SellProfitsPage() {
   const [filter, setFilter] = useState<Filter>('ALL')
   const { data } = useSellProfits()
 
-  const filtered = (data?.items ?? []).filter(
+  const items: SellProfitItem[] = data?.items ?? []
+  const filtered = items.filter(
     (i) => filter === 'ALL' || i.productType === filter,
   )
 
@@ -74,9 +76,7 @@ export function SellProfitsPage() {
               <p className="text-xs text-text-secondary">{item.date}</p>
               <p className="text-xs text-text-secondary text-center">{item.productType === 'OVERSEAS' ? '해외주식' : 'ETF'}</p>
               <div className="flex items-center gap-1.5">
-                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-[9px] font-bold">{item.ticker.slice(0, 2)}</span>
-                </div>
+                <TickerLogo ticker={item.ticker} size="sm" />
                 <p className="text-xs text-text-primary truncate">{item.productName}</p>
               </div>
               <p className={cn('text-xs font-medium text-center', item.isProfit ? 'text-up' : 'text-down')}>

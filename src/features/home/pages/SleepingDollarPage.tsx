@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, Calendar } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import sleepingIcon from '@/assets/home/sleeping.svg'
 import checkIcon from '@/assets/home/check.svg'

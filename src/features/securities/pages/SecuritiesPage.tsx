@@ -8,10 +8,11 @@ import { StockListItem } from '../components/StockListItem'
 import { RankingTabBar } from '../components/RankingTabBar'
 import { MarketStatusBadge } from '../components/MarketStatusBadge'
 import { SkeletonList } from '../components/SkeletonList'
+import { TickerLogo } from '../components/TickerLogo'
 import { useMyInvestments } from '../hooks/useMyInvestments'
 import { useSecuritiesProducts } from '../hooks/useSecuritiesProducts'
 import { useMarketIndices } from '../hooks/useMarketIndices'
-import type { ProductSortType } from '../types/securities'
+import type { ProductSortType, HoldingItem } from '../types/securities'
 
 type Tab = 'MY홈' | '해외' | 'ETF'
 
@@ -22,11 +23,12 @@ function MyHomeTab() {
   const [priceMode, setPriceMode] = useState<'current' | 'avg'>('current')
   const [currencyMode, setCurrencyMode] = useState<'usd' | 'krw'>('usd')
 
-  const stocks = data?.holdings.filter((h) => h.productType === 'OVERSEAS') ?? []
-  const etfs = data?.holdings.filter((h) => h.productType === 'ETF') ?? []
+  const holdings: HoldingItem[] = data?.holdings ?? []
+  const stocks = holdings.filter((h) => h.productType === 'OVERSEAS')
+  const etfs = holdings.filter((h) => h.productType === 'ETF')
   const totalValue = data?.totalCurrentValueUsd ?? 1
 
-  const HoldingRow = ({ h }: { item?: undefined; h: typeof stocks[0] }) => {
+  const HoldingRow = ({ h }: { item?: undefined; h: HoldingItem }) => {
     const ratio = totalValue > 0 ? (h.currentValueUsd / totalValue) * 100 : 0
     const value = priceMode === 'current'
       ? `${currencyMode === 'usd' ? '$' + h.currentValueUsd.toFixed(2) : h.currentValueUsd.toFixed(0) + '원'}`
@@ -37,9 +39,7 @@ function MyHomeTab() {
         onClick={() => navigate(`/securities/stocks/${h.productId}`)}
         className="w-full flex items-center gap-3 py-3 text-left"
       >
-        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-xs font-bold">{h.ticker.slice(0, 2)}</span>
-        </div>
+        <TickerLogo ticker={h.ticker} size="md" className="w-10 h-10" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-text-primary">{h.productName}</p>
           <div className="flex items-center gap-1.5 mt-0.5">
@@ -198,6 +198,7 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
               <StockListItem
                 key={p.productId}
                 item={p}
+                sort={sort}
                 onClick={() => navigate(`/securities/stocks/${p.productId}`)}
               />
             ))}

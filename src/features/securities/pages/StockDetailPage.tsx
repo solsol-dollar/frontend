@@ -7,6 +7,7 @@ import { PriceChart } from '../components/PriceChart'
 import { useStockDetail, useOrderBook } from '../hooks/useStockDetail'
 import { useWatchlist } from '../hooks/useWatchlist'
 import { type UiPeriod, PERIOD_MAP } from '../types/chart'
+import type { OrderBookEntry } from '../types/securities'
 
 type DetailTab = '차트' | '호가'
 
@@ -107,13 +108,15 @@ export function StockDetailPage() {
               </div>
               <div className="space-y-1">
                 {(() => {
+                  const asks: OrderBookEntry[] = orderBook?.asks ?? []
+                  const bids: OrderBookEntry[] = orderBook?.bids ?? []
                   const maxQty = Math.max(
-                    ...(orderBook?.asks.map((a) => a.qty) ?? [1]),
-                    ...(orderBook?.bids.map((b) => b.qty) ?? [1]),
+                    ...(asks.map((a) => a.qty).length ? asks.map((a) => a.qty) : [1]),
+                    ...(bids.map((b) => b.qty).length ? bids.map((b) => b.qty) : [1]),
                   )
-                  return Array.from({ length: Math.max(orderBook?.asks.length ?? 0, orderBook?.bids.length ?? 0) }).map((_, i) => {
-                    const ask = orderBook?.asks[i]
-                    const bid = orderBook?.bids[i]
+                  return Array.from({ length: Math.max(asks.length, bids.length) }).map((_, i) => {
+                    const ask = asks[i]
+                    const bid = bids[i]
                     return (
                       <div key={i} className="grid grid-cols-3 items-center gap-1.5">
                         {/* 매도 — depth bar 오른쪽 정렬 */}
