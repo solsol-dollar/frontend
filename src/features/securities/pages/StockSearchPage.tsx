@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSecuritiesProducts } from '../hooks/useSecuritiesProducts'
+import { TickerLogo } from '../components/TickerLogo'
 import type { ProductListItem } from '../types/securities'
 
 export function StockSearchPage() {
@@ -77,9 +78,7 @@ export function StockSearchPage() {
 function SearchResultItem({ item, onClick }: { item: ProductListItem; onClick: () => void }) {
   return (
     <button onClick={onClick} className="w-full flex items-center gap-3 py-3 text-left">
-      <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-        <span className="text-white text-xs font-bold">{item.ticker.slice(0, 2)}</span>
-      </div>
+      <TickerLogo ticker={item.ticker} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-primary truncate">{item.productName}</p>
         <p className="text-xs text-text-tertiary">{item.ticker} · {item.productType === 'OVERSEAS' ? '해외주식' : 'ETF'}</p>

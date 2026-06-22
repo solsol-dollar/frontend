@@ -2,13 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { serviceApi } from '@/lib/axios'
 import type { ApiResponse, MarketIndex } from '../types/securities'
 
-const MOCK: MarketIndex[] = [
-  { name: 'S&P 500', value: 5308.13, changeAmount: -500.77, changeRate: -1.6, isUp: false },
-  { name: '나스닥', value: 5308.13, changeAmount: -500.77, changeRate: -1.6, isUp: false },
-  { name: 'USD/KRW', value: 5308.13, changeAmount: -500.77, changeRate: -1.65, isUp: false },
-]
-
-// TODO: GET /api/v1/securities/market/indices (백엔드 구현 필요)
 export function useMarketIndices() {
   return useQuery({
     queryKey: ['securities', 'market-indices'],
@@ -16,7 +9,9 @@ export function useMarketIndices() {
       const res = await serviceApi.get('/api/v1/securities/market/indices')
       return (res as unknown as ApiResponse<MarketIndex[]>).data
     },
-    initialData: MOCK,
-    staleTime: 1000 * 60,
+    // 장 중 여부는 첫 응답에서 알 수 있으므로 항상 30초 refetch
+    // (백엔드 스케줄러가 60초마다 갱신하므로 30초면 충분)
+    refetchInterval: 30_000,
+    staleTime: 25_000,
   })
 }

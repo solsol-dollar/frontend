@@ -34,6 +34,7 @@ export type ProductSortType = 'TRADING_VALUE' | 'TRADING_VOLUME' | 'RISE' | 'FAL
 export type ProductType = 'OVERSEAS' | 'ETF'
 
 export interface ProductListItem {
+  sparkPrices: number[]
   productId: number
   ticker: string
   productName: string
@@ -82,6 +83,7 @@ export interface MarketIndex {
   changeAmount: number
   changeRate: number
   isUp: boolean
+  isMarketOpen: boolean
 }
 
 // ─── 주문 내역 ────────────────────────────────────────────────

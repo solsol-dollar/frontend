@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { useStockDetail } from '../hooks/useStockDetail'
 import { useMyInvestments } from '../hooks/useMyInvestments'
 import { usePlaceOrder } from '../hooks/usePlaceOrder'
-import type { TradeOrderResponse } from '../types/securities'
+import type { TradeOrderResponse, HoldingItem } from '../types/securities'
 
 const FEE_RATE = 0.0025
 
@@ -15,7 +15,8 @@ export function SellPage() {
   const { data: holdings } = useMyInvestments()
   const { mutate: placeOrder, isPending } = usePlaceOrder()
 
-  const holding = holdings?.holdings.find((h) => h.productId === Number(id))
+  const holdingItems: HoldingItem[] = holdings?.holdings ?? []
+  const holding = holdingItems.find((h) => h.productId === Number(id))
   const maxQty = holding?.qty ?? 0
 
   const [qty, setQty] = useState('')
