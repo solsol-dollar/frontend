@@ -19,7 +19,6 @@ import { IpoCalendarPage } from '@/features/ipo/pages/IpoCalendarPage'
 import { IpoDetailPage } from '@/features/ipo/pages/IpoDetailPage'
 import { IpoGuidePage } from '@/features/ipo/pages/IpoGuidePage'
 import { SubscribePage } from '@/features/ipo/pages/SubscribePage'
-import { SubscribeExchangePage } from '@/features/ipo/pages/SubscribeExchangePage'
 import { InvestmentProfilePage } from '@/features/ipo/pages/InvestmentProfilePage'
 import { AllocationResultPage } from '@/features/ipo/pages/AllocationResultPage'
 
@@ -73,7 +72,6 @@ export const router = createBrowserRouter([
   // IPO 청약 플로우 — 바텀탭 없음
   { path: '/ipo/:id', element: <IpoDetailPage /> },
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
-  { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
   { path: '/ipo/:id/result', element: <AllocationResultPage /> },
   { path: '/return-plan/history', element: <ReturnPlanHistoryPage /> },
   { path: '/return-plan/pending/:id', element: <ReturnPlanPendingPage /> },

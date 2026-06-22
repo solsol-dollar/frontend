@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { useCountUp } from '../hooks/useCountUp'
+import { useReturnPlans } from '../hooks/useReturnPlans'
 
 const REFUND_TOTAL = 2108
 
@@ -14,14 +15,9 @@ const SUMMARY = [
 const formatUsd = (n: number) =>
   `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-const HISTORY = [
-  { id: 1, name: 'Rubrik', ticker: 'RUBK', date: '2025.05.28', amount: '$838.91', distributed: true },
-  { id: 2, name: 'Rubrik', ticker: 'RUBK', date: '2025.05.28', amount: '$838.91', distributed: true },
-  { id: 3, name: 'Klarna', ticker: 'KLAR', date: '2026.03.06', amount: '$2,108.00', distributed: false },
-]
-
 export function ReturnPlanPage() {
   const navigate = useNavigate()
+  const { data: returnPlans = [] } = useReturnPlans()
 
   const refundCount = useCountUp(REFUND_TOTAL)
   const amount0 = useCountUp(SUMMARY[0].amount)
@@ -29,15 +25,24 @@ export function ReturnPlanPage() {
   const amount2 = useCountUp(SUMMARY[2].amount)
   const amounts = [amount0, amount1, amount2]
 
-  const nextPending = HISTORY.filter((item) => !item.distributed).sort(
-    (a, b) => new Date(a.date.replace(/\./g, '-')).getTime() - new Date(b.date.replace(/\./g, '-')).getTime(),
-  )[0]
+  const history = returnPlans.map((plan) => ({
+    id: plan.returnPlanId,
+    name: plan.sourceCompanyName,
+    ticker: plan.sourceTicker,
+    date: plan.refundDate ? plan.refundDate.slice(0, 10).replace(/-/g, '.') : '예정',
+    amount: formatUsd(plan.totalRefundAmount),
+    distributed: plan.planStatus === 'EXECUTED',
+  }))
 
-  const nextPendingDday = nextPending
+  const nextPending = returnPlans
+    .filter((plan) => plan.planStatus !== 'EXECUTED')
+    .sort((a, b) => (a.refundDate ?? '').localeCompare(b.refundDate ?? ''))[0]
+
+  const nextPendingDday = nextPending?.refundDate
     ? (() => {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-        const target = new Date(nextPending.date.replace(/\./g, '-'))
+        const target = new Date(nextPending.refundDate as string)
         const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
         return diff === 0 ? 'D-Day' : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
       })()
@@ -71,12 +76,12 @@ export function ReturnPlanPage() {
       <div className="flex-1 px-4 py-4 bg-surface-bg">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(nextPending ? `/return-plan/pending/${nextPending.id}` : '/ipo')}
+            onClick={() => navigate(nextPending ? `/return-plan/pending/${nextPending.returnPlanId}` : '/ipo')}
             className="flex-1 bg-white rounded-2xl p-4 py-5 text-left"
           >
             <p className="text-sm text-text-tertiary mb-1">다음 IPO 환불일</p>
             <p className="text-base font-bold text-text-primary mb-3">
-              {nextPending ? `${nextPending.name} · ${nextPendingDday}` : '예정된 환불 없음'}
+              {nextPending ? `${nextPending.sourceCompanyName} · ${nextPendingDday ?? '예정'}` : '예정된 환불 없음'}
             </p>
             <div className="flex items-center justify-between">
               <img src="/icons/Calendar.svg" width={32} height={32} alt="" />
@@ -109,7 +114,7 @@ export function ReturnPlanPage() {
         </div>
 
         <div className="bg-white rounded-2xl divide-y divide-border">
-          {HISTORY.map((item) => (
+          {history.map((item) => (
             <button
               key={item.id}
               onClick={() =>

@@ -141,12 +141,22 @@ export function IpoDetailPage() {
       </div>
 
       <div className="px-5 py-4 bg-white border-t border-border shrink-0">
-        <button
-          onClick={() => navigate(`/ipo/${id}/subscribe`)}
-          className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-base"
-        >
-          청약신청
-        </button>
+        {MOCK_IPO.status === '청약종료' ? (
+          <button
+            onClick={() => navigate(`/securities/stocks/${id}`, { state: { tab: '호가' } })}
+            className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-base"
+          >
+            주식 구매하기
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate(`/ipo/${id}/subscribe`)}
+            disabled={MOCK_IPO.status === '청약예정'}
+            className="w-full bg-primary disabled:bg-border disabled:text-text-tertiary text-white py-4 rounded-xl font-semibold text-base"
+          >
+            청약신청
+          </button>
+        )}
       </div>
     </div>
   )
