@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Header } from '@/components/common/Header'
@@ -14,11 +14,15 @@ type DetailTab = '차트' | '호가'
 export function StockDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { data: stock } = useStockDetail(id)
   const { data: orderBook } = useOrderBook(id)
   const { toggle, isWatchlisted } = useWatchlist()
 
-  const [detailTab, setDetailTab] = useState<DetailTab>('차트')
+  const [detailTab, setDetailTab] = useState<DetailTab>(() => {
+    const stateTab = (location.state as { tab?: string } | null)?.tab
+    return stateTab === '호가' ? '호가' : '차트'
+  })
   const [period, setPeriod] = useState<UiPeriod>('일')
   const periods: UiPeriod[] = ['5분', '일', '주', '월']
 

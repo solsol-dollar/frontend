@@ -4,40 +4,52 @@ import { ChevronDown } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { cn } from '@/lib/utils'
 import { MonthPickerSheet } from '../components/MonthPickerSheet'
+import { useReturnPlans } from '../hooks/useReturnPlans'
 
-const SUMMARY = [
-  { label: '총 분배액', value: '$700.00' },
-  { label: '총 실행', value: '4회' },
-  { label: '예수금 누적', value: '$308.00' },
-]
-
-const HISTORY = [
-  { id: 1, date: '2025.05.28', name: 'Rubrik', ticker: 'RUBK', amount: '$838.91', status: 'DONE' },
-  { id: 2, date: '2025.05.28', name: 'Rubrik', ticker: 'RUBK', amount: '$838.91', status: 'DONE' },
-  { id: 3, date: '2025.05.30', name: 'Rubrik', ticker: 'RUBK', amount: '$838.91', status: 'DONE' },
-  { id: 4, date: '2025.05.30', name: 'Rubrik', ticker: 'RUBK', amount: '$838.91', status: 'DONE' },
-  { id: 5, date: '2026.03.06', name: 'Klarna', ticker: 'KLAR', amount: '$2,108.00', status: 'UPCOMING' },
-] as const
+const formatUsd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export function ReturnPlanHistoryPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<'DONE' | 'UPCOMING'>('DONE')
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [year, setYear] = useState(2025)
-  const [month, setMonth] = useState(5)
+  const [year, setYear] = useState(new Date().getFullYear())
+  const [month, setMonth] = useState(new Date().getMonth() + 1)
 
-  const grouped = HISTORY.filter((item) => {
-    if (item.status !== tab) return false
-    const [itemYear, itemMonth] = item.date.split('.').map(Number)
-    return itemYear === year && itemMonth === month
-  }).reduce<Record<string, typeof HISTORY[number][]>>(
-    (acc, item) => {
+  const { data: returnPlans = [] } = useReturnPlans()
+
+  const items = returnPlans
+    .filter((plan) => plan.refundDate)
+    .map((plan) => {
+      const [itemYear, itemMonth] = plan.refundDate!.split('-').map(Number)
+      return {
+        id: plan.returnPlanId,
+        date: plan.refundDate!.replace(/-/g, '.'),
+        year: itemYear,
+        month: itemMonth,
+        name: plan.sourceCompanyName,
+        ticker: plan.sourceTicker,
+        amount: formatUsd(plan.totalRefundAmount),
+        rawAmount: plan.totalRefundAmount,
+        status: (plan.planStatus === 'EXECUTED' ? 'DONE' : 'UPCOMING') as 'DONE' | 'UPCOMING',
+      }
+    })
+
+  const itemsInMonth = items.filter((item) => item.year === year && item.month === month)
+  const doneInMonth = itemsInMonth.filter((item) => item.status === 'DONE')
+
+  const SUMMARY = [
+    { label: '총 분배액', value: formatUsd(doneInMonth.reduce((sum, item) => sum + item.rawAmount, 0)) },
+    { label: '총 실행', value: `${doneInMonth.length}회` },
+    { label: '분배 건수', value: `${itemsInMonth.length}건` },
+  ]
+
+  const grouped = itemsInMonth
+    .filter((item) => item.status === tab)
+    .reduce<Record<string, typeof itemsInMonth>>((acc, item) => {
       if (!acc[item.date]) acc[item.date] = []
       acc[item.date].push(item)
       return acc
-    },
-    {},
-  )
+    }, {})
 
   return (
     <div className="mobile-container flex flex-col h-screen overflow-hidden bg-white">
@@ -89,10 +101,12 @@ export function ReturnPlanHistoryPage() {
         </div>
 
         <div className="mt-2">
-          {Object.entries(grouped).map(([date, items]) => (
+          {Object.entries(grouped)
+            .sort(([a], [b]) => b.localeCompare(a))
+            .map(([date, dateItems]) => (
             <div key={date}>
               <p className="px-4 pt-4 pb-1 text-sm text-text-tertiary">{date}</p>
-              {items.map((item) => (
+              {dateItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() =>
@@ -105,7 +119,7 @@ export function ReturnPlanHistoryPage() {
                   className="w-full flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 text-left"
                 >
                   <div className="w-10 h-10 rounded-full bg-primary-300 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs font-bold">MS</span>
+                    <span className="text-white text-xs font-bold">{item.ticker.slice(0, 2)}</span>
                   </div>
                   <div className="flex-1">
                     <p className="text-base font-semibold text-text-primary">{item.name}</p>
