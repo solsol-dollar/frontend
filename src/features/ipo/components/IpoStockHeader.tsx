@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 interface IpoStockHeaderProps {
@@ -29,6 +29,7 @@ export function IpoStockHeader({
   size = 'lg',
 }: IpoStockHeaderProps) {
   const [imgError, setImgError] = useState(false)
+  useEffect(() => { setImgError(false) }, [logoUrl])
   const showLogo = !!logoUrl && !imgError
 
   return (

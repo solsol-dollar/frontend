@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ipoApi } from '../api/ipoApi'
+import { ipoApi } from '@/features/ipo/api/ipoApi'
 
 export const ipoKeys = {
   all: ['ipos'] as const,

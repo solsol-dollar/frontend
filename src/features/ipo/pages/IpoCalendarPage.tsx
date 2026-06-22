@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
-import { ipoApi, type IpoListItem } from '../api/ipoApi'
-import { ipoKeys, useIpoList } from '../hooks/useIpo'
-import { generateLogoColor } from '../utils/ipoUtils'
+import { ipoApi, type IpoListItem } from '@/features/ipo/api/ipoApi'
+import { ipoKeys, useIpoList } from '@/features/ipo/hooks/useIpo'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 
 type Tab = '청약 일정' | '청약내역/취소'
 type BottomFilter = '전체' | '관심'
@@ -871,7 +871,7 @@ export function IpoCalendarPage() {
                 </div>
               )
             })}
-            <div className={uniqueDates[uniqueDates.length - 1] <= todayStr ? 'h-[150px]' : 'h-[335px]'} />
+            <div className={uniqueDates.length > 0 && uniqueDates[uniqueDates.length - 1] <= todayStr ? 'h-[150px]' : 'h-[335px]'} />
           </div>}
 
         </>

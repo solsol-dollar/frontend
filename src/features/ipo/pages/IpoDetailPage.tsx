@@ -10,8 +10,8 @@ import {
   getSubscriptionStatusTextClass,
   type SubscriptionStatus,
 } from '@/features/ipo/utils/subscriptionStatus'
-import { useIpoDetail, useToggleFavorite } from '../hooks/useIpo'
-import { generateLogoColor } from '../utils/ipoUtils'
+import { useIpoDetail, useToggleFavorite } from '@/features/ipo/hooks/useIpo'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 
 const MOCK_PERFORMANCE = [
   { label: '최근 매출액', value: '333조', change: '+10.88%', positive: true },
@@ -38,11 +38,28 @@ export function IpoDetailPage() {
   const navigate = useNavigate()
   const ipoId = Number(id)
 
-  const { data, isLoading } = useIpoDetail(ipoId)
+  const { data, isLoading, isError } = useIpoDetail(ipoId)
   const { mutate: toggleFav } = useToggleFavorite()
 
-  if (isLoading || !data?.data) {
+  if (isLoading) {
     return <div className="page-content" />
+  }
+
+  if (isNaN(ipoId) || isError || !data?.data) {
+    return (
+      <div className="mobile-container flex flex-col h-screen">
+        <Header showBack showNotification={false} showMypage={false} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-text-secondary">종목 정보를 불러올 수 없습니다.</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="text-sm text-primary font-semibold"
+          >
+            돌아가기
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const ipo = data.data
