@@ -12,6 +12,7 @@ import { TransferCompletePage } from '@/features/home/pages/TransferCompletePage
 import { TransferHistoryPage } from '@/features/home/pages/TransferHistoryPage'
 import { FillPage } from '@/features/home/pages/FillPage'
 import { ExchangePage } from '@/features/home/pages/ExchangePage'
+import { SleepingDollarPage } from '@/features/home/pages/SleepingDollarPage'
 
 // IPO
 import { IpoCalendarPage } from '@/features/ipo/pages/IpoCalendarPage'
@@ -19,17 +20,26 @@ import { IpoDetailPage } from '@/features/ipo/pages/IpoDetailPage'
 import { IpoGuidePage } from '@/features/ipo/pages/IpoGuidePage'
 import { SubscribePage } from '@/features/ipo/pages/SubscribePage'
 import { SubscribeExchangePage } from '@/features/ipo/pages/SubscribeExchangePage'
-import { SubscriptionHistoryPage } from '@/features/ipo/pages/SubscriptionHistoryPage'
 import { InvestmentProfilePage } from '@/features/ipo/pages/InvestmentProfilePage'
+import { AllocationResultPage } from '@/features/ipo/pages/AllocationResultPage'
 
 // Return Plan
 import { ReturnPlanPage } from '@/features/return-plan/pages/ReturnPlanPage'
 import { ReturnPlanSettingsPage } from '@/features/return-plan/pages/ReturnPlanSettingsPage'
+import { ReturnPlanHistoryPage } from '@/features/return-plan/pages/ReturnPlanHistoryPage'
+import { ReturnPlanResultDetailPage } from '@/features/return-plan/pages/ReturnPlanResultDetailPage'
+import { ReturnPlanPendingPage } from '@/features/return-plan/pages/ReturnPlanPendingPage'
 
 // Securities
 import { SecuritiesPage } from '@/features/securities/pages/SecuritiesPage'
 import { StockDetailPage } from '@/features/securities/pages/StockDetailPage'
 import { EtfPage } from '@/features/securities/pages/EtfPage'
+import { MyInvestmentsPage } from '@/features/securities/pages/MyInvestmentsPage'
+import { OrderHistoryPage } from '@/features/securities/pages/OrderHistoryPage'
+import { SellProfitsPage } from '@/features/securities/pages/SellProfitsPage'
+import { BuyPage } from '@/features/securities/pages/BuyPage'
+import { SellPage } from '@/features/securities/pages/SellPage'
+import { StockSearchPage } from '@/features/securities/pages/StockSearchPage'
 
 // Mypage
 import { MyPage } from '@/features/mypage/pages/MyPage'
@@ -52,10 +62,23 @@ export const router = createBrowserRouter([
   { path: '/home/transfer/history', element: <TransferHistoryPage /> },
   { path: '/home/fill', element: <FillPage /> },
   { path: '/home/exchange', element: <ExchangePage /> },
+  { path: '/home/sleeping-dollar', element: <SleepingDollarPage /> },
+
+  // Securities 서브 플로우 — 바텀탭 없음
+  { path: '/securities/stocks/:id', element: <StockDetailPage /> },
+  { path: '/securities/stocks/:id/buy', element: <BuyPage /> },
+  { path: '/securities/stocks/:id/sell', element: <SellPage /> },
+  { path: '/securities/search', element: <StockSearchPage /> },
 
   // IPO 청약 플로우 — 바텀탭 없음
+  { path: '/ipo/:id', element: <IpoDetailPage /> },
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
   { path: '/ipo/:id/subscribe/exchange', element: <SubscribeExchangePage /> },
+  { path: '/ipo/:id/result', element: <AllocationResultPage /> },
+  { path: '/return-plan/history', element: <ReturnPlanHistoryPage /> },
+  { path: '/return-plan/pending/:id', element: <ReturnPlanPendingPage /> },
+  { path: '/return-plan/result/:id', element: <ReturnPlanResultDetailPage /> },
+  { path: '/return-plan/allocation', element: <ReturnPlanSettingsPage /> },
 
   {
     element: <Layout />,
@@ -66,17 +89,16 @@ export const router = createBrowserRouter([
       // IPO
       { path: '/ipo', element: <IpoCalendarPage /> },
       { path: '/ipo/guide', element: <IpoGuidePage /> },
-      { path: '/ipo/history', element: <SubscriptionHistoryPage /> },
       { path: '/ipo/profile', element: <InvestmentProfilePage /> },
-      { path: '/ipo/:id', element: <IpoDetailPage /> },
 
       // Return Plan
       { path: '/return-plan', element: <ReturnPlanPage /> },
-      { path: '/return-plan/settings', element: <ReturnPlanSettingsPage /> },
 
       // Securities
       { path: '/securities', element: <SecuritiesPage /> },
-      { path: '/securities/stocks/:ticker', element: <StockDetailPage /> },
+      { path: '/securities/my', element: <MyInvestmentsPage /> },
+      { path: '/securities/orders', element: <OrderHistoryPage /> },
+      { path: '/securities/profits', element: <SellProfitsPage /> },
       { path: '/securities/etf', element: <EtfPage /> },
 
       // Mypage

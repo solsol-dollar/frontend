@@ -98,48 +98,72 @@ function mapApiToIpo(raw: IpoListItem): Ipo {
   }
 }
 
-const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토']
+const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
 function getMonthWeeks(month: dayjs.Dayjs): dayjs.Dayjs[][] {
-  const firstDay = month.startOf('month')
-  const lastDay = month.endOf('month')
-  const firstMon = firstDay.subtract((firstDay.day() + 6) % 7, 'day')
-  const weeks: dayjs.Dayjs[][] = []
-  let cur = firstMon
-  while (cur.isBefore(lastDay) || cur.isSame(lastDay, 'day')) {
-    weeks.push(Array.from({ length: 5 }, (_, i) => cur.add(i, 'day')))
-    cur = cur.add(7, 'day')
+  const firstDay = month.startOf("month");
+  const lastDay = month.endOf("month");
+  const firstMon = firstDay.subtract((firstDay.day() + 6) % 7, "day");
+  const weeks: dayjs.Dayjs[][] = [];
+  let cur = firstMon;
+  while (cur.isBefore(lastDay) || cur.isSame(lastDay, "day")) {
+    weeks.push(Array.from({ length: 5 }, (_, i) => cur.add(i, "day")));
+    cur = cur.add(7, "day");
   }
-  return weeks
+  return weeks;
 }
 
-function MonthlyCalendarView({ month, events, todayStr }: { month: dayjs.Dayjs; events: CalendarEvent[]; todayStr: string }) {
-  const weeks = getMonthWeeks(month)
+function MonthlyCalendarView({
+  month,
+  events,
+  todayStr,
+}: {
+  month: dayjs.Dayjs;
+  events: CalendarEvent[];
+  todayStr: string;
+}) {
+  const weeks = getMonthWeeks(month);
   return (
     <div className="pb-[10px]">
       <div className="relative my-[10px] flex items-center justify-center">
-        <img src="/icons/Line.svg" className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full" alt="" />
+        <img
+          src="/icons/Line.svg"
+          className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full"
+          alt=""
+        />
         <span className="relative bg-white px-2 text-[14px] font-medium text-[#9AA0AB]">
-          {month.format('YYYY년 M월')}
+          {month.format("YYYY년 M월")}
         </span>
       </div>
       {weeks.map((week, wi) => (
-        <div key={wi} className={cn('grid grid-cols-5 h-[100px]', wi > 0 && 'border-t border-[#f0f1f4]')}>
+        <div
+          key={wi}
+          className={cn(
+            "grid grid-cols-5 h-[100px]",
+            wi > 0 && "border-t border-[#f0f1f4]",
+          )}
+        >
           {week.map((day) => {
-            const dateStr = day.format('YYYY-MM-DD')
-            const isCurrentMonth = day.month() === month.month()
-            const isToday = dateStr === todayStr
-            const dayEvents = events.filter((e) => e.date === dateStr)
-            const hasEvents = dayEvents.length > 0
+            const dateStr = day.format("YYYY-MM-DD");
+            const isCurrentMonth = day.month() === month.month();
+            const isToday = dateStr === todayStr;
+            const dayEvents = events.filter((e) => e.date === dateStr);
+            const hasEvents = dayEvents.length > 0;
             return (
               <div key={dateStr} className="flex flex-col pt-[10px] min-w-0">
                 {isCurrentMonth && (
                   <>
                     <div className="flex justify-center mb-[6px]">
-                      <span className={cn(
-                        'text-[16px] font-semibold leading-none w-[28px] h-[28px] flex items-center justify-center rounded-[6px]',
-                        isToday ? 'bg-[#E8E9EC] text-[#1A1A1A]' : hasEvents ? 'text-[#1A1A1A]' : 'text-[#C8CBD2]',
-                      )}>
+                      <span
+                        className={cn(
+                          "text-[16px] font-semibold leading-none w-[28px] h-[28px] flex items-center justify-center rounded-[6px]",
+                          isToday
+                            ? "bg-[#E8E9EC] text-[#1A1A1A]"
+                            : hasEvents
+                              ? "text-[#1A1A1A]"
+                              : "text-[#C8CBD2]",
+                        )}
+                      >
                         {day.date()}
                       </span>
                     </div>
@@ -151,14 +175,18 @@ function MonthlyCalendarView({ month, events, todayStr }: { month: dayjs.Dayjs; 
                       >
                         <div
                           className="w-[2px] h-[11px] mx-[3px] shrink-0 rounded-[1px]"
-                          style={{ backgroundColor: EVENT_COLORS[event.type].bar }}
+                          style={{
+                            backgroundColor: EVENT_COLORS[event.type].bar,
+                          }}
                         />
                         <span
                           className="text-[10px] font-medium flex-1 min-w-0"
                           style={{
                             color: EVENT_COLORS[event.type].bar,
-                            WebkitMaskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
-                            maskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
+                            WebkitMaskImage:
+                              "linear-gradient(to right, black 70%, transparent 100%)",
+                            maskImage:
+                              "linear-gradient(to right, black 70%, transparent 100%)",
                           }}
                         >
                           {event.name}
@@ -168,18 +196,18 @@ function MonthlyCalendarView({ month, events, todayStr }: { month: dayjs.Dayjs; 
                   </>
                 )}
               </div>
-            )
+            );
           })}
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function getWeekOfMonth(date: dayjs.Dayjs): number {
-  const firstDay = date.startOf('month').day()
-  const adjusted = firstDay === 0 ? 6 : firstDay - 1
-  return Math.ceil((date.date() + adjusted) / 7)
+  const firstDay = date.startOf("month").day();
+  const adjusted = firstDay === 0 ? 6 : firstDay - 1;
+  return Math.ceil((date.date() + adjusted) / 7);
 }
 
 function IpoLogo({ ipo, size = 40 }: { ipo: Ipo; size?: number }) {
@@ -209,25 +237,35 @@ function IpoLogo({ ipo, size = 40 }: { ipo: Ipo; size?: number }) {
 
 function HeartIcon({ isActive }: { isActive: boolean }) {
   return (
-    <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width="17"
+      height="16"
+      viewBox="0 0 17 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         d="M16.2503 2.40774C15.4111 0.899217 14.004 0 12.4854 0C10.2345 0 9.03662 1.52736 8.49986 2.50765C7.9631 1.52736 6.76523 0 4.51431 0C2.99575 0 1.5894 0.900036 0.749377 2.40774C-0.258193 4.21846 -0.249095 6.54102 0.77288 8.62036C2.26869 11.662 5.5939 14.3342 7.44301 15.6552C7.76446 15.8845 8.1314 16 8.49986 16C8.86832 16 9.23526 15.8845 9.55671 15.6552C11.4051 14.3342 14.731 11.662 16.2268 8.62036C17.2496 6.54102 17.2579 4.21846 16.2503 2.40774Z"
-        fill={isActive ? '#CA3D40' : '#001936'}
+        fill={isActive ? "#CA3D40" : "#001936"}
         fillOpacity={isActive ? 1 : 0.31}
       />
     </svg>
-  )
+  );
 }
 
 function WeekDivider({ label }: { label: string }) {
   return (
     <div className="relative mt-[3px] py-4 flex items-center justify-center">
-      <img src="/icons/Line.svg" className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full" alt="" />
+      <img
+        src="/icons/Line.svg"
+        className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full"
+        alt=""
+      />
       <span className="relative bg-[#F6F6F9] px-2 text-[14px] font-medium text-[#9AA0AB]">
         {label}
       </span>
     </div>
-  )
+  );
 }
 
 function computeDDay(subscriptionEnd: string): { label: string; isEnded: boolean } {
@@ -282,7 +320,13 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           </span>
         </div>
       </div>
-      <button onClick={(e) => { e.stopPropagation(); onWishlistToggle() }} className="absolute bottom-[22px] right-[17px]">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onWishlistToggle();
+        }}
+        className="absolute bottom-[22px] right-[17px]"
+      >
         <HeartIcon isActive={isWishlisted} />
       </button>
     </div>
@@ -341,7 +385,13 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           )}
         </div>
       </div>
-      <button onClick={(e) => { e.stopPropagation(); onWishlistToggle() }} className="absolute bottom-[22px] right-[17px]">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onWishlistToggle();
+        }}
+        className="absolute bottom-[22px] right-[17px]"
+      >
         <HeartIcon isActive={isWishlisted} />
       </button>
     </div>
@@ -480,8 +530,8 @@ export function IpoCalendarPage() {
     toggleFavMutation({ ipoId: id, isCurrent })
   }
 
-  const today = dayjs()
-  const todayStr = today.format('YYYY-MM-DD')
+  const today = dayjs();
+  const todayStr = today.format("YYYY-MM-DD");
 
   const [selectedDate, setSelectedDate] = useState(todayStr)
 
@@ -591,13 +641,15 @@ export function IpoCalendarPage() {
     <div className="h-dvh flex flex-col bg-[#F6F6F9]">
       <header className="bg-white flex items-center justify-between px-4 h-[56px] shrink-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-[18px] font-bold text-[#111111]">IPO 캘린더</span>
-          <button onClick={() => navigate('/ipo/guide')}>
+          <span className="text-[18px] font-bold text-[#111111]">
+            IPO 캘린더
+          </span>
+          <button onClick={() => navigate("/ipo/guide")}>
             <img src="/icons/question.svg" width={22} height={22} alt="" />
           </button>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/notifications')}>
+          <button onClick={() => navigate("/notifications")}>
             <img src="/icons/Bell.svg" width={25} height={25} alt="" />
           </button>
           <button>
@@ -612,8 +664,10 @@ export function IpoCalendarPage() {
             key={t}
             onClick={() => setTab(t)}
             className={cn(
-              'flex-1 h-[47px] text-[15px] font-bold border-b-2 transition-colors',
-              tab === t ? 'border-[#111111] text-[#111111]' : 'border-transparent text-[#999EA4]',
+              "flex-1 h-[47px] text-[15px] font-bold border-b-2 transition-colors",
+              tab === t
+                ? "border-[#111111] text-[#111111]"
+                : "border-transparent text-[#999EA4]",
             )}
           >
             {t}
@@ -621,7 +675,7 @@ export function IpoCalendarPage() {
         ))}
       </div>
 
-      {tab === '청약 일정' && (
+      {tab === "청약 일정" && (
         <>
           <div ref={monthlyContainerRef} className={cn(
             'relative z-[1] bg-white px-4 pb-[17px] rounded-b-[20px] shadow-[0_1px_10px_rgba(0,0,0,0.2)]',
@@ -803,18 +857,18 @@ export function IpoCalendarPage() {
         </div>
       )}
 
-      {tab === '청약 일정' && (
+      {tab === "청약 일정" && (
         <div className="fixed bottom-[91px] right-4 z-20">
           <div className="flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)]">
-            {(['전체', '관심'] as BottomFilter[]).map((f) => (
+            {(["전체", "관심"] as BottomFilter[]).map((f) => (
               <button
                 key={f}
                 onClick={() => setBottomFilter(f)}
                 className={cn(
-                  'px-5 py-1.5 rounded-[15px] text-[13px] transition-colors',
+                  "px-5 py-1.5 rounded-[15px] text-[13px] transition-colors",
                   bottomFilter === f
-                    ? 'bg-white text-black font-semibold shadow-[0_2px_2px_rgba(0,0,0,0.05)]'
-                    : 'text-[#999EA4] font-medium',
+                    ? "bg-white text-black font-semibold shadow-[0_2px_2px_rgba(0,0,0,0.05)]"
+                    : "text-[#999EA4] font-medium",
                 )}
               >
                 {f}
@@ -824,5 +878,5 @@ export function IpoCalendarPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

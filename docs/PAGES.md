@@ -164,15 +164,14 @@ SOL SOL 달러 앱의 전체 페이지 목록, 라우팅, 역할, API 연동 정
 
 **섹션**:
 1. 현재 IPO 리턴플랜 요약 (총 리턴금, 배정금, 이자)
-2. 리턴 플랜 설정 버튼 → `/return-plan/settings`
-3. 월 네비게이션 (← 5월 / 6월 →)
-4. 날짜별 리턴 내역 목록
+2. 리턴 플랜 설정 버튼 → `/return-plan/allocation`
+3. 날짜별 리턴 내역 목록
 
 **API**: `GET /api/return-plans?userId={id}`, `GET /api/return-plans/history`
 
 ---
 
-### `/return-plan/settings` — ReturnPlanSettingsPage
+### `/return-plan/allocation` — ReturnPlanSettingsPage
 
 **역할**: 리턴금 수령 계좌 배분 설정
 
@@ -292,4 +291,4 @@ SOL SOL 달러 앱의 전체 페이지 목록, 라우팅, 역할, API 연동 정
 | 알림센터 설정 아이콘 | `/notifications/settings` |
 | 마이페이지 알림설정 행 | `/notifications/settings` |
 | IPO 캘린더 "IPO란?" | `/ipo/guide` |
-| 리턴플랜 "설정" 버튼 | `/return-plan/settings` |
+| 리턴플랜 "설정" 버튼 | `/return-plan/allocation` |

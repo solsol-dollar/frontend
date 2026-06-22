@@ -28,6 +28,11 @@
   html, body {
     overflow: hidden;
     height: 100%;
+    /* PWA standalone: 노치/홈 인디케이터 safe area 확보 */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   body {
@@ -37,6 +42,14 @@
   }
 
   body::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
     display: none;
   }
 
@@ -77,6 +90,10 @@
   .week-slide-right {
     animation: week-slide-right 0.4s ease-out;
   }
+
+  .fade-slide-up {
+    animation: fade-slide-up 0.4s ease-out both;
+  }
 }
 
 @keyframes week-slide-left {
@@ -87,4 +104,14 @@
 @keyframes week-slide-right {
   from { transform: translateX(-30px); opacity: 0; }
   to   { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes fade-slide-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) translateX(var(--drift, 0px)) rotate(720deg); opacity: 0; }
 }
