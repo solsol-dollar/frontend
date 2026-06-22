@@ -1,7 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
+import { ipoApi, type IpoListItem } from '../api/ipoApi'
+import { ipoKeys, useIpoList } from '../hooks/useIpo'
+import { generateLogoColor } from '../utils/ipoUtils'
 
 type Tab = '청약 일정' | '청약내역/취소'
 type BottomFilter = '전체' | '관심'
@@ -29,6 +33,7 @@ interface Ipo {
   company: string
   ticker: string
   logo_color: string
+  logo_url: string | null
   status: 'closed' | 'open' | 'upcoming'
   subscription_start: string
   subscription_end: string
@@ -74,88 +79,24 @@ function deriveCalendarEvents(ipos: Ipo[]): CalendarEvent[] {
   return events
 }
 
-const IPOS: Ipo[] = [
-  {
-    id: 1,
-    company: 'CoreWeave',
-    ticker: 'CRWV',
-    logo_color: '#FF6B35',
-    status: 'open',
-    subscription_start: '2026-06-01',
-    subscription_end: '2026-06-24',
-    listing_date: '2026-07-04',
-
-    price: 20.00,
-    price_confirmed: null,
-    is_favorite: false,
+function mapApiToIpo(raw: IpoListItem): Ipo {
+  return {
+    id: raw.id,
+    company: raw.companyName,
+    ticker: raw.ticker,
+    logo_color: generateLogoColor(raw.ticker),
+    logo_url: raw.logoUrl,
+    status: (raw.ipoStatus?.toLowerCase() ?? 'upcoming') as Ipo['status'],
+    subscription_start: raw.subscriptionStartDate,
+    subscription_end: raw.subscriptionEndDate,
+    listing_date: raw.listingDate,
+    price: raw.confirmedOfferPrice ?? raw.offerPriceMin ?? 0,
+    price_confirmed: raw.confirmedOfferPrice,
+    is_favorite: raw.isFavorite,
     current_price: null,
     listing_change_pct: null,
-  },
-  {
-    id: 2,
-    company: 'SpaceX',
-    ticker: 'SPCX',
-    logo_color: '#1C1FE8',
-    status: 'closed',
-    subscription_start: '2026-06-08',
-    subscription_end: '2026-06-23',
-    listing_date: '2026-07-12',
-
-    price: 18.00,
-    price_confirmed: 20.00,
-    is_favorite: false,
-    current_price: 24.60,
-    listing_change_pct: 23.12,
-  },
-  {
-    id: 3,
-    company: 'Anthropic',
-    ticker: 'ANTH',
-    logo_color: '#E8632A',
-    status: 'closed',
-    subscription_start: '2026-06-02',
-    subscription_end: '2026-06-07',
-    listing_date: '2026-06-09',
-
-    price: 13.00,
-    price_confirmed: 25.00,
-    is_favorite: false,
-    current_price: 28.50,
-    listing_change_pct: 25.00,
-  },
-  {
-    id: 4,
-    company: 'Stripe',
-    ticker: 'STRP',
-    logo_color: '#635BFF',
-    status: 'upcoming',
-    subscription_start: '2026-06-19',
-    subscription_end: '2026-06-27',
-    listing_date: '2026-06-29',
-
-    price: 28.00,
-    price_confirmed: null,
-    is_favorite: false,
-    current_price: null,
-    listing_change_pct: null,
-  },
-  {
-    id: 5,
-    company: 'OpenAI',
-    ticker: 'OAIX',
-    logo_color: '#10A37F',
-    status: 'closed',
-    subscription_start: '2026-06-08',
-    subscription_end: '2026-06-13',
-    listing_date: '2026-06-20',
-
-    price: 23.00,
-    price_confirmed: 25.00,
-    is_favorite: false,
-    current_price: 31.20,
-    listing_change_pct: 24.80,
-  },
-]
+  }
+}
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -241,6 +182,31 @@ function getWeekOfMonth(date: dayjs.Dayjs): number {
   return Math.ceil((date.date() + adjusted) / 7)
 }
 
+function IpoLogo({ ipo, size = 40 }: { ipo: Ipo; size?: number }) {
+  const [imgError, setImgError] = useState(false)
+  const abbr = getAbbr(ipo.company)
+  const cls = `rounded-full flex-shrink-0 overflow-hidden`
+  if (ipo.logo_url && !imgError) {
+    return (
+      <img
+        src={ipo.logo_url}
+        alt={ipo.company}
+        className={cls}
+        style={{ width: size, height: size, objectFit: 'cover' }}
+        onError={() => setImgError(true)}
+      />
+    )
+  }
+  return (
+    <div
+      className={`${cls} flex items-center justify-center text-white font-black`}
+      style={{ width: size, height: size, backgroundColor: ipo.logo_color, fontSize: size * 0.325 }}
+    >
+      {abbr}
+    </div>
+  )
+}
+
 function HeartIcon({ isActive }: { isActive: boolean }) {
   return (
     <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -272,21 +238,15 @@ function computeDDay(subscriptionEnd: string): { label: string; isEnded: boolean
 }
 
 function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
-  const today = dayjs().startOf('day')
-  const isUpcoming = today.isBefore(dayjs(ipo.subscription_start).startOf('day'))
+  const isUpcoming = ipo.status === 'upcoming'
   const { label: dDayLabel } = computeDDay(isUpcoming ? ipo.subscription_start : ipo.subscription_end)
-  const abbr = getAbbr(ipo.company)
+  const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
 
   return (
-    <button onClick={onClick} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none">
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
       <div className="flex items-center justify-between mb-[13px]">
         <div className="flex items-center gap-[18px]">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[13px] font-black flex-shrink-0"
-            style={{ backgroundColor: ipo.logo_color }}
-          >
-            {abbr}
-          </div>
+          <IpoLogo ipo={ipo} />
           <div className="translate-y-[1px]">
             <p className="text-[15px] font-bold text-[#111827] leading-[17.5px]">{ipo.company}</p>
             <p className="text-[12px] text-[#7F858F] mt-[2px] leading-[17.5px]">{ipo.ticker}</p>
@@ -325,28 +285,24 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
       <button onClick={(e) => { e.stopPropagation(); onWishlistToggle() }} className="absolute bottom-[22px] right-[17px]">
         <HeartIcon isActive={isWishlisted} />
       </button>
-    </button>
+    </div>
   )
 }
 
 function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
-  const abbr = getAbbr(ipo.company)
   const isPositive = (ipo.listing_change_pct ?? 0) >= 0
   const change = ipo.current_price != null && ipo.price_confirmed != null
     ? Math.abs(ipo.current_price - ipo.price_confirmed)
     : null
 
+  const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
+
   return (
-    <button onClick={onClick} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none">
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
       <img src="/icons/IPO_end.svg" width={50} height={17} alt="청약종료" className="absolute top-[17.5px] right-[17px] translate-x-[3px]" />
       <div className="flex items-center mb-[13px]">
         <div className="flex items-center gap-[18px]">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[13px] font-black flex-shrink-0"
-            style={{ backgroundColor: ipo.logo_color }}
-          >
-            {abbr}
-          </div>
+          <IpoLogo ipo={ipo} />
           <div className="translate-y-[1px]">
             <p className="text-[15px] font-bold text-[#111827] leading-[17.5px]">{ipo.company}</p>
             <p className="text-[12px] text-[#7F858F] mt-[2px] leading-[17.5px]">{ipo.ticker}</p>
@@ -388,13 +344,12 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
       <button onClick={(e) => { e.stopPropagation(); onWishlistToggle() }} className="absolute bottom-[22px] right-[17px]">
         <HeartIcon isActive={isWishlisted} />
       </button>
-    </button>
+    </div>
   )
 }
 
 function IpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
-  const isClosed = dayjs().startOf('day').isAfter(dayjs(ipo.subscription_end).startOf('day'))
-  if (isClosed) {
+  if (ipo.status === 'closed') {
     return <ClosedIpoCard ipo={ipo} onClick={onClick} isWishlisted={isWishlisted} onWishlistToggle={onWishlistToggle} />
   }
   return <ActiveIpoCard ipo={ipo} onClick={onClick} isWishlisted={isWishlisted} onWishlistToggle={onWishlistToggle} />
@@ -404,9 +359,7 @@ export function IpoCalendarPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('청약 일정')
   const [bottomFilter, setBottomFilter] = useState<BottomFilter>('전체')
-  const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(
-    () => new Set(IPOS.filter((ipo) => ipo.is_favorite).map((ipo) => ipo.id))
-  )
+  const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
   const [calendarView, setCalendarView] = useState<CalendarView>('weekly')
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'))
 
@@ -490,12 +443,41 @@ export function IpoCalendarPage() {
     }, WEEK_SLIDE_DURATION_MS)
   }
 
+  const queryClient = useQueryClient()
+  const { data: queryData } = useIpoList()
+
+  const ipos = useMemo(
+    () => queryData?.data.ipos.map(mapApiToIpo) ?? [],
+    [queryData],
+  )
+
+  useEffect(() => {
+    if (queryData?.data.ipos) {
+      setWishlistedIds(new Set(queryData.data.ipos.filter((i) => i.isFavorite).map((i) => i.id)))
+    }
+  }, [queryData])
+
+  const { mutate: toggleFavMutation } = useMutation({
+    mutationFn: ({ ipoId, isCurrent }: { ipoId: number; isCurrent: boolean }) =>
+      isCurrent ? ipoApi.removeFavorite(ipoId) : ipoApi.addFavorite(ipoId),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ipoKeys.all }),
+    onError: (_, { ipoId, isCurrent }) => {
+      setWishlistedIds((prev) => {
+        const next = new Set(prev)
+        isCurrent ? next.add(ipoId) : next.delete(ipoId)
+        return next
+      })
+    },
+  })
+
   const toggleWishlist = (id: number) => {
+    const isCurrent = wishlistedIds.has(id)
     setWishlistedIds((prev) => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      isCurrent ? next.delete(id) : next.add(id)
       return next
     })
+    toggleFavMutation({ ipoId: id, isCurrent })
   }
 
   const today = dayjs()
@@ -529,7 +511,7 @@ export function IpoCalendarPage() {
     }))
   }
 
-  const filteredIpos = bottomFilter === '전체' ? IPOS : IPOS.filter((ipo) => wishlistedIds.has(ipo.id))
+  const filteredIpos = bottomFilter === '전체' ? ipos : ipos.filter((ipo) => wishlistedIds.has(ipo.id))
   const calendarEvents = deriveCalendarEvents(filteredIpos)
 
   const scrollToTodayMonth = () => {
@@ -807,7 +789,7 @@ export function IpoCalendarPage() {
                 </div>
               )
             })}
-            <div className="h-[335px]" />
+            <div className={uniqueDates[uniqueDates.length - 1] <= todayStr ? 'h-[150px]' : 'h-[335px]'} />
           </div>}
 
         </>
@@ -815,7 +797,7 @@ export function IpoCalendarPage() {
 
       {tab === '청약내역/취소' && (
         <div className="px-4 pt-4 space-y-3">
-          {IPOS.map((ipo) => (
+          {ipos.map((ipo) => (
             <IpoCard key={ipo.id} ipo={ipo} onClick={() => navigate(`/ipo/${ipo.id}`)} isWishlisted={wishlistedIds.has(ipo.id)} onWishlistToggle={() => toggleWishlist(ipo.id)} />
           ))}
         </div>

@@ -1,6 +1,14 @@
 import axios from 'axios'
 
-const MOCK_USER_ID = '1'
+const DEV_TOKEN = ''
+
+export function getToken(): string | null {
+  return DEV_TOKEN || localStorage.getItem('accessToken')
+}
+
+export function setToken(token: string) {
+  localStorage.setItem('accessToken', token)
+}
 
 function createInstance(baseURL: string) {
   const instance = axios.create({
@@ -10,7 +18,8 @@ function createInstance(baseURL: string) {
   })
 
   instance.interceptors.request.use((config) => {
-    config.headers['X-User-Id'] = MOCK_USER_ID
+    const token = getToken()
+    if (token) config.headers['Authorization'] = `Bearer ${token}`
     return config
   })
 
@@ -25,8 +34,8 @@ function createInstance(baseURL: string) {
   return instance
 }
 
-// 자금/원장 (청약, 리턴플랜, 계좌)
+// 자금/원장 (청약, 리턴플랜, 계좌) — 추후 proxy 추가 시 빈 문자열로
 export const ledgerApi = createInstance(import.meta.env.VITE_LEDGER_URL ?? 'http://localhost:8080')
 
-// 조회/AI (IPO 탐색, 증권, 홈 대시보드)
-export const serviceApi = createInstance(import.meta.env.VITE_SERVICE_URL ?? 'http://localhost:8081')
+// 조회/AI (IPO 탐색, 증권, 홈 대시보드) — Vite proxy /api/v1 → localhost:8081
+export const serviceApi = createInstance('')
