@@ -29,20 +29,20 @@ export function ReturnPlanPage() {
     id: plan.returnPlanId,
     name: plan.sourceCompanyName,
     ticker: plan.sourceTicker,
-    date: plan.confirmedAt ? plan.confirmedAt.slice(0, 10).replace(/-/g, '.') : '예정',
+    date: plan.refundDate ? plan.refundDate.slice(0, 10).replace(/-/g, '.') : '예정',
     amount: formatUsd(plan.totalRefundAmount),
     distributed: plan.planStatus === 'EXECUTED',
   }))
 
   const nextPending = returnPlans
     .filter((plan) => plan.planStatus !== 'EXECUTED')
-    .sort((a, b) => (a.confirmedAt ?? '').localeCompare(b.confirmedAt ?? ''))[0]
+    .sort((a, b) => (a.refundDate ?? '').localeCompare(b.refundDate ?? ''))[0]
 
-  const nextPendingDday = nextPending?.confirmedAt
+  const nextPendingDday = nextPending?.refundDate
     ? (() => {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-        const target = new Date(nextPending.confirmedAt as string)
+        const target = new Date(nextPending.refundDate as string)
         const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
         return diff === 0 ? 'D-Day' : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
       })()

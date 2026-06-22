@@ -101,7 +101,9 @@ export function ReturnPlanHistoryPage() {
         </div>
 
         <div className="mt-2">
-          {Object.entries(grouped).map(([date, dateItems]) => (
+          {Object.entries(grouped)
+            .sort(([a], [b]) => b.localeCompare(a))
+            .map(([date, dateItems]) => (
             <div key={date}>
               <p className="px-4 pt-4 pb-1 text-sm text-text-tertiary">{date}</p>
               {dateItems.map((item) => (

@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Header } from "@/components/common/Header";
-import { ledgerApi } from "@/lib/axios";
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
 import {
   ReturnPlanAllocationSection,
   type AllocationAccount,
 } from "@/features/return-plan/components/AllocationSplitEditor";
 import { splitsToAllocationItems } from "@/features/return-plan/utils/allocationMapper";
-import type { ReturnPlanResponse } from "@/features/return-plan/types/returnPlan";
-import type { ApiResponse } from "@/features/securities/types/securities";
+import { useCreateReturnPlan } from "@/features/return-plan/hooks/useCreateReturnPlan";
+import { useUpdateReturnPlanRatios } from "@/features/return-plan/hooks/useUpdateReturnPlanRatios";
 
 const MARGIN_RATE = 1.01; // 청약대행증거금 = 청약신청금액의 101%
 const FEE_RATE = 0.005; // 배정금액의 0.5%는 청약 수수료로 차감
@@ -104,18 +103,24 @@ function InfoRow({
 
 export function AllocationResultPage() {
   const { id } = useParams();
-  const subscriptionId = Number(id);
   const navigate = useNavigate();
   const [splits, setSplits] = useState<[number, number]>([40, 80]);
   const [showEtfSheet, setShowEtfSheet] = useState(false);
-  const [isReserving, setIsReserving] = useState(false);
+
+  const createPlan = useCreateReturnPlan();
+  const updateRatios = useUpdateReturnPlanRatios();
+  const isReserving = createPlan.isPending || updateRatios.isPending;
 
   const handleReserve = async () => {
-    setIsReserving(true);
+    const subscriptionId = Number(id);
+    if (!id || Number.isNaN(subscriptionId)) {
+      console.error("subscriptionId가 없습니다");
+      return;
+    }
     try {
-      const createRes = await ledgerApi.post("/api/v1/return-plans", { subscriptionId });
-      const plan = (createRes as unknown as ApiResponse<ReturnPlanResponse>).data;
-      await ledgerApi.put(`/api/v1/return-plans/${plan.returnPlanId}`, {
+      const plan = await createPlan.mutateAsync(subscriptionId);
+      await updateRatios.mutateAsync({
+        returnPlanId: plan.returnPlanId,
         allocations: splitsToAllocationItems(splits),
       });
       setShowEtfSheet(true);
@@ -123,8 +128,6 @@ export function AllocationResultPage() {
       // TODO: 에러 토스트 처리
       console.error("리턴 플랜 예약 실패", e);
       alert("리턴 플랜 분배 예약에 실패했어요. 잠시 후 다시 시도해주세요.");
-    } finally {
-      setIsReserving(false);
     }
   };
 

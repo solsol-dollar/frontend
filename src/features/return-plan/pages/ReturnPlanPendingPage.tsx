@@ -58,7 +58,7 @@ export function ReturnPlanPendingPage() {
 
   const { data: plan } = useReturnPlanDetail(returnPlanId);
   const { data: allocationResult } = useSubscriptionResultDetail(plan?.subscriptionId ?? NaN);
-  const updateRatios = useUpdateReturnPlanRatios(returnPlanId);
+  const updateRatios = useUpdateReturnPlanRatios();
 
   useEffect(() => {
     if (plan) setSplits(allocationItemsToSplits(plan.allocations));
@@ -76,7 +76,7 @@ export function ReturnPlanPendingPage() {
       return;
     }
     try {
-      await updateRatios.mutateAsync(splitsToAllocationItems(splits));
+      await updateRatios.mutateAsync({ returnPlanId, allocations: splitsToAllocationItems(splits) });
       setIsEditing(false);
     } catch (e) {
       // TODO: 에러 토스트 처리
@@ -104,14 +104,16 @@ export function ReturnPlanPendingPage() {
               {plan?.sourceCompanyName ?? "불러오는 중..."}
             </p>
             <p className="mt-1">
-              {formatDday(plan?.refundDate ?? null) && (
-                <>
-                  <span className="text-3xl font-extrabold text-primary">
-                    {formatDday(plan?.refundDate ?? null)}
-                  </span>
-                  <span className="text-base text-text-secondary"> 일 후 </span>
-                </>
-              )}
+              {(() => {
+                const dday = formatDday(plan?.refundDate ?? null);
+                if (!dday) return null;
+                return (
+                  <>
+                    <span className="text-3xl font-extrabold text-primary">{dday}</span>
+                    {dday !== "D-Day" && <span className="text-base text-text-secondary"> 일 후 </span>}
+                  </>
+                );
+              })()}
               <span className="text-base font-bold text-text-primary">
                 {formatUsd(refundAmount)}
               </span>
