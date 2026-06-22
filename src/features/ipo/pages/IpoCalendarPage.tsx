@@ -23,6 +23,7 @@ const EVENT_COLORS = {
 type EventType = keyof typeof EVENT_COLORS
 
 interface CalendarEvent {
+  id: number
   date: string
   type: EventType
   name: string
@@ -67,13 +68,13 @@ function deriveCalendarEvents(ipos: Ipo[]): CalendarEvent[] {
   const events: CalendarEvent[] = []
   for (const ipo of ipos) {
     if (ipo.listing_date) {
-      events.push({ date: ipo.listing_date, type: '상장(예정)일', name: ipo.company })
+      events.push({ id: ipo.id, date: ipo.listing_date, type: '상장(예정)일', name: ipo.company })
     }
     if (ipo.subscription_start) {
-      events.push({ date: ipo.subscription_start, type: '청약시작', name: ipo.company })
+      events.push({ id: ipo.id, date: ipo.subscription_start, type: '청약시작', name: ipo.company })
     }
     if (ipo.subscription_end) {
-      events.push({ date: ipo.subscription_end, type: '청약마감', name: ipo.company })
+      events.push({ id: ipo.id, date: ipo.subscription_end, type: '청약마감', name: ipo.company })
     }
   }
   return events
@@ -93,8 +94,8 @@ function mapApiToIpo(raw: IpoListItem): Ipo {
     price: raw.confirmedOfferPrice ?? raw.offerPriceMin ?? 0,
     price_confirmed: raw.confirmedOfferPrice,
     is_favorite: raw.isFavorite,
-    current_price: null,
-    listing_change_pct: null,
+    current_price: raw.currentPrice ?? null,
+    listing_change_pct: raw.priceChangePercent ?? null,
   }
 }
 
@@ -117,10 +118,14 @@ function MonthlyCalendarView({
   month,
   events,
   todayStr,
+  onShowMore,
+  onNavigate,
 }: {
   month: dayjs.Dayjs;
   events: CalendarEvent[];
   todayStr: string;
+  onShowMore: (date: string, events: CalendarEvent[]) => void;
+  onNavigate: (id: number) => void;
 }) {
   const weeks = getMonthWeeks(month);
   return (
@@ -167,10 +172,18 @@ function MonthlyCalendarView({
                         {day.date()}
                       </span>
                     </div>
-                    {dayEvents.map((event, i) => (
+                    {dayEvents.slice(0, 2).map((event, i) => (
                       <div
                         key={i}
-                        className="flex items-center rounded-[5px] overflow-hidden h-[17px] mb-[2px] mr-[4px]"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          dayEvents.length > 2
+                            ? onShowMore(dateStr, dayEvents)
+                            : onNavigate(event.id)
+                        }
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { dayEvents.length > 2 ? onShowMore(dateStr, dayEvents) : onNavigate(event.id) } }}
+                        className="flex items-center rounded-[5px] overflow-hidden h-[17px] mb-[2px] mr-[4px] cursor-pointer"
                         style={{ backgroundColor: EVENT_COLORS[event.type].bg }}
                       >
                         <div
@@ -180,7 +193,7 @@ function MonthlyCalendarView({
                           }}
                         />
                         <span
-                          className="text-[10px] font-medium flex-1 min-w-0"
+                          className="text-[10px] font-medium flex-1 min-w-0 overflow-hidden whitespace-nowrap block"
                           style={{
                             color: EVENT_COLORS[event.type].bar,
                             WebkitMaskImage:
@@ -193,6 +206,14 @@ function MonthlyCalendarView({
                         </span>
                       </div>
                     ))}
+                    {dayEvents.length > 2 && (
+                      <button
+                        onClick={() => onShowMore(dateStr, dayEvents)}
+                        className="text-[10px] font-normal text-text-tertiary h-[17px] leading-none pl-[3px] text-left"
+                      >
+                        +{dayEvents.length - 2}개
+                      </button>
+                    )}
                   </>
                 )}
               </div>
@@ -283,10 +304,10 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
   return (
     <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
       <div className="flex items-center justify-between mb-[13px]">
-        <div className="flex items-center gap-[18px]">
+        <div className="flex items-center gap-[18px] min-w-0">
           <IpoLogo ipo={ipo} />
-          <div className="translate-y-[1px]">
-            <p className="text-[15px] font-bold text-[#111827] leading-[17.5px]">{ipo.company}</p>
+          <div className="translate-y-[1px] min-w-0 max-w-[160px]">
+            <p className="text-[15px] font-bold text-[#111827] leading-[17.5px] truncate">{ipo.company}</p>
             <p className="text-[12px] text-[#7F858F] mt-[2px] leading-[17.5px]">{ipo.ticker}</p>
           </div>
         </div>
@@ -345,10 +366,10 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
     <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
       <img src="/icons/IPO_end.svg" width={50} height={17} alt="청약종료" className="absolute top-[17.5px] right-[17px] translate-x-[3px]" />
       <div className="flex items-center mb-[13px]">
-        <div className="flex items-center gap-[18px]">
+        <div className="flex items-center gap-[18px] min-w-0">
           <IpoLogo ipo={ipo} />
-          <div className="translate-y-[1px]">
-            <p className="text-[15px] font-bold text-[#111827] leading-[17.5px]">{ipo.company}</p>
+          <div className="translate-y-[1px] min-w-0 max-w-[160px]">
+            <p className="text-[15px] font-bold text-[#111827] leading-[17.5px] truncate">{ipo.company}</p>
             <p className="text-[12px] text-[#7F858F] mt-[2px] leading-[17.5px]">{ipo.ticker}</p>
           </div>
         </div>
@@ -412,6 +433,7 @@ export function IpoCalendarPage() {
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
   const [calendarView, setCalendarView] = useState<CalendarView>('weekly')
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'))
+  const [daySheet, setDaySheet] = useState<{ date: string; events: CalendarEvent[] } | null>(null)
 
   const dateSectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -637,6 +659,12 @@ export function IpoCalendarPage() {
     })
   }, [calendarView])
 
+
+  const handleSheetEventClick = (ipoId: number) => {
+    setDaySheet(null)
+    navigate(`/ipo/${ipoId}`)
+  }
+
   return (
     <div className="h-dvh flex flex-col bg-[#F6F6F9]">
       <header className="bg-white flex items-center justify-between px-4 h-[56px] shrink-0">
@@ -766,7 +794,7 @@ export function IpoCalendarPage() {
                       if (isCurrentMonthSection) currentMonthSectionRef.current = el
                       if (isTodayMonth) todayMonthRef.current = el
                     }}>
-                      <MonthlyCalendarView month={month} events={calendarEvents} todayStr={todayStr} />
+                      <MonthlyCalendarView month={month} events={calendarEvents} todayStr={todayStr} onShowMore={(date, evts) => setDaySheet({ date, events: evts })} onNavigate={handleSheetEventClick} />
                     </div>
                   )
                 })}
@@ -874,6 +902,41 @@ export function IpoCalendarPage() {
                 {f}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {daySheet && (
+        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setDaySheet(null)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative w-full bg-white rounded-t-2xl px-5 pt-4 pb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-[#E0E0E0] rounded-full mx-auto mb-4" />
+            <p className="text-base font-bold text-text-primary mb-3">
+              {dayjs(daySheet.date).format('M월 D일')} 청약 일정
+            </p>
+            <div className="space-y-2">
+              {daySheet.events.map((event, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSheetEventClick(event.id)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#F6F6F9] text-left"
+                >
+                  <div
+                    className="w-[3px] h-[18px] rounded-[2px] shrink-0"
+                    style={{ backgroundColor: EVENT_COLORS[event.type].bar }}
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{event.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: EVENT_COLORS[event.type].bar }}>
+                      {event.type}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

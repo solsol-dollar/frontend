@@ -13,6 +13,20 @@ import {
 import { useIpoDetail, useToggleFavorite } from '../hooks/useIpo'
 import { generateLogoColor } from '../utils/ipoUtils'
 
+const MOCK_PERFORMANCE = [
+  { label: '최근 매출액', value: '333조', change: '+10.88%', positive: true },
+  { label: '영업이익', value: '43조', change: '+33.23%', positive: true },
+  { label: '순이익', value: '45조', change: '+31.22%', positive: true },
+]
+
+const MOCK_NEWS_SCORE = 62
+const MOCK_NEWS_SUMMARY =
+  'GPU 인프라 수요 급증 중이나, 매출 대비 부채 비율이 높아 재무 안정성 리스크가 존재합니다.'
+const MOCK_NEWS = [
+  { title: 'CoreWeave, NVIDIA와 $10B GPU 계약 체결', source: 'Reuters', date: '06.09' },
+  { title: 'CoreWeave, NVIDIA와 $10B GPU 계약 체결', source: 'Reuters', date: '06.09' },
+]
+
 const STATUS_MAP: Record<string, SubscriptionStatus> = {
   UPCOMING: '청약예정',
   OPEN: '청약가능',
@@ -94,6 +108,7 @@ export function IpoDetailPage() {
             <IpoStockHeader
               avatarText={abbr}
               avatarColor={avatarColor}
+              logoUrl={ipo.logoUrl}
               name={ipo.companyName}
               ticker={ipo.ticker}
               status={status}
@@ -116,13 +131,16 @@ export function IpoDetailPage() {
         <section className="px-5 py-6 bg-white mt-2">
           <div className="flex items-center justify-between mb-4">
             <span className="text-base font-bold text-text-primary">실적현황</span>
-            <span className="text-xs text-text-tertiary">준비 중</span>
+            <span className="text-xs text-text-tertiary">2025.12 기준</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {(['최근 매출액', '영업이익', '순이익'] as const).map((label) => (
-              <div key={label} className="bg-[#F6F6F9] rounded-xl p-3 flex flex-col items-center">
-                <p className="text-xs text-text-secondary mb-2 text-center">{label}</p>
-                <p className="text-sm font-bold text-text-primary">-</p>
+            {MOCK_PERFORMANCE.map((stat) => (
+              <div key={stat.label} className="bg-[#F6F6F9] rounded-xl p-3 flex flex-col items-center">
+                <p className="text-xs text-text-secondary mb-2 text-center">{stat.label}</p>
+                <p className="text-sm font-bold text-text-primary">{stat.value}</p>
+                <p className={cn('text-xs font-medium mt-1', stat.positive ? 'text-up' : 'text-down')}>
+                  {stat.change}
+                </p>
               </div>
             ))}
           </div>
@@ -132,15 +150,22 @@ export function IpoDetailPage() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-base font-bold text-text-primary">News Score</span>
             <span className="text-base font-bold text-text-primary">
-              -<span className="text-text-tertiary font-normal text-sm">/100</span>
+              {MOCK_NEWS_SCORE}<span className="text-text-tertiary font-normal text-sm">/100</span>
             </span>
           </div>
           <div className="h-1.5 bg-surface rounded-full overflow-hidden mb-4">
-            <div className="h-full bg-primary rounded-full" style={{ width: '0%' }} />
+            <div className="h-full bg-primary rounded-full" style={{ width: `${MOCK_NEWS_SCORE}%` }} />
           </div>
-          <p className="text-sm text-text-secondary leading-relaxed mb-5">준비 중입니다.</p>
+          <p className="text-sm text-text-secondary leading-relaxed mb-5">{MOCK_NEWS_SUMMARY}</p>
           <p className="text-sm font-bold text-text-primary mb-1">관련 뉴스</p>
-          <div className={cn('text-sm text-text-tertiary py-4 text-center')}>뉴스 데이터 준비 중</div>
+          <div>
+            {MOCK_NEWS.map((n, i) => (
+              <div key={i} className="py-3 border-b border-border last:border-0">
+                <p className="text-sm font-semibold text-text-primary">{n.title}</p>
+                <p className="text-xs text-text-tertiary mt-1">{n.source} · {n.date}</p>
+              </div>
+            ))}
+          </div>
         </section>
       </div>
 

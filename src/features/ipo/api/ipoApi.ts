@@ -19,6 +19,9 @@ export interface IpoListItem {
   confirmedOfferPrice: number | null
   isFavorite: boolean
   logoUrl: string | null
+  currentPrice: number | null
+  priceChange: number | null
+  priceChangePercent: number | null
 }
 
 export interface IpoDetailItem {
