@@ -24,7 +24,7 @@ const YESTERDAY: Notification[] = [
   {
     id: 2, type: 'refund', title: '환불금 입금 완료', read: false, time: '오전 8:00',
     body: 'Databricks 미배정 환불금 $2,250.00이 외화 증권 계좌에 입금되었습니다.',
-    action: { label: '리턴 플랜 설정', path: '/return-plan/settings' },
+    action: { label: '리턴 플랜 설정', path: '/return-plan/allocation' },
   },
   {
     id: 3, type: 'sleeping', title: '쉬는 달러 알림', read: true, time: '오전 8:00',
