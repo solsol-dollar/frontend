@@ -17,15 +17,15 @@ const MOCK_SUBSCRIPTION = {
   ticker: "CRWV",
   name: "CoreWeave",
   color: "#FF6830",
-  offeringPrice: "USD 20.00",
-  pricePerShare: 20,
+  // 공모가가 확정값일 수도, 범위(밴드)로 제시될 수도 있음
+  offeringPriceRange: { min: 18, max: 20 } as { min: number; max?: number },
   milestones: [
     { label: "청약시작일", date: "2026.06.24" },
     { label: "청약마감일", date: "2026.09.04" },
     { label: "환불(예정)일", date: "2026.09.05" },
     { label: "상장(예정)일", date: "2026.09.06" },
   ],
-  availableAmount: 1084455,
+  availableAmount: 1084455.32,
   foreignBalance: 25340,
   cmaBalanceKrw: 1548320,
   exchangeRate: 1512.54,
@@ -46,9 +46,17 @@ export function SubscribePage() {
   const status = getSubscriptionStatus(ipo.milestones);
   const dday = getSubscriptionDday(ipo.milestones);
 
+  const { min: minPrice, max: maxPrice } = ipo.offeringPriceRange;
+  const offeringPriceLabel =
+    maxPrice && maxPrice !== minPrice
+      ? `USD ${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}`
+      : `USD ${minPrice.toFixed(2)}`;
+  // 예상 청약 가능 수량은 상단 공모가(최대값) 기준으로 보수적으로 계산
+  const pricePerShareForEstimate = maxPrice ?? minPrice;
+
   const numericAmount = Number(amount || 0);
   const maxSubscribable = Math.floor(ipo.availableAmount / 1.01);
-  const maxShares = Math.floor(maxSubscribable / ipo.pricePerShare);
+  const maxShares = Math.floor(maxSubscribable / pricePerShareForEstimate);
   const isValidAmount =
     numericAmount >= 100 &&
     Number.isInteger(numericAmount) &&
@@ -56,7 +64,7 @@ export function SubscribePage() {
 
   const subscriptionFee = useMemo(() => {
     if (!isValidAmount) return 0;
-    return Math.round(numericAmount * 1.01);
+    return numericAmount * 1.01;
   }, [numericAmount, isValidAmount]);
 
   const adjustAmount = (delta: number) => {
@@ -107,7 +115,7 @@ return (
           <div className="h-2 bg-surface-bg -mx-4 mb-4" />
 
           <IpoOfferingInfo
-            offeringPrice={ipo.offeringPrice}
+            offeringPrice={offeringPriceLabel}
             milestones={ipo.milestones}
             footnote="※ 일정은 사전 고지없이 변경될 수 있습니다."
           />
@@ -122,17 +130,17 @@ return (
           <div className="h-px bg-border mx-4" />
 
           {/* 청약 가능 금액 */}
-          <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-2">
+          <div className="px-4 pt-4 pb-3">
             <span className="text-2xl font-bold text-text-primary">
-              ${ipo.availableAmount.toLocaleString("en-US")}
+              ${ipo.availableAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <div className="flex flex-col items-end gap-0.5">
-              <span className="text-sm text-primary font-semibold whitespace-nowrap">
+            <div className="mt-1">
+              <p className="text-sm text-primary font-semibold">
                 최대 {maxShares.toLocaleString("en-US")}주 청약 가능해요!
-              </span>
-              <span className="text-[11px] text-text-tertiary">
+              </p>
+              <p className="text-[11px] text-text-tertiary mt-0.5">
                 공모가 기준 예상 수량
-              </span>
+              </p>
             </div>
           </div>
 
@@ -208,7 +216,7 @@ return (
           <div className="px-4 pt-3 pb-5 flex items-center justify-between">
             <span className="text-sm text-text-secondary">청약대행증거금</span>
             <span className="text-base font-bold text-text-primary">
-              USD {subscriptionFee.toLocaleString("en-US")}
+              USD {subscriptionFee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
         </section>
@@ -295,7 +303,7 @@ return (
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-text-secondary">공모(예정)가</span>
-              <span className="font-semibold text-text-primary">{ipo.offeringPrice}</span>
+              <span className="font-semibold text-text-primary">{offeringPriceLabel}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-text-secondary">청약신청금액</span>
@@ -303,7 +311,7 @@ return (
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-text-secondary">청약대행증거금</span>
-              <span className="font-semibold text-text-primary">USD {subscriptionFee.toLocaleString("en-US")}</span>
+              <span className="font-semibold text-text-primary">USD {subscriptionFee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
 
