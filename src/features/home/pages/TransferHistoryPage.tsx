@@ -93,7 +93,7 @@ export function TransferHistoryPage() {
               <ActionButtons
                 labels={['옮기기', '환전']}
                 onPress={[
-                  () => navigate('/home/transfer', { state: { sourceName: accountName, sourceBalance: `$${(totalUsdBalance ?? 0).toFixed(2)}` } }),
+                  () => accountIds[0] && navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(usdBalance ?? 0).toFixed(2)}` } }),
                   () => setShowExchange(true),
                 ]}
               />
@@ -140,7 +140,7 @@ export function TransferHistoryPage() {
                 labels={['채우기', '옮기기']}
                 onPress={[
                   () => navigate('/home/fill', { state: { fixedFromAccountId: cmaAccountId, fixedFromName: 'CMA 계좌', fixedFromBalance: `$${cmaBalance.toFixed(2)}`, toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } }),
-                  () => navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(balance ?? 0).toFixed(2)}` } }),
+                  () => accountIds[0] && navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(balance ?? 0).toFixed(2)}` } }),
                 ]}
               />
             </>

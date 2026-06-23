@@ -57,18 +57,24 @@ export function TransferPage() {
     }
   }, [isFixed])
 
-  // 고정 모드일 때 assets 로드 후 selectedId 반영
   useEffect(() => {
     if (isFixed) setSelectedId(fixedToAccountId)
   }, [isFixed, fixedToAccountId])
 
-  const selected = destAccounts.find((a) => a.accountId === selectedId) ?? null
   const { chars, amount, pushChar, popChar } = useAnimatedInput()
-  const canProceed = !!selected && amount.length > 0 && amount !== '.'
+
+  const selected = destAccounts.find((a) => a.accountId === selectedId) ?? null
+  const sourceFunds = parseFloat(sourceBalance.replace(/[^0-9.]/g, ''))
+  const amountNum = parseFloat(amount) || 0
+  const isOverBalance = amountNum > 0 && amountNum > sourceFunds
+  const canProceed = !!selected && amountNum > 0 && amount !== '.' && !isOverBalance
 
   const onKey = (k: string) => {
     if (k === '←') { popChar(); return }
-    if (k === '.') { if (!amount.includes('.')) pushChar('.'); return }
+    if (k === '.') {
+      if (!amount.includes('.')) pushChar('.')
+      return
+    }
     const [, dec] = amount.split('.')
     if (dec !== undefined && dec.length >= 2) return
     pushChar(k)
@@ -84,10 +90,9 @@ export function TransferPage() {
             <span className="font-bold text-text-primary">{sourceName}</span>
             <span className="text-text-secondary"> 에서</span>
           </p>
-          <p className="text-sm text-text-tertiary mt-1">잔액 {sourceBalance}</p>
+          <p className={`text-sm mt-1 ${isOverBalance ? 'text-danger' : 'text-text-tertiary'}`}>잔액 {sourceBalance}</p>
         </div>
 
-        {/* 입금 계좌 */}
         {isFixed ? (
           <div className="text-left mb-8 h-[52px] flex flex-col justify-start">
             {selected ? (
@@ -129,7 +134,7 @@ export function TransferPage() {
           {chars.length > 0 ? (
             <div className="flex items-baseline gap-0">
               <span className="text-[26px] font-semibold text-text-primary mr-1">$</span>
-              {chars.map((c: { char: string; id: number; exiting: boolean }) => (
+              {chars.map((c) => (
                 <span
                   key={c.id}
                   className={`text-[26px] font-semibold text-text-primary inline-block ${c.exiting ? 'animate-char-out' : 'animate-char-in'}`}

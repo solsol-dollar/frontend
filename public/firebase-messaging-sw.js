@@ -1,17 +1,12 @@
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js')
 
-// 서비스 워커는 Vite 빌드 파이프라인 밖에서 실행됩니다.
-// VITE_* 환경변수가 주입되지 않으므로 Firebase 설정 값을 직접 입력해야 합니다.
-// Firebase 콘솔(console.firebase.google.com)에서 프로젝트 설정 → 웹 앱 → SDK 설정 복사
-//
-// TODO: FCM 연동 시 아래 값을 채울 것 (이 파일은 .gitignore 되지 않으므로 실제 키 입력 후 주의)
 firebase.initializeApp({
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: 'AIzaSyAQ80gvBqHc3hxyTASogJkx0_Y9v7fzVKE',
+  authDomain: 'solsol-dollar.firebaseapp.com',
+  projectId: 'solsol-dollar',
+  messagingSenderId: '409696929635',
+  appId: '1:409696929635:web:c7a0efca68f526ca36b556',
 })
 
 const messaging = firebase.messaging()

@@ -7,13 +7,17 @@ interface TransferRequest {
   amount: number
 }
 
-interface TransferResult {
+export interface TransferResult {
   transactionId: number
   fromAccountId: number
   toAccountId: number
+  toAccountType: string
   amount: number
+  currency: string
   status: string
+  completedAt: string
   executedAt: string
+
 }
 
 export function useTransfer() {
