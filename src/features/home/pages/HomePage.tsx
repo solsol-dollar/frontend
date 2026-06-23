@@ -1,10 +1,42 @@
+import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import sleepingIcon from '@/assets/home/sleeping.svg'
 import changeupCard from '@/assets/home/changeup-card.png'
 import { Header } from '@/components/common/Header'
 import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
-import { useFavoriteIpos, getIpoDisplay, getIpoColor } from '@/features/home/hooks/useFavoriteIpos'
+import { useFavoriteIpos, getIpoDisplay, type FavoriteIpo } from '@/features/home/hooks/useFavoriteIpos'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
+
+function getAbbr(company: string): string {
+  const words = company.split(/(?=[A-Z])|[\s-]/).filter(Boolean)
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+  return company.substring(0, 2).toUpperCase()
+}
+
+function FavoriteIpoLogo({ ipo }: { ipo: FavoriteIpo }) {
+  const [imgError, setImgError] = useState(false)
+  const color = generateLogoColor(ipo.ticker)
+  const abbr = getAbbr(ipo.companyName)
+  if (ipo.logoUrl && !imgError) {
+    return (
+      <img
+        src={ipo.logoUrl}
+        alt={ipo.ticker}
+        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+        onError={() => setImgError(true)}
+      />
+    )
+  }
+  return (
+    <div
+      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black flex-shrink-0"
+      style={{ backgroundColor: color, fontSize: 13 }}
+    >
+      {abbr}
+    </div>
+  )
+}
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -51,7 +83,7 @@ export function HomePage() {
               <img src={sleepingIcon} alt="쉬는 달러 감지 아이콘" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-text-primary">쉬는 달러 감지</p>
+              <p className="text-sm font-semibold text-text-primary">쉬는 달러</p>
               <p className="text-xs text-text-secondary mt-0.5">쉬는 달러를 SOLSOL하게 적금으로!</p>
             </div>
             <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />
@@ -157,37 +189,53 @@ export function HomePage() {
         <section className="mx-4 mt-5">
           <div className="flex items-center justify-between mb-2 px-1">
             <p className="text-xs text-text-secondary">관심 IPO</p>
-            <button className="flex items-center gap-0.5 text-xs text-text-secondary">
+            <button
+              onClick={() => navigate('/ipo', { state: { bottomFilter: '관심' } })}
+              className="flex items-center gap-0.5 text-xs text-text-secondary"
+            >
               전체보기 <ChevronRight size={13} />
             </button>
           </div>
           <div className="space-y-3">
+            {favoriteIpos?.length === 0 && (
+              <div className="bg-white rounded-xl px-5 py-8 flex flex-col items-center gap-3">
+                <p className="text-sm text-text-tertiary">등록된 관심 IPO가 없어요</p>
+                <button
+                  onClick={() => navigate('/ipo')}
+                  className="flex items-center gap-1 text-xs font-medium text-primary border border-primary rounded-full px-4 py-1.5"
+                >
+                  등록하러 가기 <ChevronRight size={12} />
+                </button>
+              </div>
+            )}
             {(favoriteIpos ?? []).map((ipo) => {
               const { label, dday } = getIpoDisplay(ipo)
-              const color = getIpoColor(ipo.ipoId)
               return (
-                <button
+                <div
                   key={ipo.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => navigate(`/ipo/${ipo.ipoId}`)}
-                  className="w-full bg-white rounded-xl p-4 flex items-center gap-4 text-left"
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/ipo/${ipo.ipoId}`) }}
+                  className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer"
                 >
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                    style={{ backgroundColor: color }}
-                  >
-                    {ipo.ticker.slice(0, 2)}
+                  <div className="flex items-center gap-[18px] min-w-0">
+                    <FavoriteIpoLogo ipo={ipo} />
+                    <div className="translate-y-[1px] min-w-0 max-w-[160px]">
+                      <p className="text-[15px] font-bold text-[#111827] leading-[17.5px] truncate">{ipo.companyName}</p>
+                      <p className="text-[12px] text-[#7F858F] mt-[2px] leading-[17.5px]">{ipo.ticker}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-semibold text-text-primary">{ipo.companyName}</p>
-                    <p className="text-xs text-text-tertiary">{ipo.ticker}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-xs border border-danger text-danger rounded-full px-2 py-0.5 whitespace-nowrap">
-                      {label}
-                    </span>
-                    <span className="text-xs font-medium text-danger pr-2">{dday}</span>
-                  </div>
-                </button>
+                  <img
+                    src={ipo.ipoStatus === 'CLOSED' ? '/icons/IPO_end.svg' : ipo.ipoStatus === 'UPCOMING' ? '/icons/IPO_upcoming.svg' : '/icons/IPO_ready.svg'}
+                    width={50} height={17}
+                    alt={label}
+                    className="absolute top-[17.5px] right-[17px] translate-x-[3px]"
+                  />
+                  {dday && (
+                    <span className="absolute top-[39px] right-[17px] text-[11px] font-bold text-[#CA3D40]">{dday}</span>
+                  )}
+                </div>
               )
             })}
           </div>

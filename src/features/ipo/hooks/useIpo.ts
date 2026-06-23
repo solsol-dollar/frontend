@@ -29,7 +29,10 @@ export function useToggleFavorite() {
   return useMutation({
     mutationFn: ({ ipoId, isFavorite }: { ipoId: number; isFavorite: boolean }) =>
       isFavorite ? ipoApi.removeFavorite(ipoId) : ipoApi.addFavorite(ipoId),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ipoKeys.all }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ipoKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['home', 'favorite-ipos'] })
+    },
   })
 }
 

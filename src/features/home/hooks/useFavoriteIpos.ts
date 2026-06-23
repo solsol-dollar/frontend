@@ -6,6 +6,7 @@ export interface FavoriteIpo {
   ipoId: number
   ticker: string
   companyName: string
+  logoUrl: string | null
   ipoStatus: 'UPCOMING' | 'OPEN' | 'CLOSED'
   subscriptionStartDate: string
   subscriptionEndDate: string
@@ -19,7 +20,7 @@ function calcDDay(dateStr: string): string {
 }
 
 export function getIpoDisplay(ipo: FavoriteIpo): { label: string; dday: string } {
-  if (ipo.ipoStatus === 'CLOSED') return { label: '청약마감', dday: '마감' }
+  if (ipo.ipoStatus === 'CLOSED') return { label: '청약마감', dday: '' }
   if (ipo.ipoStatus === 'OPEN') return { label: '청약가능', dday: calcDDay(ipo.subscriptionEndDate) }
   return { label: '청약예정', dday: calcDDay(ipo.subscriptionStartDate) }
 }
@@ -33,11 +34,11 @@ export function useFavoriteIpos() {
   return useQuery({
     queryKey: ['home', 'favorite-ipos'],
     queryFn: async () => {
-      const res = await serviceApi.get('/api/service/api/v1/home/favorite-ipos') as unknown
-      // 배열로 바로 오는 경우 vs { data: [...] } 래핑 모두 처리
-      if (Array.isArray(res)) return res as FavoriteIpo[]
-      const wrapped = res as { data: FavoriteIpo[] }
-      return wrapped.data ?? []
+      const res = (await serviceApi.get('/api/service/api/v1/home/favorite-ipos')) as unknown as {
+        data: FavoriteIpo[]
+      }
+      return res.data
     },
+    refetchOnMount: 'always',
   })
 }
