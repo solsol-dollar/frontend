@@ -13,6 +13,10 @@ export async function loginWithPin(pin: string): Promise<LoginResponse> {
   return res.data
 }
 
+export async function completeOnboarding(): Promise<void> {
+  await serviceApi.post('/api/v1/onboarding')
+}
+
 export async function logout(): Promise<void> {
   await serviceApi.post('/api/service/auth/logout')
 }
