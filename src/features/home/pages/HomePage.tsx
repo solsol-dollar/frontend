@@ -43,7 +43,6 @@ export function HomePage() {
   const navigate = useNavigate()
   const { data: assets } = useHomeAssets()
   const { data: favoriteIpos } = useFavoriteIpos()
-
   const exchangeRate = assets?.exchangeRateInfo
   const changeSign = (exchangeRate?.changeRate ?? 0) >= 0 ? '+' : ''
   const rateColor = (exchangeRate?.changeRate ?? 0) >= 0 ? 'text-up' : 'text-danger'
@@ -74,7 +73,7 @@ export function HomePage() {
           </div>
         </section>
 
-        {/* 쉬는 달러 감지 */}
+        {/* 쉬는 달러 */}
         <section className="mx-4 mt-5">
           <button
             className="w-full bg-white rounded-xl px-4 py-4 flex items-center gap-4 text-left"
