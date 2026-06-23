@@ -39,3 +39,11 @@ export function useIpoFavorites(limit?: number) {
     queryFn: () => ipoApi.getFavorites(limit),
   })
 }
+
+export function useIpoNews(ipoId: number, size = 3) {
+  return useQuery({
+    queryKey: [...ipoKeys.detail(ipoId), 'news', size],
+    queryFn: () => ipoApi.getNews(ipoId, size),
+    enabled: ipoId > 0,
+  })
+}
