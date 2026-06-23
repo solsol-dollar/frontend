@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PinKeypad } from '@/features/onboarding/components/PinKeypad'
 import { LoadingStep } from '@/features/onboarding/components/LoadingStep'
 import { AccountSelectStep } from '@/features/onboarding/components/AccountSelectStep'
-import { loginWithPin } from '@/lib/auth'
+import { useLogin } from '@/features/onboarding/hooks/useLogin'
 
 type Step = 'splash' | 'pin' | 'loading' | 'accounts'
 
@@ -21,10 +21,12 @@ export function OnboardingPage() {
     }
   }, [])
 
+  const { mutateAsync: login } = useLogin()
+
   const handlePinEnter = async (pin: string) => {
     setPinError(null)
     try {
-      const { onboardingStatus } = await loginWithPin(pin)
+      const { onboardingStatus } = await login(pin)
       if (onboardingStatus === 'COMPLETED') {
         setIsCompleted(true)
         setStep('loading')

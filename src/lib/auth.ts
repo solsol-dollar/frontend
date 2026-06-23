@@ -1,4 +1,4 @@
-import { serviceApi } from './axios'
+import { serviceApi } from '@/lib/axios'
 
 interface LoginResponse {
   onboardingStatus: 'REQUIRED' | 'COMPLETED'
