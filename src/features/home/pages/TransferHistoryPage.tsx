@@ -39,7 +39,7 @@ const FILTER_OPTIONS: Record<AccountType, string[]> = {
 
 function ActionButtons({ labels, onPress }: { labels: [string, string]; onPress: [() => void, () => void] }) {
   return (
-    <div className="flex bg-surface-neutral rounded-xl overflow-hidden">
+    <div className="flex bg-surface-bg rounded-xl overflow-hidden">
       <button onClick={onPress[0]} className="flex-1 py-3 text-sm text-text-sub">{labels[0]}</button>
       <div className="w-px bg-border my-2" />
       <button onClick={onPress[1]} className="flex-1 py-2.5 text-sm text-text-sub">{labels[1]}</button>
@@ -99,7 +99,7 @@ export function TransferHistoryPage() {
               />
               <div className="mt-4 space-y-2">
                 <div className="flex items-center gap-3 rounded-xl px-2 py-3">
-                  <div className="p-3 rounded-xl bg-surface-neutral">
+                  <div className="p-3 rounded-xl bg-surface-bg">
                     <img className="w-6" src={wonIcon} alt="원화 아이콘" />
                   </div>
                   <div className="flex flex-col">
@@ -110,7 +110,7 @@ export function TransferHistoryPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 rounded-xl px-2 py-3">
-                  <div className="p-3 rounded-xl bg-surface-neutral">
+                  <div className="p-3 rounded-xl bg-surface-bg">
                     <img className="w-6" src={dollarIcon} alt="달러 아이콘" />
                   </div>
                   <div className="flex flex-col">
@@ -139,7 +139,7 @@ export function TransferHistoryPage() {
               <ActionButtons
                 labels={['채우기', '옮기기']}
                 onPress={[
-                  () => navigate('/home/fill', { state: { fixedFromAccountId: cmaAccountId, fixedFromName: 'CMA 계좌', fixedFromBalance: `$${cmaBalance.toFixed(2)}`, toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } }),
+                  () => cmaAccountId && navigate('/home/fill', { state: { fixedFromAccountId: cmaAccountId, fixedFromName: 'CMA 계좌', fixedFromBalance: `$${cmaBalance.toFixed(2)}`, toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } }),
                   () => accountIds[0] && navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(balance ?? 0).toFixed(2)}` } }),
                 ]}
               />

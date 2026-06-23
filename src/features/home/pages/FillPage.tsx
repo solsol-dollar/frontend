@@ -64,7 +64,9 @@ export function FillPage() {
     : sourceAccounts.find((a) => a.accountId === selectedId) ?? null
 
   const { chars, amount, pushChar, popChar } = useAnimatedInput()
-  const canProceed = !!selected && amount.length > 0 && amount !== '.'
+  const amountNum = parseFloat(amount) || 0
+  const isOverBalance = !!selected && amountNum > 0 && amountNum > selected.balance
+  const canProceed = !!selected && amountNum > 0 && amount !== '.' && !isOverBalance
 
   const onKey = (k: string) => {
     if (k === '←') { popChar(); return }
@@ -95,7 +97,7 @@ export function FillPage() {
                   <span className="font-bold text-text-primary">{selected.displayName}</span>
                   <span className="text-text-secondary"> 에서</span>
                 </p>
-                <p className="text-sm text-text-tertiary mt-1">
+                <p className={`text-sm mt-1 ${isOverBalance ? 'text-danger' : 'text-text-tertiary'}`}>
                   잔액 ${selected.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </p>
               </>

@@ -8,8 +8,11 @@ export interface AnimatedChar {
 
 export function useAnimatedInput() {
   const [chars, setChars] = useState<AnimatedChar[]>([])
+  const charsRef = useRef(chars)
   const nextId = useRef(0)
   const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
+
+  charsRef.current = chars
 
   useEffect(() => {
     return () => { timers.current.forEach(clearTimeout) }
@@ -23,17 +26,16 @@ export function useAnimatedInput() {
   }, [])
 
   const popChar = useCallback(() => {
-    setChars((prev) => {
-      const last = [...prev].reverse().find((c) => !c.exiting)
-      if (!last) return prev
-      const updated = prev.map((c) => (c.id === last.id ? { ...c, exiting: true } : c))
-      const t = setTimeout(() => {
-        setChars((p) => p.filter((c) => c.id !== last.id))
-        timers.current.delete(t)
-      }, 130)
-      timers.current.add(t)
-      return updated
-    })
+    const last = [...charsRef.current].reverse().find((c) => !c.exiting)
+    if (!last) return
+
+    setChars((prev) => prev.map((c) => (c.id === last.id ? { ...c, exiting: true } : c)))
+
+    const t = setTimeout(() => {
+      setChars((p) => p.filter((c) => c.id !== last.id))
+      timers.current.delete(t)
+    }, 130)
+    timers.current.add(t)
   }, [])
 
   const clear = useCallback(() => setChars([]), [])
