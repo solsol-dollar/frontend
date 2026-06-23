@@ -6,6 +6,9 @@ import {
   ReturnPlanAllocationSection,
   type AllocationAccount,
 } from "@/features/return-plan/components/AllocationSplitEditor";
+import { splitsToAllocationItems } from "@/features/return-plan/utils/allocationMapper";
+import { useCreateReturnPlan } from "@/features/return-plan/hooks/useCreateReturnPlan";
+import { useUpdateReturnPlanRatios } from "@/features/return-plan/hooks/useUpdateReturnPlanRatios";
 
 const MARGIN_RATE = 1.01; // 청약대행증거금 = 청약신청금액의 101%
 const FEE_RATE = 0.005; // 배정금액의 0.5%는 청약 수수료로 차감
@@ -99,10 +102,34 @@ function InfoRow({
 
 
 export function AllocationResultPage() {
-  useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const [splits, setSplits] = useState<[number, number]>([40, 80]);
   const [showEtfSheet, setShowEtfSheet] = useState(false);
+
+  const createPlan = useCreateReturnPlan();
+  const updateRatios = useUpdateReturnPlanRatios();
+  const isReserving = createPlan.isPending || updateRatios.isPending;
+
+  const handleReserve = async () => {
+    const subscriptionId = Number(id);
+    if (!id || Number.isNaN(subscriptionId)) {
+      console.error("subscriptionId가 없습니다");
+      return;
+    }
+    try {
+      const plan = await createPlan.mutateAsync(subscriptionId);
+      await updateRatios.mutateAsync({
+        returnPlanId: plan.returnPlanId,
+        allocations: splitsToAllocationItems(splits),
+      });
+      setShowEtfSheet(true);
+    } catch (e) {
+      // TODO: 에러 토스트 처리
+      console.error("리턴 플랜 예약 실패", e);
+      alert("리턴 플랜 분배 예약에 실패했어요. 잠시 후 다시 시도해주세요.");
+    }
+  };
 
   return (
     <div className="mobile-container flex flex-col h-screen bg-surface-bg">
@@ -184,10 +211,11 @@ export function AllocationResultPage() {
 
       <div className="px-4 pb-8 pt-3 bg-white border-t border-border">
         <button
-          onClick={() => setShowEtfSheet(true)}
-          className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
+          onClick={handleReserve}
+          disabled={isReserving}
+          className="w-full bg-primary text-white py-4 rounded-xl font-semibold disabled:opacity-50"
         >
-          분배 예약하기
+          {isReserving ? "예약 중..." : "분배 예약하기"}
         </button>
       </div>
 
