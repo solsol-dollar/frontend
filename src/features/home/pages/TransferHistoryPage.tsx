@@ -18,6 +18,7 @@ interface LocationState {
   accountType: AccountType
   usdBalance?: number
   krwBalance?: number
+  totalUsdBalance?: number
   balance?: number
 }
 
@@ -47,6 +48,7 @@ export function TransferHistoryPage() {
     accountType = 'SECURITIES',
     usdBalance,
     krwBalance,
+    totalUsdBalance,
     balance,
   } = (state as LocationState) ?? {}
 
@@ -72,12 +74,12 @@ export function TransferHistoryPage() {
                 <span className="text-sm text-text-tertiary">{accountNumber}</span>
               </div>
               <p className="text-3xl font-semibold text-text-primary mb-4">
-                ${((usdBalance ?? 0) + (krwBalance ?? 0) / 1385).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${(totalUsdBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
               <ActionButtons
                 labels={['옮기기', '환전']}
                 onPress={[
-                  () => navigate('/home/transfer', { state: { sourceName: accountName, sourceBalance: `$${usdBalance}` } }),
+                  () => navigate('/home/transfer', { state: { sourceName: accountName, sourceBalance: `$${(totalUsdBalance ?? 0).toFixed(2)}` } }),
                   () => setShowExchange(true),
                 ]}
               />

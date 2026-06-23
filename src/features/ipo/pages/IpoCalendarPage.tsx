@@ -434,7 +434,8 @@ export function IpoCalendarPage() {
   const navigate = useNavigate()
   const { state } = useLocation()
   const [tab, setTab] = useState<Tab>('청약 일정')
-  const [bottomFilter, setBottomFilter] = useState<BottomFilter>((state as { bottomFilter?: BottomFilter })?.bottomFilter ?? '전체')
+  const initialFilter = (state as { bottomFilter?: string })?.bottomFilter
+  const [bottomFilter, setBottomFilter] = useState<BottomFilter>(initialFilter === '관심' ? '관심' : '전체')
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
   const [calendarView, setCalendarView] = useState<CalendarView>('weekly')
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'))

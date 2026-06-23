@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import dayjs from 'dayjs'
 import { serviceApi } from '@/lib/axios'
 
 export interface FavoriteIpo {
@@ -14,8 +15,8 @@ export interface FavoriteIpo {
 }
 
 function calcDDay(dateStr: string): string {
-  const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  if (diff === 0) return 'D-day'
+  const diff = dayjs(dateStr).startOf('day').diff(dayjs().startOf('day'), 'day')
+  if (diff === 0) return 'D-Day'
   return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
 }
 

@@ -1,20 +1,8 @@
 import { ChevronDown } from 'lucide-react'
 import { SolBankLogo } from './SolBankLogo'
+import type { TxItem, TxGroup } from '@/features/home/types/transaction'
 
-export interface TxItem {
-  id: number
-  name: string
-  label: string
-  time: string
-  amount: number
-  balance?: number
-  type: '입금' | '출금' | '체크카드' | '환전'
-}
-
-export interface TxGroup {
-  date: string
-  items: TxItem[]
-}
+export type { TxItem, TxGroup }
 
 interface Props {
   groups: TxGroup[]

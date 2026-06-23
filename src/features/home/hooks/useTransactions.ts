@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { ledgerApi } from '@/lib/axios'
-import type { TxGroup } from '@/features/home/components/TransactionList'
+import type { TxGroup } from '@/features/home/types/transaction'
 
 export type ApiFilter = 'ALL' | 'IN' | 'OUT' | 'EXCHANGE' | 'CARD'
 
@@ -72,10 +72,11 @@ const TYPE_LABEL = { IN: '입금', OUT: '출금', EXCHANGE: '환전', CARD: '체
 function groupByDate(txList: Transaction[]): TxGroup[] {
   const map = new Map<string, TxGroup>()
   for (const tx of txList) {
-    const date = formatDate(tx.executedAt)
-    if (!map.has(date)) map.set(date, { date, items: [] })
+    const isoDate = tx.executedAt.substring(0, 10)
+    const displayDate = formatDate(tx.executedAt)
+    if (!map.has(isoDate)) map.set(isoDate, { date: displayDate, items: [] })
     const { name, label } = getTxDisplay(tx)
-    map.get(date)!.items.push({
+    map.get(isoDate)!.items.push({
       id: tx.id,
       name,
       label,

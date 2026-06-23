@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import sleepingIcon from '@/assets/home/sleeping.svg'
 import changeupCard from '@/assets/home/changeup-card.png'
 import { Header } from '@/components/common/Header'
+import { cn } from '@/lib/utils'
 import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 import { useFavoriteIpos, getIpoDisplay, type FavoriteIpo } from '@/features/home/hooks/useFavoriteIpos'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
@@ -61,11 +62,11 @@ export function HomePage() {
             </p>
             <div className="flex items-center justify-end gap-1">
               <p className="text-[14px] font-medium text-text-secondary">달러 환율</p>
-              <p className={`text-[14px] font-medium ${rateColor}`}>
+              <p className={cn('text-[14px] font-medium', rateColor)}>
                 {exchangeRate?.rate.toLocaleString('ko-KR') ?? '—'}
               </p>
               {exchangeRate?.changeRate != null && (
-                <p className={`text-[13px] font-light ${rateColor}`}>
+                <p className={cn('text-[13px] font-light', rateColor)}>
                   {changeSign}{exchangeRate.changeRate.toFixed(2)}%
                 </p>
               )}
@@ -96,7 +97,9 @@ export function HomePage() {
           <div className="bg-white rounded-xl">
             {/* CMA (증권) */}
             {assets?.securities && (
-              <button
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => navigate('/home/transfer/history', {
                   state: {
                     accountIds: [assets.securities.usdAccountId, assets.securities.krwAccountId],
@@ -104,10 +107,12 @@ export function HomePage() {
                     accountNumber: assets.securities.accountNumberMasked,
                     usdBalance: assets.securities.usdBalance,
                     krwBalance: assets.securities.krwBalance,
+                    totalUsdBalance: assets.securities.totalUsdBalance,
                     accountType: 'SECURITIES',
                   },
                 })}
-                className="w-full flex items-center gap-4 px-4 py-4 text-left"
+                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.click() }}
+                className="w-full flex items-center gap-4 px-4 py-4 text-left cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-[9px] font-bold leading-none">SOL</span>
@@ -121,19 +126,21 @@ export function HomePage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    navigate('/home/transfer', { state: { sourceName: 'CMA 계좌', sourceBalance: `$${assets.securities.totalUsdBalance}` } })
+                    navigate('/home/transfer', { state: { sourceName: 'CMA 계좌', sourceBalance: `$${assets.securities.totalUsdBalance.toFixed(2)}` } })
                   }}
                   className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary"
                 >
                   송금
                 </button>
-              </button>
+              </div>
             )}
 
             {/* 예금/적금 계좌 */}
             {assets?.accounts.map((acc) => (
-              <button
+              <div
                 key={acc.accountId}
+                role="button"
+                tabIndex={0}
                 onClick={() => navigate('/home/transfer/history', {
                   state: {
                     accountIds: [acc.accountId],
@@ -143,7 +150,8 @@ export function HomePage() {
                     accountType: acc.accountType,
                   },
                 })}
-                className="w-full flex items-center gap-4 px-4 py-4 text-left"
+                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.click() }}
+                className="w-full flex items-center gap-4 px-4 py-4 text-left cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-[9px] font-bold leading-none">SOL</span>
@@ -157,13 +165,13 @@ export function HomePage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    navigate('/home/transfer', { state: { sourceName: acc.accountName, sourceBalance: `$${acc.balance}` } })
+                    navigate('/home/transfer', { state: { sourceName: acc.accountName, sourceBalance: `$${acc.balance.toFixed(2)}` } })
                   }}
                   className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary"
                 >
                   송금
                 </button>
-              </button>
+              </div>
             ))}
           </div>
         </section>
@@ -216,7 +224,7 @@ export function HomePage() {
                   role="button"
                   tabIndex={0}
                   onClick={() => navigate(`/ipo/${ipo.ipoId}`)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/ipo/${ipo.ipoId}`) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/ipo/${ipo.ipoId}`) } }}
                   className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer"
                 >
                   <div className="flex items-center gap-[18px] min-w-0">
