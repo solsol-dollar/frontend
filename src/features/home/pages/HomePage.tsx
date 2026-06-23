@@ -134,8 +134,8 @@ export function HomePage() {
               </div>
             )}
 
-            {/* 예금/적금 계좌 */}
-            {assets?.accounts.map((acc) => (
+            {/* 예금/적금 계좌 — DEPOSIT 먼저, SAVINGS 나중 */}
+            {[...(assets?.accounts ?? [])].sort((a) => a.accountType === 'DEPOSIT' ? -1 : 1).map((acc) => (
               <div
                 key={acc.accountId}
                 role="button"
@@ -147,6 +147,7 @@ export function HomePage() {
                     accountNumber: acc.accountNumberMasked,
                     balance: acc.balance,
                     accountType: acc.accountType,
+                    maturityDate: acc.maturityDate,
                   },
                 })}
                 onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.click() }}
@@ -161,15 +162,17 @@ export function HomePage() {
                     ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    navigate('/home/transfer', { state: { fromAccountId: acc.accountId, sourceName: acc.accountName, sourceBalance: `$${acc.balance.toFixed(2)}` } })
-                  }}
-                  className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary"
-                >
-                  송금
-                </button>
+                {acc.accountType !== 'SAVINGS' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigate('/home/transfer', { state: { fromAccountId: acc.accountId, sourceName: acc.accountName, sourceBalance: `$${acc.balance.toFixed(2)}` } })
+                    }}
+                    className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary"
+                  >
+                    송금
+                  </button>
+                )}
               </div>
             ))}
           </div>

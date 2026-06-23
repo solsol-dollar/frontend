@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import dayjs from 'dayjs'
 import { Header } from '@/components/common/Header'
 import changeupCard from '@/assets/home/changeup-card.png'
 import { FilterSheet } from '../components/FilterSheet'
@@ -8,6 +9,7 @@ import { TransactionList } from '../components/TransactionList'
 import dollarIcon from '@/assets/home/dollar.svg'
 import wonIcon from '@/assets/home/won.svg'
 import { useTransactions, FILTER_LABEL_TO_API, type ApiFilter } from '@/features/home/hooks/useTransactions'
+import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 
 type AccountType = 'SECURITIES' | 'SAVINGS' | 'DEPOSIT'
 
@@ -20,6 +22,13 @@ interface LocationState {
   krwBalance?: number
   totalUsdBalance?: number
   balance?: number
+  maturityDate?: string | null
+}
+
+function calcDDay(dateStr: string): string {
+  const diff = dayjs(dateStr).startOf('day').diff(dayjs().startOf('day'), 'day')
+  if (diff === 0) return 'D-Day'
+  return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
 }
 
 const FILTER_OPTIONS: Record<AccountType, string[]> = {
@@ -50,7 +59,12 @@ export function TransferHistoryPage() {
     krwBalance,
     totalUsdBalance,
     balance,
+    maturityDate,
   } = (state as LocationState) ?? {}
+
+  const { data: assets } = useHomeAssets()
+  const cmaAccountId = assets?.securities?.usdAccountId
+  const cmaBalance = assets?.securities?.usdBalance ?? 0
 
   const [filterLabel, setFilterLabel] = useState('전체')
   const [showFilter, setShowFilter] = useState(false)
@@ -125,7 +139,7 @@ export function TransferHistoryPage() {
               <ActionButtons
                 labels={['채우기', '옮기기']}
                 onPress={[
-                  () => navigate('/home/fill', { state: { toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } }),
+                  () => navigate('/home/fill', { state: { fixedFromAccountId: cmaAccountId, fixedFromName: 'CMA 계좌', fixedFromBalance: `$${cmaBalance.toFixed(2)}`, toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } }),
                   () => navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(balance ?? 0).toFixed(2)}` } }),
                 ]}
               />
@@ -134,12 +148,21 @@ export function TransferHistoryPage() {
             <>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-base font-medium text-text-primary">{accountName}</span>
-                <span className="text-xs font-semibold text-primary bg-surface rounded-xl px-2 py-1">적금</span>
+                {maturityDate
+                  ? <span className="text-xs font-semibold text-primary bg-surface rounded-xl px-2 py-1">{calcDDay(maturityDate)}</span>
+                  : <span className="text-xs font-semibold text-primary bg-surface rounded-xl px-2 py-1">적금</span>
+                }
               </div>
               <p className="text-sm text-text-tertiary mb-2">{accountNumber}</p>
-              <p className="text-3xl font-semibold text-text-primary">
+              <p className="text-3xl font-semibold text-text-primary mb-4">
                 ${(balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
+              <button
+                onClick={() => navigate('/home/fill', { state: { toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } })}
+                className="w-full py-3 text-sm text-text-sub bg-surface-neutral rounded-xl"
+              >
+                채우기
+              </button>
             </>
           )}
         </div>

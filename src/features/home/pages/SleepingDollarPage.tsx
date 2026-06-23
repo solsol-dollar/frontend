@@ -9,10 +9,9 @@ import { useIdleStatus } from '@/features/home/hooks/useIdleStatus'
 import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 
 const CONDITIONS = [
-  '외화예수금 잔액 $1,000 이상',
+  '외화예수금 잔액 $500 이상',
   '14일 이상 미사용',
   '관심 IPO 청약 14일 이상 남음',
-  '환불금 수령 7일 초과',
 ]
 
 export function SleepingDollarPage() {
@@ -63,8 +62,7 @@ export function SleepingDollarPage() {
             </div>
           </div>
 
-          {idle && (
-            <div className="bg-surface-neutral rounded-2xl px-5 py-4 flex flex-col gap-4">
+          <div className="bg-surface-neutral rounded-2xl px-5 py-4 flex flex-col gap-4">
               {CONDITIONS.map((cond) => (
                 <div key={cond} className="flex items-center gap-3">
                   <div className="w-5 h-5 rounded-full bg-surface flex items-center justify-center flex-shrink-0">
@@ -74,7 +72,6 @@ export function SleepingDollarPage() {
                 </div>
               ))}
             </div>
-          )}
         </div>
 
         <div className="flex flex-col gap-3 px-5 pt-5 pb-6">

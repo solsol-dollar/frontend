@@ -13,6 +13,9 @@ export function FillPage() {
   const toAccountId: number | undefined = state?.toAccountId
   const destName: string = state?.destName ?? '외화 예금'
   const destBalance: string = state?.destBalance ?? '$0.00'
+  const fixedFromAccountId: number | undefined = state?.fixedFromAccountId
+  const fixedFromName: string | undefined = state?.fixedFromName
+  const fixedFromBalance: string | undefined = state?.fixedFromBalance
 
   const { data: assets } = useHomeAssets()
 
@@ -45,14 +48,21 @@ export function FillPage() {
       })) ?? []),
   ]
 
+  const isFixed = fixedFromAccountId !== undefined
   const [showSheet, setShowSheet] = useState(false)
-  const [selectedId, setSelectedId] = useState<number | null>(null)
-  useEffect(() => {
-    const t = setTimeout(() => setShowSheet(true), 50)
-    return () => clearTimeout(t)
-  }, [])
+  const [selectedId, setSelectedId] = useState<number | null>(fixedFromAccountId ?? null)
 
-  const selected = sourceAccounts.find((a) => a.accountId === selectedId) ?? null
+  useEffect(() => {
+    if (!isFixed) {
+      const t = setTimeout(() => setShowSheet(true), 50)
+      return () => clearTimeout(t)
+    }
+  }, [isFixed])
+
+  const selected = isFixed
+    ? { accountId: fixedFromAccountId!, displayName: fixedFromName ?? 'CMA 계좌', accountName: fixedFromName ?? 'CMA 계좌', accountNumber: '', balance: parseFloat((fixedFromBalance ?? '$0').replace(/[^0-9.]/g, '')) }
+    : sourceAccounts.find((a) => a.accountId === selectedId) ?? null
+
   const { chars, amount, pushChar, popChar } = useAnimatedInput()
   const canProceed = !!selected && amount.length > 0 && amount !== '.'
 
@@ -69,24 +79,34 @@ export function FillPage() {
       <Header showBack title="채우기" showNotification={false} showMypage={false} />
 
       <div className="flex-1 flex flex-col px-5 pt-6 min-h-0">
-        <button onClick={() => setShowSheet(true)} className="text-left mb-5 h-[52px] flex flex-col justify-start">
-          {selected ? (
-            <>
-              <p className="text-lg leading-snug">
-                <span className="font-bold text-text-primary">{selected.displayName}</span>
-                <span className="text-text-secondary"> 에서</span>
-              </p>
-              <p className="text-sm text-text-tertiary mt-1">
-                잔액 ${selected.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-lg text-text-tertiary mt-2">계좌를 선택하세요</p>
-              <p className="text-sm text-text-tertiary mt-1 invisible">잔액</p>
-            </>
-          )}
-        </button>
+        {isFixed ? (
+          <div className="text-left mb-5 h-[52px] flex flex-col justify-start">
+            <p className="text-lg leading-snug">
+              <span className="font-bold text-text-primary">{selected?.displayName}</span>
+              <span className="text-text-secondary"> 에서</span>
+            </p>
+            <p className="text-sm text-text-tertiary mt-1">잔액 {fixedFromBalance}</p>
+          </div>
+        ) : (
+          <button onClick={() => setShowSheet(true)} className="text-left mb-5 h-[52px] flex flex-col justify-start">
+            {selected ? (
+              <>
+                <p className="text-lg leading-snug">
+                  <span className="font-bold text-text-primary">{selected.displayName}</span>
+                  <span className="text-text-secondary"> 에서</span>
+                </p>
+                <p className="text-sm text-text-tertiary mt-1">
+                  잔액 ${selected.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-lg text-text-tertiary mt-2">계좌를 선택하세요</p>
+                <p className="text-sm text-text-tertiary mt-1 invisible">잔액</p>
+              </>
+            )}
+          </button>
+        )}
 
         <div className="mb-8">
           <p className="text-lg leading-snug">
@@ -151,11 +171,11 @@ export function FillPage() {
         ))}
       </div>
 
-      <div
+      {!isFixed && <div
         className={`fixed inset-0 z-20 bg-black/20 transition-opacity duration-300 ${showSheet ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setShowSheet(false)}
-      />
-      <div
+      />}
+      {!isFixed && <div
         className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-3xl z-30 transition-transform duration-300 ease-out ${showSheet ? 'translate-y-0' : 'translate-y-full'}`}
       >
         <div className="flex justify-center pt-3 pb-2">
@@ -180,7 +200,7 @@ export function FillPage() {
           ))}
         </div>
         <div className="pb-8" />
-      </div>
+      </div>}
     </div>
   )
 }
