@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PinKeypad } from '@/features/onboarding/components/PinKeypad'
 import { LoadingStep } from '@/features/onboarding/components/LoadingStep'
 import { AccountSelectStep } from '@/features/onboarding/components/AccountSelectStep'
-import { loginWithPin } from '@/lib/auth'
+import { loginWithPin, completeOnboarding } from '@/lib/auth'
 
 type Step = 'splash' | 'pin' | 'loading' | 'accounts'
 
@@ -57,7 +57,15 @@ export function OnboardingPage() {
         onDone={() => (isCompleted ? navigate('/home') : setStep('accounts'))}
       />
     )
-  if (step === 'accounts') return <AccountSelectStep onConfirm={() => navigate('/home')} />
+  if (step === 'accounts')
+    return (
+      <AccountSelectStep
+        onConfirm={async () => {
+          await completeOnboarding()
+          navigate('/home')
+        }}
+      />
+    )
 
   return (
     <div className="mobile-container flex flex-col h-screen bg-white px-4 pb-10">
