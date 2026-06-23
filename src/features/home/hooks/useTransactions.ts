@@ -98,7 +98,8 @@ export function useTransactions(accountIds: number[], filter: ApiFilter) {
       const res = (await ledgerApi.get(`/api/ledger/api/v1/transactions?${params}`)) as unknown as {
         data: Transaction[]
       }
-      return groupByDate(res.data)
+      const unique = res.data.filter((tx, i, arr) => arr.findIndex((t) => t.id === tx.id) === i)
+      return groupByDate(unique)
     },
     enabled: accountIds.length > 0,
   })

@@ -16,6 +16,8 @@ export interface TransferResult {
   currency: string
   status: string
   completedAt: string
+  executedAt: string
+
 }
 
 export function useTransfer() {
