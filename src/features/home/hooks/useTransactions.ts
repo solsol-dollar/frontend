@@ -58,7 +58,7 @@ function getTxDisplay(tx: Transaction): { name: string; label: string } {
     return { name: tx.fromAccount?.accountName ?? '', label: '에서 입금' }
   if (tx.type === 'CARD')
     return { name: tx.fromAccount?.accountName ?? '', label: ' 카드결제' }
-  return { name: tx.toAccount?.accountName ?? '', label: '으로 출금' }
+  return { name: tx.toAccount?.accountName ?? '', label: '로 출금' }
 }
 
 function getTxAmount(tx: Transaction): number {

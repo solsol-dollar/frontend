@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Header } from '@/components/common/Header'
 import shinhanIcon from '@/assets/home/shinhan-logo.svg'
@@ -6,8 +7,12 @@ import type { ExchangeResult } from '@/features/home/hooks/useExchange'
 export function ExchangeCompletePage() {
   const navigate = useNavigate()
   const { state } = useLocation()
-  const result: ExchangeResult = state?.result
+  const result: ExchangeResult | undefined = state?.result
   const isDollarToWon = result?.toCurrency === 'KRW'
+
+  useEffect(() => {
+    if (!result) navigate('/home', { replace: true })
+  }, [result, navigate])
 
   const fromText = isDollarToWon
     ? `$${result?.sourceAmount?.toFixed(2) ?? '0.00'}`

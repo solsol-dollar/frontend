@@ -51,7 +51,10 @@ export function TransferPage() {
   ]
 
   const selected = destAccounts.find((a) => a.accountId === selectedId) ?? null
-  const canProceed = !!selected && amount.length > 0 && amount !== '.'
+  const sourceFunds = parseFloat(sourceBalance.replace(/[^0-9.]/g, ''))
+  const amountNum = parseFloat(amount) || 0
+  const isOverBalance = amountNum > 0 && amountNum > sourceFunds
+  const canProceed = !!selected && amountNum > 0 && amount !== '.' && !isOverBalance
 
   const onKey = (k: string) => {
     if (k === '←') { popChar(); return }
@@ -74,7 +77,7 @@ export function TransferPage() {
             <span className="font-bold text-text-primary">{sourceName}</span>
             <span className="text-text-secondary"> 에서</span>
           </p>
-          <p className="text-sm text-text-tertiary mt-1">잔액 {sourceBalance}</p>
+          <p className={`text-sm mt-1 ${isOverBalance ? 'text-danger' : 'text-text-tertiary'}`}>잔액 {sourceBalance}</p>
         </div>
 
         <button onClick={() => setShowSheet(true)} className="text-left mb-8 h-[52px] flex flex-col justify-start">

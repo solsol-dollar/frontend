@@ -42,7 +42,7 @@ export function ExchangePage() {
   }
 
   const amountNum = parseFloat(amount) || 0
-  const convertedAmount = amountNum > 0
+  const convertedAmount = amountNum > 0 && rate > 0
     ? isDollarToWon
       ? (amountNum * rate).toLocaleString('ko-KR', { maximumFractionDigits: 0 })
       : (amountNum / rate).toLocaleString('en-US', { maximumFractionDigits: 2 })

@@ -15,8 +15,10 @@ export function TransferConfirmPage() {
   const amount: string = state?.amount ?? '0'
 
   const amountNum = parseFloat(amount)
-  const sourceAfter = (parseFloat(sourceBalance.replace('$', '')) - amountNum).toFixed(2)
-  const destAfter = (parseFloat(destBalance.replace('$', '')) + amountNum).toFixed(2)
+  const sourceFunds = parseFloat(sourceBalance.replace(/[^0-9.]/g, ''))
+  const sourceAfter = (sourceFunds - amountNum).toFixed(2)
+  const destAfter = (parseFloat(destBalance.replace(/[^0-9.]/g, '')) + amountNum).toFixed(2)
+  const isInvalid = !amountNum || amountNum <= 0 || amountNum > sourceFunds || !fromAccountId || !toAccountId
 
   const { mutateAsync: transfer, isPending } = useTransfer()
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -25,7 +27,7 @@ export function TransferConfirmPage() {
     setErrorMsg(null)
     try {
       const result = await transfer({ fromAccountId, toAccountId, amount: amountNum })
-      navigate('/home/transfer/complete', { state: { destName, amount, result } })
+      navigate('/home/transfer/complete', { state: { account: { displayName: destName }, amount, result } })
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       setErrorMsg(msg ?? '송금 중 오류가 발생했습니다')
@@ -67,7 +69,7 @@ export function TransferConfirmPage() {
       <div className="px-4 pb-10">
         <button
           onClick={handleConfirm}
-          disabled={isPending}
+          disabled={isPending || isInvalid}
           className="w-full bg-primary text-white py-4 rounded-xl font-semibold disabled:opacity-40"
         >
           {isPending ? '처리 중...' : '옮기기'}

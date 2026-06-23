@@ -136,7 +136,7 @@ export function HomePage() {
                         accountType: 'SECURITIES',
                       },
                     })}
-                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.click() }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click() } }}
                     className="w-full flex items-center gap-4 px-4 py-4 text-left cursor-pointer"
                   >
                     <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
@@ -174,7 +174,7 @@ export function HomePage() {
                         accountType: acc.accountType,
                       },
                     })}
-                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.click() }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click() } }}
                     className="w-full flex items-center gap-4 px-4 py-4 text-left cursor-pointer"
                   >
                     <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">

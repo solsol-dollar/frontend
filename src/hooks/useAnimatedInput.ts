@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 
 export interface AnimatedChar {
   char: string
@@ -9,6 +9,11 @@ export interface AnimatedChar {
 export function useAnimatedInput() {
   const [chars, setChars] = useState<AnimatedChar[]>([])
   const nextId = useRef(0)
+  const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
+
+  useEffect(() => {
+    return () => { timers.current.forEach(clearTimeout) }
+  }, [])
 
   const amount = chars.filter((c) => !c.exiting).map((c) => c.char).join('')
 
@@ -22,9 +27,11 @@ export function useAnimatedInput() {
       const last = [...prev].reverse().find((c) => !c.exiting)
       if (!last) return prev
       const updated = prev.map((c) => (c.id === last.id ? { ...c, exiting: true } : c))
-      setTimeout(() => {
+      const t = setTimeout(() => {
         setChars((p) => p.filter((c) => c.id !== last.id))
+        timers.current.delete(t)
       }, 130)
+      timers.current.add(t)
       return updated
     })
   }, [])
