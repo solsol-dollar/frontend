@@ -6,11 +6,12 @@ function shuffle(arr: number[]) {
 }
 
 interface Props {
-  onEnter: () => void
+  onEnter: (pin: string) => void
   onBack: () => void
+  error?: string | null
 }
 
-export function PinKeypad({ onEnter, onBack }: Props) {
+export function PinKeypad({ onEnter, onBack, error }: Props) {
   const [pin, setPin] = useState<number[]>([])
   const [nums, setNums] = useState(() => shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]))
   const enterTimerRef = useRef<number | null>(null)
@@ -31,7 +32,7 @@ export function PinKeypad({ onEnter, onBack }: Props) {
       setPin(next)
       if (next.length === 6) {
         if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current)
-        enterTimerRef.current = window.setTimeout(onEnter, 300)
+        enterTimerRef.current = window.setTimeout(() => onEnter(next.join('')), 300)
       }
     }
   }
@@ -62,16 +63,21 @@ export function PinKeypad({ onEnter, onBack }: Props) {
             <p className="text-sm text-text-secondary mt-2">비밀번호를 입력해주세요.</p>
           </div>
 
-          <div className="flex gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  'w-4 h-4 rounded-full border-2 transition-colors',
-                  i < pin.length ? 'bg-primary border-primary' : 'border-gray-300',
-                )}
-              />
-            ))}
+          <div className="flex flex-col items-center">
+            <div className="flex gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'w-4 h-4 rounded-full border-2 transition-colors',
+                    error ? 'bg-red-400 border-red-400' : i < pin.length ? 'bg-primary border-primary' : 'border-gray-300',
+                  )}
+                />
+              ))}
+            </div>
+            <div className="h-6 flex items-center mt-3">
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
           </div>
         </div>
       </div>

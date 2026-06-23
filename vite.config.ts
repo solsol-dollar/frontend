@@ -46,6 +46,16 @@ export default defineConfig({
   ],
   server: {
     proxy: {
+      '/api/service': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/service/, ''),
+      },
+      '/api/ledger': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/ledger/, ''),
+      },
       '/api/v1': {
         target: 'http://localhost:8081',
         changeOrigin: true,
