@@ -1,27 +1,11 @@
 import axios from 'axios'
 
-const DEV_TOKEN = ''
-
-export function getToken(): string | null {
-  return DEV_TOKEN || localStorage.getItem('accessToken')
-}
-
-export function setToken(token: string) {
-  localStorage.setItem('accessToken', token)
-}
-
 function createInstance(baseURL: string) {
   const instance = axios.create({
     baseURL,
     timeout: 10000,
     withCredentials: true,
     headers: { 'Content-Type': 'application/json' },
-  })
-
-  instance.interceptors.request.use((config) => {
-    const token = getToken()
-    if (token) config.headers['Authorization'] = `Bearer ${token}`
-    return config
   })
 
   instance.interceptors.response.use(
@@ -32,5 +16,8 @@ function createInstance(baseURL: string) {
   return instance
 }
 
+// 자금/원장 (청약, 리턴플랜, 계좌) — 직접 8080으로
 export const ledgerApi = createInstance(import.meta.env.VITE_LEDGER_URL ?? 'http://localhost:8080')
+
+// 조회/AI + 인증 (IPO, 증권, 홈, auth) — Vite proxy: /api/v1, /api/service → 8081
 export const serviceApi = createInstance('')
