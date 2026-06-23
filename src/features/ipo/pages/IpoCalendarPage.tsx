@@ -292,7 +292,9 @@ function WeekDivider({ label }: { label: string }) {
 }
 
 function computeDDay(subscriptionEnd: string): { label: string; isEnded: boolean } {
-  const diff = dayjs(subscriptionEnd).startOf('day').diff(dayjs().startOf('day'), 'day')
+  const d = dayjs(subscriptionEnd)
+  if (!subscriptionEnd || !d.isValid()) return { label: '', isEnded: false }
+  const diff = d.startOf('day').diff(dayjs().startOf('day'), 'day')
   if (diff < 0) return { label: '', isEnded: true }
   if (diff === 0) return { label: 'D-Day', isEnded: false }
   return { label: `D-${diff}`, isEnded: false }
