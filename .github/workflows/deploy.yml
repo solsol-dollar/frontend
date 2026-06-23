@@ -1,12 +1,12 @@
 # Eclipse Frontend — S3 + CloudFront 배포 워크플로우
 #
-# 필요 GitHub Secrets (Settings → Secrets and variables → Actions):
-#   AWS_ACCESS_KEY_ID       — AWS IAM 사용자 액세스 키 ID
-#   AWS_SECRET_ACCESS_KEY   — AWS IAM 사용자 시크릿 액세스 키
-#   S3_BUCKET               — S3 버킷명 (e.g. eclipse-frontend-prod)
-#   CF_DISTRIBUTION_ID      — CloudFront 배포 ID (e.g. EXXXXXXXXXX)
-#   VITE_LEDGER_URL         — ledger-app API URL (e.g. https://api.yourdomain.com/api/ledger)
-#   VITE_SERVICE_URL        — service-app API URL (e.g. https://api.yourdomain.com/api/service)
+# 필요 GitHub Secrets:
+#   VITE_LEDGER_URL      — ledger-app API URL
+#   VITE_SERVICE_URL     — service-app API URL
+#   S3_BUCKET            — S3 버킷명
+#   CF_DISTRIBUTION_ID   — CloudFront 배포 ID
+#
+# AWS 인증은 OIDC로 처리 (별도 Access Key 불필요)
 
 name: Deploy Frontend
 
@@ -14,9 +14,16 @@ on:
   push:
     branches: [main]
 
+env:
+  AWS_ROLE_ARN: arn:aws:iam::496009355626:role/eclipse-github-actions-role
+  AWS_REGION: ap-northeast-2
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -39,9 +46,8 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-2
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Sync to S3 (assets - long cache)
         run: |
