@@ -48,7 +48,7 @@ import { NotificationSettingsPage } from '@/features/mypage/pages/NotificationSe
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/home" replace />,
+    element: <Navigate to="/onboarding" replace />,
   },
   {
     path: '/onboarding',

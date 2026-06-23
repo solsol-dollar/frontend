@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { ipoApi, type IpoListItem } from '@/features/ipo/api/ipoApi'
 import { ipoKeys, useIpoList } from '@/features/ipo/hooks/useIpo'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
+import { SubscriptionHistory } from '@/features/ipo/components/SubscriptionHistory'
 
 type Tab = '청약 일정' | '청약내역/취소'
 type BottomFilter = '전체' | '관심'
@@ -36,8 +37,8 @@ interface Ipo {
   logo_color: string
   logo_url: string | null
   status: 'closed' | 'open' | 'upcoming'
-  subscription_start: string
-  subscription_end: string
+  subscription_start: string | null
+  subscription_end: string | null
   listing_date: string
   price: number
   price_confirmed: number | null
@@ -56,7 +57,8 @@ function formatPrice(price: number): string {
   return `USD ${price.toFixed(2)}`
 }
 
-function formatPeriod(start: string, end: string): string {
+function formatPeriod(start: string | null, end: string | null): string {
+  if (!start || !end) return '-'
   const s = dayjs(start).format('YYYY.MM.DD')
   const e = dayjs(end)
   return start.substring(0, 4) === end.substring(0, 4)
@@ -298,7 +300,7 @@ function computeDDay(subscriptionEnd: string): { label: string; isEnded: boolean
 
 function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
   const isUpcoming = ipo.status === 'upcoming'
-  const { label: dDayLabel } = computeDDay(isUpcoming ? ipo.subscription_start : ipo.subscription_end)
+  const { label: dDayLabel } = computeDDay((isUpcoming ? ipo.subscription_start : ipo.subscription_end) ?? '')
   const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
 
   return (
@@ -594,7 +596,7 @@ export function IpoCalendarPage() {
     container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 30
   }
 
-  const allIpoDates = filteredIpos.map((ipo) => ipo.subscription_start)
+  const allIpoDates = filteredIpos.map((ipo) => ipo.subscription_start).filter((d): d is string => d !== null)
   const uniqueDates = bottomFilter === '관심'
     ? Array.from(new Set(allIpoDates)).sort()
     : Array.from(new Set([todayStr, ...allIpoDates])).sort()
@@ -877,13 +879,7 @@ export function IpoCalendarPage() {
         </>
       )}
 
-      {tab === '청약내역/취소' && (
-        <div className="px-4 pt-4 space-y-3">
-          {ipos.map((ipo) => (
-            <IpoCard key={ipo.id} ipo={ipo} onClick={() => navigate(`/ipo/${ipo.id}`)} isWishlisted={wishlistedIds.has(ipo.id)} onWishlistToggle={() => toggleWishlist(ipo.id)} />
-          ))}
-        </div>
-      )}
+      {tab === '청약내역/취소' && <SubscriptionHistory />}
 
       {tab === "청약 일정" && (
         <div className="fixed bottom-[91px] right-4 z-20">
