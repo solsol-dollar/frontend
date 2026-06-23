@@ -19,12 +19,10 @@ export function SleepingDollarPage() {
   const navigate = useNavigate()
   const { data: idleStatus } = useIdleStatus()
   const { data: assets } = useHomeAssets()
-
+  const savingsAccount = assets?.accounts.find((a) => a.accountType === 'SAVINGS')
   const idle = idleStatus?.isIdle ?? false
   const idleBalance = idleStatus?.idleBalance
   const idleDays = idleStatus?.idleDays ?? 0
-
-  const depositAccount = assets?.accounts.find((a) => a.accountType === 'DEPOSIT')
 
   const balanceText = idleBalance != null
     ? `$${idleBalance.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
@@ -94,11 +92,14 @@ export function SleepingDollarPage() {
             <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />
           </button>
 
-          <button
-            onClick={() => navigate('/home/fill', {
-              state: depositAccount
-                ? { destName: depositAccount.accountName, destBalance: `$${depositAccount.balance.toFixed(2)}` }
-                : undefined,
+          {savingsAccount && <button
+            onClick={() => navigate('/home/transfer', {
+              state: {
+                fromAccountId: assets?.securities?.usdAccountId,
+                sourceName: 'CMA 계좌',
+                sourceBalance: `$${(assets?.securities?.usdBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+                toAccountId: savingsAccount.accountId,
+              },
             })}
             className="w-full bg-white rounded-2xl px-5 py-4 flex items-center gap-4 text-left"
           >
@@ -108,18 +109,10 @@ export function SleepingDollarPage() {
               <p className="text-xs text-text-secondary mt-0.5">쉬는 달러를 SOLSOL하게 적립예금으로!</p>
             </div>
             <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />
-          </button>
+          </button>}
         </div>
       </div>
 
-      <div className="px-4 pb-5 pt-2">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-full bg-primary text-white py-4 rounded-2xl font-semibold"
-        >
-          완료
-        </button>
-      </div>
     </div>
   )
 }

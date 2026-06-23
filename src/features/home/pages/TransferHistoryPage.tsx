@@ -125,8 +125,8 @@ export function TransferHistoryPage() {
               <ActionButtons
                 labels={['채우기', '옮기기']}
                 onPress={[
-                  () => navigate('/home/fill', { state: { destName: accountName, destBalance: `$${balance}` } }),
-                  () => navigate('/home/transfer', { state: { sourceName: accountName, sourceBalance: `$${balance}` } }),
+                  () => navigate('/home/fill', { state: { toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } }),
+                  () => navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(balance ?? 0).toFixed(2)}` } }),
                 ]}
               />
             </>

@@ -125,7 +125,7 @@ export function HomePage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    navigate('/home/transfer', { state: { sourceName: 'CMA 계좌', sourceBalance: `$${assets.securities.totalUsdBalance.toFixed(2)}` } })
+                    navigate('/home/transfer', { state: { fromAccountId: assets.securities.usdAccountId, sourceName: 'CMA 계좌', sourceBalance: `$${assets.securities.usdBalance.toFixed(2)}` } })
                   }}
                   className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary"
                 >
@@ -164,7 +164,7 @@ export function HomePage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    navigate('/home/transfer', { state: { sourceName: acc.accountName, sourceBalance: `$${acc.balance.toFixed(2)}` } })
+                    navigate('/home/transfer', { state: { fromAccountId: acc.accountId, sourceName: acc.accountName, sourceBalance: `$${acc.balance.toFixed(2)}` } })
                   }}
                   className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary"
                 >
