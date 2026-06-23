@@ -9,3 +9,5 @@ dist-ssr/
 .vite/
 *.tsbuildinfo
 coverage/
+.idea/
+.env.production

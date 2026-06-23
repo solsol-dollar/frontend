@@ -1,4 +1,4 @@
-import { Bell, Settings, Search } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 interface HeaderProps {
@@ -9,6 +9,7 @@ interface HeaderProps {
   showSearch?: boolean
   showSettings?: boolean
   rightAction?: React.ReactNode
+  onSearchClick?: () => void
 }
 
 export function Header({
@@ -19,13 +20,14 @@ export function Header({
   showSearch = false,
   showSettings = false,
   rightAction,
+  onSearchClick,
 }: HeaderProps) {
   const navigate = useNavigate()
 
   // 뒤로가기 + 타이틀: 타이틀을 절대 중앙 정렬
   if (showBack) {
     return (
-      <header className="sticky top-0 z-10 bg-white relative flex items-center justify-between px-4 h-14">
+      <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-[56px]">
         <button onClick={() => navigate(-1)} className="p-1 -ml-1 z-10">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -38,21 +40,21 @@ export function Header({
           </span>
         )}
 
-        <div className="flex items-center gap-2 z-10">
+        <div className="flex items-center gap-4 z-10">
           {rightAction}
           {showSettings && (
             <button onClick={() => navigate('/notifications/settings')} className="p-1">
               <Settings size={20} className="text-text-primary" />
             </button>
           )}
-          {showSearch && (
-            <button className="p-1">
-              <Search size={20} className="text-text-primary" />
+          {showNotification && (
+            <button onClick={() => navigate('/notifications')}>
+              <img src="/icons/Bell.svg" width={25} height={25} alt="" />
             </button>
           )}
-          {showNotification && (
-            <button onClick={() => navigate('/notifications')} className="p-1">
-              <Bell size={22} className="text-text-primary" />
+          {showSearch && (
+            <button onClick={onSearchClick}>
+              <img src="/icons/search.svg" width={19} height={19} alt="" />
             </button>
           )}
         </div>
@@ -74,14 +76,14 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-3">
-        {showSearch && (
-          <button className="p-1">
-            <Search size={20} className="text-text-primary" />
+        {showNotification && (
+          <button onClick={() => navigate('/notifications')}>
+            <img src="/icons/Bell.svg" width={25} height={25} alt="" />
           </button>
         )}
-        {showNotification && (
-          <button onClick={() => navigate('/notifications')} className="p-1">
-            <Bell size={22} className="text-text-primary" />
+        {showSearch && (
+          <button>
+            <img src="/icons/search.svg" width={19} height={19} alt="" />
           </button>
         )}
         {showMypage && (

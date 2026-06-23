@@ -1,99 +1,701 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LayoutGrid, List } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
-import { Header } from '@/components/common/Header'
+import { ipoApi, type IpoListItem } from '@/features/ipo/api/ipoApi'
+import { ipoKeys, useIpoList } from '@/features/ipo/hooks/useIpo'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 
 type Tab = '청약 일정' | '청약내역/취소'
-type Filter = '전체' | '청약가능' | '청약예정'
-type ViewMode = 'list' | 'calendar'
+type BottomFilter = '전체' | '관심'
+type CalendarView = 'weekly' | 'monthly'
 
-const IPOS = [
-  {
-    id: 1, date: '14일', ticker: 'CRWV', name: 'CoreWeave', color: '#FF6830',
-    status: '청약가능' as const, price: 'USD 20,000', startDate: '2026.06.02',
-    endDate: '2026.06.14', returnAmount: '+$1,432.33 ~ +$3,003',
-  },
-  {
-    id: 2, date: '24일', ticker: 'SPCE', name: 'SpaceX', color: '#1C1FE8',
-    status: '청약예정' as const, price: 'USD 20,000', startDate: '2026.06.10',
-    endDate: '2026.06.24', returnAmount: '+$830 ~ +$1,200',
-  },
-]
+const WEEK_SLIDE_DURATION_MS = 400
+const DATE_SCROLL_TOP_PADDING = 16
 
-const CALENDAR_DAYS = Array.from({ length: 30 }, (_, i) => i + 1)
+const EVENT_COLORS = {
+  '청약시작': { bg: '#FFD6DB', bar: '#E2468B' },
+  '청약마감': { bg: '#C7E5FF', bar: '#3660AC' },
+  '상장(예정)일': { bg: '#F0F3EE', bar: '#019989' },
+} as const
 
-function IpoCard({ ipo, onClick }: { ipo: typeof IPOS[0]; onClick: () => void }) {
+type EventType = keyof typeof EVENT_COLORS
+
+interface CalendarEvent {
+  id: number
+  date: string
+  type: EventType
+  name: string
+}
+
+interface Ipo {
+  id: number
+  company: string
+  ticker: string
+  logo_color: string
+  logo_url: string | null
+  status: 'closed' | 'open' | 'upcoming'
+  subscription_start: string
+  subscription_end: string
+  listing_date: string
+  price: number
+  price_confirmed: number | null
+  is_favorite: boolean
+  current_price: number | null
+  listing_change_pct: number | null
+}
+
+function getAbbr(company: string): string {
+  const words = company.split(/(?=[A-Z])|[\s-]/).filter(Boolean)
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+  return company.substring(0, 2).toUpperCase()
+}
+
+function formatPrice(price: number): string {
+  return `USD ${price.toFixed(2)}`
+}
+
+function formatPeriod(start: string, end: string): string {
+  const s = dayjs(start).format('YYYY.MM.DD')
+  const e = dayjs(end)
+  return start.substring(0, 4) === end.substring(0, 4)
+    ? `${s} ~ ${e.format('MM.DD')}`
+    : `${s} ~ ${e.format('YYYY.MM.DD')}`
+}
+
+function deriveCalendarEvents(ipos: Ipo[]): CalendarEvent[] {
+  const events: CalendarEvent[] = []
+  for (const ipo of ipos) {
+    if (ipo.listing_date) {
+      events.push({ id: ipo.id, date: ipo.listing_date, type: '상장(예정)일', name: ipo.company })
+    }
+    if (ipo.subscription_start) {
+      events.push({ id: ipo.id, date: ipo.subscription_start, type: '청약시작', name: ipo.company })
+    }
+    if (ipo.subscription_end) {
+      events.push({ id: ipo.id, date: ipo.subscription_end, type: '청약마감', name: ipo.company })
+    }
+  }
+  return events
+}
+
+function mapApiToIpo(raw: IpoListItem): Ipo {
+  return {
+    id: raw.id,
+    company: raw.companyName,
+    ticker: raw.ticker,
+    logo_color: generateLogoColor(raw.ticker),
+    logo_url: raw.logoUrl,
+    status: (raw.ipoStatus?.toLowerCase() ?? 'upcoming') as Ipo['status'],
+    subscription_start: raw.subscriptionStartDate,
+    subscription_end: raw.subscriptionEndDate,
+    listing_date: raw.listingDate,
+    price: raw.confirmedOfferPrice ?? raw.offerPriceMin ?? 0,
+    price_confirmed: raw.confirmedOfferPrice,
+    is_favorite: raw.isFavorite,
+    current_price: raw.currentPrice ?? null,
+    listing_change_pct: raw.priceChangePercent ?? null,
+  }
+}
+
+const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
+
+function getMonthWeeks(month: dayjs.Dayjs): dayjs.Dayjs[][] {
+  const firstDay = month.startOf("month");
+  const lastDay = month.endOf("month");
+  const firstMon = firstDay.subtract((firstDay.day() + 6) % 7, "day");
+  const weeks: dayjs.Dayjs[][] = [];
+  let cur = firstMon;
+  while (cur.isBefore(lastDay) || cur.isSame(lastDay, "day")) {
+    weeks.push(Array.from({ length: 5 }, (_, i) => cur.add(i, "day")));
+    cur = cur.add(7, "day");
+  }
+  return weeks;
+}
+
+function MonthlyCalendarView({
+  month,
+  events,
+  todayStr,
+  onShowMore,
+  onNavigate,
+}: {
+  month: dayjs.Dayjs;
+  events: CalendarEvent[];
+  todayStr: string;
+  onShowMore: (date: string, events: CalendarEvent[]) => void;
+  onNavigate: (id: number) => void;
+}) {
+  const weeks = getMonthWeeks(month);
   return (
-    <button onClick={onClick} className="w-full bg-white border border-border rounded-2xl p-4 text-left">
-      <div className="flex items-start gap-3">
+    <div className="pb-[10px]">
+      <div className="relative my-[10px] flex items-center justify-center">
+        <img
+          src="/icons/Line.svg"
+          className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full"
+          alt=""
+        />
+        <span className="relative bg-white px-2 text-[14px] font-medium text-[#9AA0AB]">
+          {month.format("YYYY년 M월")}
+        </span>
+      </div>
+      {weeks.map((week, wi) => (
         <div
-          className="w-12 h-12 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-          style={{ backgroundColor: ipo.color }}
+          key={wi}
+          className={cn(
+            "grid grid-cols-5 h-[100px]",
+            wi > 0 && "border-t border-[#f0f1f4]",
+          )}
         >
-          {ipo.ticker.slice(0, 2)}
+          {week.map((day) => {
+            const dateStr = day.format("YYYY-MM-DD");
+            const isCurrentMonth = day.month() === month.month();
+            const isToday = dateStr === todayStr;
+            const dayEvents = events.filter((e) => e.date === dateStr);
+            const hasEvents = dayEvents.length > 0;
+            return (
+              <div key={dateStr} className="flex flex-col pt-[10px] min-w-0">
+                {isCurrentMonth && (
+                  <>
+                    <div className="flex justify-center mb-[6px]">
+                      <span
+                        className={cn(
+                          "text-[16px] font-semibold leading-none w-[28px] h-[28px] flex items-center justify-center rounded-[6px]",
+                          isToday
+                            ? "bg-[#E8E9EC] text-[#1A1A1A]"
+                            : hasEvents
+                              ? "text-[#1A1A1A]"
+                              : "text-[#C8CBD2]",
+                        )}
+                      >
+                        {day.date()}
+                      </span>
+                    </div>
+                    {dayEvents.slice(0, 2).map((event, i) => (
+                      <div
+                        key={i}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          dayEvents.length > 2
+                            ? onShowMore(dateStr, dayEvents)
+                            : onNavigate(event.id)
+                        }
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { dayEvents.length > 2 ? onShowMore(dateStr, dayEvents) : onNavigate(event.id) } }}
+                        className="flex items-center rounded-[5px] overflow-hidden h-[17px] mb-[2px] mr-[4px] cursor-pointer"
+                        style={{ backgroundColor: EVENT_COLORS[event.type].bg }}
+                      >
+                        <div
+                          className="w-[2px] h-[11px] mx-[3px] shrink-0 rounded-[1px]"
+                          style={{
+                            backgroundColor: EVENT_COLORS[event.type].bar,
+                          }}
+                        />
+                        <span
+                          className="text-[10px] font-medium flex-1 min-w-0 overflow-hidden whitespace-nowrap block"
+                          style={{
+                            color: EVENT_COLORS[event.type].bar,
+                            WebkitMaskImage:
+                              "linear-gradient(to right, black 70%, transparent 100%)",
+                            maskImage:
+                              "linear-gradient(to right, black 70%, transparent 100%)",
+                          }}
+                        >
+                          {event.name}
+                        </span>
+                      </div>
+                    ))}
+                    {dayEvents.length > 2 && (
+                      <button
+                        onClick={() => onShowMore(dateStr, dayEvents)}
+                        className="text-[10px] font-normal text-text-tertiary h-[17px] leading-none pl-[3px] text-left"
+                      >
+                        +{dayEvents.length - 2}개
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 justify-between">
-            <span className="text-base font-semibold text-text-primary">{ipo.name}</span>
-            <span className={cn(
-              'text-xs border rounded-full px-2 py-0.5',
-              ipo.status === '청약가능' ? 'border-primary text-primary' : 'border-text-tertiary text-text-tertiary',
-            )}>
-              {ipo.status}
-            </span>
+      ))}
+    </div>
+  );
+}
+
+function getWeekOfMonth(date: dayjs.Dayjs): number {
+  const firstDay = date.startOf("month").day();
+  const adjusted = firstDay === 0 ? 6 : firstDay - 1;
+  return Math.ceil((date.date() + adjusted) / 7);
+}
+
+function IpoLogo({ ipo, size = 40 }: { ipo: Ipo; size?: number }) {
+  const [imgError, setImgError] = useState(false)
+  const abbr = getAbbr(ipo.company)
+  const cls = `rounded-full flex-shrink-0 overflow-hidden`
+  if (ipo.logo_url && !imgError) {
+    return (
+      <img
+        src={ipo.logo_url}
+        alt={ipo.company}
+        className={cls}
+        style={{ width: size, height: size, objectFit: 'cover' }}
+        onError={() => setImgError(true)}
+      />
+    )
+  }
+  return (
+    <div
+      className={`${cls} flex items-center justify-center text-white font-black`}
+      style={{ width: size, height: size, backgroundColor: ipo.logo_color, fontSize: size * 0.325 }}
+    >
+      {abbr}
+    </div>
+  )
+}
+
+function HeartIcon({ isActive }: { isActive: boolean }) {
+  return (
+    <svg
+      width="17"
+      height="16"
+      viewBox="0 0 17 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M16.2503 2.40774C15.4111 0.899217 14.004 0 12.4854 0C10.2345 0 9.03662 1.52736 8.49986 2.50765C7.9631 1.52736 6.76523 0 4.51431 0C2.99575 0 1.5894 0.900036 0.749377 2.40774C-0.258193 4.21846 -0.249095 6.54102 0.77288 8.62036C2.26869 11.662 5.5939 14.3342 7.44301 15.6552C7.76446 15.8845 8.1314 16 8.49986 16C8.86832 16 9.23526 15.8845 9.55671 15.6552C11.4051 14.3342 14.731 11.662 16.2268 8.62036C17.2496 6.54102 17.2579 4.21846 16.2503 2.40774Z"
+        fill={isActive ? "#CA3D40" : "#001936"}
+        fillOpacity={isActive ? 1 : 0.31}
+      />
+    </svg>
+  );
+}
+
+function WeekDivider({ label }: { label: string }) {
+  return (
+    <div className="relative mt-[3px] py-4 flex items-center justify-center">
+      <img
+        src="/icons/Line.svg"
+        className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full"
+        alt=""
+      />
+      <span className="relative bg-[#F6F6F9] px-2 text-[14px] font-medium text-[#9AA0AB]">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function computeDDay(subscriptionEnd: string): { label: string; isEnded: boolean } {
+  const diff = dayjs(subscriptionEnd).startOf('day').diff(dayjs().startOf('day'), 'day')
+  if (diff < 0) return { label: '', isEnded: true }
+  if (diff === 0) return { label: 'D-Day', isEnded: false }
+  return { label: `D-${diff}`, isEnded: false }
+}
+
+function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
+  const isUpcoming = ipo.status === 'upcoming'
+  const { label: dDayLabel } = computeDDay(isUpcoming ? ipo.subscription_start : ipo.subscription_end)
+  const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
+
+  return (
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
+      <div className="flex items-center justify-between mb-[13px]">
+        <div className="flex items-center gap-[18px] min-w-0">
+          <IpoLogo ipo={ipo} />
+          <div className="translate-y-[1px] min-w-0 max-w-[160px]">
+            <p className="text-[15px] font-bold text-[#111827] leading-[17.5px] truncate">{ipo.company}</p>
+            <p className="text-[12px] text-[#7F858F] mt-[2px] leading-[17.5px]">{ipo.ticker}</p>
           </div>
-          <p className="text-xs text-text-tertiary mt-1">
-            {ipo.startDate} ~ {ipo.endDate}
-          </p>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="text-sm font-bold text-text-primary">{ipo.price}</span>
-            <span className="text-xs text-up font-medium">{ipo.returnAmount}</span>
+        </div>
+        <img
+          src={isUpcoming ? '/icons/IPO_upcoming.svg' : '/icons/IPO_ready.svg'}
+          width={50} height={17}
+          alt={isUpcoming ? '청약예정' : '청약가능'}
+          className="absolute top-[17.5px] right-[17px] translate-x-[3px]"
+        />
+        {!isUpcoming && (
+          <span className="absolute top-[39px] right-[17px] text-[11px] font-bold text-[#CA3D40]">{dDayLabel}</span>
+        )}
+      </div>
+      <div className="pl-[58px] space-y-[8px]">
+        <div className="flex items-center">
+          <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">공모(예정)가</span>
+          <span className="ml-[11px] text-[13px] font-semibold text-[#111827]">
+            {formatPrice(ipo.price)}
+          </span>
+        </div>
+        <div className="flex items-center">
+          <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">청약 기간</span>
+          <span className="ml-[11px] text-[13px] font-medium text-[#7F858F]">
+            {formatPeriod(ipo.subscription_start, ipo.subscription_end)}
+          </span>
+        </div>
+        <div className="flex items-center">
+          <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">상장(예정)일</span>
+          <span className="ml-[11px] text-[13px] font-medium text-[#7F858F]">
+            {dayjs(ipo.listing_date).format('YYYY.MM.DD')}
+          </span>
+        </div>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onWishlistToggle();
+        }}
+        className="absolute bottom-[22px] right-[17px]"
+      >
+        <HeartIcon isActive={isWishlisted} />
+      </button>
+    </div>
+  )
+}
+
+function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
+  const isPositive = (ipo.listing_change_pct ?? 0) >= 0
+  const change = ipo.current_price != null && ipo.price_confirmed != null
+    ? Math.abs(ipo.current_price - ipo.price_confirmed)
+    : null
+
+  const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
+
+  return (
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
+      <img src="/icons/IPO_end.svg" width={50} height={17} alt="청약종료" className="absolute top-[17.5px] right-[17px] translate-x-[3px]" />
+      <div className="flex items-center mb-[13px]">
+        <div className="flex items-center gap-[18px] min-w-0">
+          <IpoLogo ipo={ipo} />
+          <div className="translate-y-[1px] min-w-0 max-w-[160px]">
+            <p className="text-[15px] font-bold text-[#111827] leading-[17.5px] truncate">{ipo.company}</p>
+            <p className="text-[12px] text-[#7F858F] mt-[2px] leading-[17.5px]">{ipo.ticker}</p>
           </div>
         </div>
       </div>
-    </button>
+      <div className="pl-[58px] space-y-[8px]">
+        <div className="flex gap-[30px] mb-[18px]">
+          <div>
+            <p className="text-[12px] font-medium text-[#7F858F] mb-[4px]">공모가(확정)</p>
+            <p className="text-[13px] font-semibold text-[#111827]">
+              {ipo.price_confirmed != null ? formatPrice(ipo.price_confirmed) : '-'}
+            </p>
+          </div>
+          <div>
+            <p className="text-[12px] font-medium text-[#7F858F] mb-[4px]">현재가</p>
+            <p className="text-[13px] font-semibold text-[#111827]">
+              {ipo.current_price != null ? formatPrice(ipo.current_price) : '-'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center">
+          <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">상장일</span>
+          <span className="ml-[7px] text-[13px] font-medium text-[#7F858F]">
+            {dayjs(ipo.listing_date).format('YYYY.MM.DD')}
+          </span>
+        </div>
+        <div className="flex items-center !mt-[6px]">
+          <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">상장일 대비</span>
+          {change != null && ipo.listing_change_pct != null ? (
+            <span className={cn('ml-[7px] text-[13px] font-medium', isPositive ? 'text-[#CA3D40]' : 'text-down')}>
+              {ipo.current_price!.toFixed(2)} <span className="text-[9px]">{isPositive ? '▲' : '▼'}</span>{change.toFixed(2)}({ipo.listing_change_pct.toFixed(2)}%)
+            </span>
+          ) : (
+            <span className="ml-[7px] text-[13px] font-medium text-[#7F858F]">-</span>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onWishlistToggle();
+        }}
+        className="absolute bottom-[22px] right-[17px]"
+      >
+        <HeartIcon isActive={isWishlisted} />
+      </button>
+    </div>
   )
+}
+
+function IpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
+  if (ipo.status === 'closed') {
+    return <ClosedIpoCard ipo={ipo} onClick={onClick} isWishlisted={isWishlisted} onWishlistToggle={onWishlistToggle} />
+  }
+  return <ActiveIpoCard ipo={ipo} onClick={onClick} isWishlisted={isWishlisted} onWishlistToggle={onWishlistToggle} />
 }
 
 export function IpoCalendarPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('청약 일정')
-  const [filter, setFilter] = useState<Filter>('전체')
-  const [view, setView] = useState<ViewMode>('list')
+  const [bottomFilter, setBottomFilter] = useState<BottomFilter>('전체')
+  const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
+  const [calendarView, setCalendarView] = useState<CalendarView>('weekly')
+  const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'))
+  const [daySheet, setDaySheet] = useState<{ date: string; events: CalendarEvent[] } | null>(null)
 
-  const filters: Filter[] = ['전체', '청약가능', '청약예정']
-  const filtered = IPOS.filter((ipo) => filter === '전체' || ipo.status === filter)
-  const grouped = filtered.reduce<Record<string, typeof IPOS>>((acc, ipo) => {
-    if (!acc[ipo.date]) acc[ipo.date] = []
-    acc[ipo.date].push(ipo)
-    return acc
-  }, {})
+  const dateSectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const monthlyContainerRef = useRef<HTMLDivElement>(null)
+  const monthlyHeaderRef = useRef<HTMLDivElement>(null)
+  const currentMonthSectionRef = useRef<HTMLDivElement | null>(null)
+  const todayMonthRef = useRef<HTMLDivElement | null>(null)
+  const touchStartX = useRef<number>(0)
+
+  const scrollToDate = (dateStr: string) => {
+    setSelectedDate(dateStr)
+    const date = dayjs(dateStr)
+    changeWeekRef.current(date.subtract((date.day() + 6) % 7, 'day'))
+    requestAnimationFrame(() => {
+      const el = dateSectionRefs.current.get(dateStr)
+      const container = scrollContainerRef.current
+      if (el && container) {
+        const elTop = el.getBoundingClientRect().top
+        const containerTop = container.getBoundingClientRect().top
+        container.scrollTop += elTop - containerTop - DATE_SCROLL_TOP_PADDING
+      }
+    })
+  }
+
+  const weekContainerRef = useRef<HTMLDivElement>(null)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [snapping, setSnapping] = useState(false)
+  const isSwipingRef = useRef(false)
+  const touchStartY = useRef<number>(0)
+  const swipeDirectionRef = useRef<'horizontal' | 'vertical' | null>(null)
+
+  const handleWeekTouchStart = (e: React.TouchEvent) => {
+    if (snapping) return
+    isSwipingRef.current = true
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+    swipeDirectionRef.current = null
+  }
+
+  const handleWeekTouchMove = (e: React.TouchEvent) => {
+    if (snapping) return
+    const deltaX = e.touches[0].clientX - touchStartX.current
+    const deltaY = e.touches[0].clientY - touchStartY.current
+    if (swipeDirectionRef.current === null && (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8)) {
+      swipeDirectionRef.current = Math.abs(deltaX) >= Math.abs(deltaY) ? 'horizontal' : 'vertical'
+    }
+    if (swipeDirectionRef.current === 'horizontal') {
+      setDragOffset(deltaX)
+    }
+  }
+
+  const handleWeekTouchEnd = (e: React.TouchEvent) => {
+    if (snapping) return
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current
+    if (swipeDirectionRef.current === 'vertical') {
+      isSwipingRef.current = false
+      if (deltaY > 50) {
+        setCalendarView('monthly')
+        setCurrentMonth(displayWeekStart.startOf('month'))
+      }
+      return
+    }
+    const delta = e.changedTouches[0].clientX - touchStartX.current
+    const width = weekContainerRef.current?.offsetWidth ?? 375
+    if (Math.abs(delta) < 50) {
+      setSnapping(true)
+      setDragOffset(0)
+      setTimeout(() => { setSnapping(false); isSwipingRef.current = false }, WEEK_SLIDE_DURATION_MS)
+      return
+    }
+    const dir = delta < 0 ? 'left' : 'right'
+    setSnapping(true)
+    setDragOffset(dir === 'left' ? -width : width)
+    setTimeout(() => {
+      setDisplayWeekStart((prev) => dir === 'left' ? prev.add(7, 'day') : prev.subtract(7, 'day'))
+      setDragOffset(0)
+      setSnapping(false)
+      isSwipingRef.current = false
+    }, WEEK_SLIDE_DURATION_MS)
+  }
+
+  const queryClient = useQueryClient()
+  const { data: queryData } = useIpoList()
+
+  const ipos = useMemo(
+    () => queryData?.data.ipos.map(mapApiToIpo) ?? [],
+    [queryData],
+  )
+
+  useEffect(() => {
+    if (queryData?.data.ipos) {
+      setWishlistedIds(new Set(queryData.data.ipos.filter((i) => i.isFavorite).map((i) => i.id)))
+    }
+  }, [queryData])
+
+  const { mutate: toggleFavMutation } = useMutation({
+    mutationFn: ({ ipoId, isCurrent }: { ipoId: number; isCurrent: boolean }) =>
+      isCurrent ? ipoApi.removeFavorite(ipoId) : ipoApi.addFavorite(ipoId),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ipoKeys.all }),
+    onError: (_, { ipoId, isCurrent }) => {
+      setWishlistedIds((prev) => {
+        const next = new Set(prev)
+        isCurrent ? next.add(ipoId) : next.delete(ipoId)
+        return next
+      })
+    },
+  })
+
+  const toggleWishlist = (id: number) => {
+    const isCurrent = wishlistedIds.has(id)
+    setWishlistedIds((prev) => {
+      const next = new Set(prev)
+      isCurrent ? next.delete(id) : next.add(id)
+      return next
+    })
+    toggleFavMutation({ ipoId: id, isCurrent })
+  }
+
+  const today = dayjs();
+  const todayStr = today.format("YYYY-MM-DD");
+
+  const [selectedDate, setSelectedDate] = useState(todayStr)
+
+  const dow = today.day()
+  const monday = today.subtract((dow + 6) % 7, 'day')
+  const [displayWeekStart, setDisplayWeekStart] = useState(monday)
+
+  const animIdRef = useRef(0)
+  const changeWeekRef = useRef<(newWeek: dayjs.Dayjs) => void>(() => {})
+  changeWeekRef.current = (newWeek: dayjs.Dayjs) => {
+    if (newWeek.isSame(displayWeekStart, 'day')) return
+    const dir = newWeek.isAfter(displayWeekStart) ? 'left' : 'right'
+    const width = weekContainerRef.current?.offsetWidth ?? 375
+    const startOffset = dir === 'left' ? width : -width
+    const animId = ++animIdRef.current
+    setSnapping(false)
+    setDragOffset(startOffset)
+    setDisplayWeekStart(newWeek)
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (animIdRef.current !== animId) return
+      setSnapping(true)
+      setDragOffset(0)
+      setTimeout(() => {
+        if (animIdRef.current !== animId) return
+        setSnapping(false)
+      }, WEEK_SLIDE_DURATION_MS)
+    }))
+  }
+
+  const filteredIpos = bottomFilter === '전체' ? ipos : ipos.filter((ipo) => wishlistedIds.has(ipo.id))
+  const calendarEvents = deriveCalendarEvents(filteredIpos)
+
+  const scrollToTodayMonth = () => {
+    const container = monthlyContainerRef.current
+    const section = todayMonthRef.current
+    if (!container || !section) return
+    const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
+    container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 30
+  }
+
+  const allIpoDates = filteredIpos.map((ipo) => ipo.subscription_start)
+  const uniqueDates = bottomFilter === '관심'
+    ? Array.from(new Set(allIpoDates)).sort()
+    : Array.from(new Set([todayStr, ...allIpoDates])).sort()
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      const el = dateSectionRefs.current.get(todayStr)
+      const container = scrollContainerRef.current
+      if (el && container) {
+        const elTop = el.getBoundingClientRect().top
+        const containerTop = container.getBoundingClientRect().top
+        container.scrollTop += elTop - containerTop - DATE_SCROLL_TOP_PADDING
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    let rafId: number | null = null
+    const handleScroll = () => {
+      if (rafId !== null) return
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        const HEADER_OFFSET = 160
+        let closestDate: string | null = null
+        let closestDist = Infinity
+        dateSectionRefs.current.forEach((el, dateStr) => {
+          const rect = el.getBoundingClientRect()
+          if (rect.bottom > HEADER_OFFSET) {
+            const dist = Math.abs(rect.top - HEADER_OFFSET)
+            if (dist < closestDist) {
+              closestDist = dist
+              closestDate = dateStr
+            }
+          }
+        })
+        if (closestDate) {
+          const d = dayjs(closestDate)
+          const newWeekStart = d.subtract((d.day() + 6) % 7, 'day')
+          changeWeekRef.current(newWeekStart)
+          setSelectedDate(closestDate)
+        }
+      })
+    }
+    const container = scrollContainerRef.current
+    if (!container) return
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+    }
+  }, [calendarView])
+
+  useEffect(() => {
+    if (calendarView !== 'monthly') return
+    requestAnimationFrame(() => {
+      const container = monthlyContainerRef.current
+      const section = currentMonthSectionRef.current
+      if (container && section) {
+        const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
+        container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 30
+      }
+    })
+  }, [calendarView])
+
+
+  const handleSheetEventClick = (ipoId: number) => {
+    setDaySheet(null)
+    navigate(`/ipo/${ipoId}`)
+  }
 
   return (
-    <div className="page-content">
-      <Header
-        showNotification
-        showMypage={false}
-        showSearch
-        rightAction={
-          <button onClick={() => navigate('/ipo/guide')} className="text-xs text-primary px-2">
-            IPO란?
+    <div className="h-dvh flex flex-col bg-[#F6F6F9]">
+      <header className="bg-white flex items-center justify-between px-4 h-[56px] shrink-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[18px] font-bold text-[#111111]">
+            IPO 캘린더
+          </span>
+          <button onClick={() => navigate("/ipo/guide")}>
+            <img src="/icons/question.svg" width={22} height={22} alt="" />
           </button>
-        }
-      />
+        </div>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate("/notifications")}>
+            <img src="/icons/Bell.svg" width={25} height={25} alt="" />
+          </button>
+          <button>
+            <img src="/icons/search.svg" width={19} height={19} alt="" />
+          </button>
+        </div>
+      </header>
 
-      {/* 탭 */}
-      <div className="flex border-b border-border bg-white">
+      <div className="flex bg-white relative z-[2] shrink-0">
         {(['청약 일정', '청약내역/취소'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={cn(
-              'flex-1 py-3 text-sm font-medium border-b-2 transition-colors',
+              "flex-1 h-[47px] text-[15px] font-bold border-b-2 transition-colors",
               tab === t
-                ? 'border-primary text-text-primary'
-                : 'border-transparent text-text-tertiary',
+                ? "border-[#111111] text-[#111111]"
+                : "border-transparent text-[#999EA4]",
             )}
           >
             {t}
@@ -101,95 +703,243 @@ export function IpoCalendarPage() {
         ))}
       </div>
 
-      {tab === '청약 일정' && (
+      {tab === "청약 일정" && (
         <>
-          {/* 필터 + 뷰 토글 */}
-          <div className="px-4 py-3 flex items-center justify-between bg-white">
-            <div className="flex gap-2">
-              {filters.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-                    filter === f ? 'bg-primary text-white' : 'bg-surface text-text-secondary',
-                  )}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setView('list')}
-                className={cn('p-1.5 rounded', view === 'list' ? 'text-primary' : 'text-text-tertiary')}
-              >
-                <List size={18} />
-              </button>
-              <button
-                onClick={() => setView('calendar')}
-                className={cn('p-1.5 rounded', view === 'calendar' ? 'text-primary' : 'text-text-tertiary')}
-              >
-                <LayoutGrid size={18} />
-              </button>
-            </div>
-          </div>
-
-          {view === 'list' ? (
-            <div className="px-4 pb-4 space-y-6">
-              {Object.entries(grouped).map(([date, ipos]) => (
-                <div key={date}>
-                  <p className="text-sm font-bold text-text-primary mb-3">{date}일</p>
-                  <div className="space-y-3">
-                    {ipos.map((ipo) => (
-                      <IpoCard key={ipo.id} ipo={ipo} onClick={() => navigate(`/ipo/${ipo.id}`)} />
+          <div ref={monthlyContainerRef} className={cn(
+            'relative z-[1] bg-white px-4 pb-[17px] rounded-b-[20px] shadow-[0_1px_10px_rgba(0,0,0,0.2)]',
+            calendarView === 'monthly' ? 'flex-1 overflow-y-auto scrollbar-hide' : 'shrink-0 pt-[9px]',
+          )} style={calendarView === 'monthly' ? { scrollbarWidth: 'none' } : undefined}>
+            {calendarView === 'weekly' ? (
+              <>
+                <div className="flex justify-end items-center gap-4 mb-[17px] pr-1">
+                  <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={() => {
+                    scrollToDate(todayStr)
+                  }}>오늘</button>
+                  <span className="w-px h-[14px] bg-[#D9DBE0]" />
+                  <button
+                    className="text-[12px] font-medium text-[#1A1A1A]"
+                    onClick={() => { setCalendarView('monthly'); setCurrentMonth(dayjs().startOf('month')) }}
+                  >
+                    월별보기
+                  </button>
+                </div>
+                <div ref={weekContainerRef} className="overflow-hidden">
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: '300%',
+                      transform: `translateX(calc(-33.333% + ${dragOffset}px))`,
+                      transition: snapping ? `transform ${WEEK_SLIDE_DURATION_MS}ms ease-out` : 'none',
+                      willChange: 'transform',
+                    }}
+                    onTouchStart={handleWeekTouchStart}
+                    onTouchMove={handleWeekTouchMove}
+                    onTouchEnd={handleWeekTouchEnd}
+                  >
+                    {[displayWeekStart.subtract(7, 'day'), displayWeekStart, displayWeekStart.add(7, 'day')].map((ws, wi) => (
+                      <div
+                        key={wi}
+                        className="grid grid-cols-6"
+                        style={{ width: '33.333%' }}
+                      >
+                        {Array.from({ length: 6 }, (_, i) => ws.add(i, 'day')).map((day) => {
+                          const dateStr = day.format('YYYY-MM-DD')
+                          const isToday = dateStr === todayStr
+                          const isSelected = dateStr === selectedDate
+                          const isSaturday = day.day() === 6
+                          const hasEvents = filteredIpos.some((ipo) => ipo.subscription_start === dateStr)
+                          return (
+                            <button key={dateStr} className="flex flex-col items-center" onClick={() => (hasEvents || isToday) && scrollToDate(dateStr)} disabled={!hasEvents && !isToday}>
+                              <span className="text-[12px] leading-[15px] text-[#9AA0AB]">
+                                {isToday ? '오늘' : DAY_NAMES[day.day()]}
+                              </span>
+                              <div className={cn(
+                                'mt-[10px] w-[33px] h-[33px] flex items-center justify-center rounded-[6px] text-[16px] font-semibold',
+                                isSelected ? 'bg-[#6B7280] text-white' : isSaturday || !hasEvents ? 'text-[#C8CBD2]' : 'text-[#1A1A1A]',
+                              )}>
+                                {day.date()}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="px-4 pb-4">
-              {/* 캘린더 그리드 */}
-              <div className="grid grid-cols-7 mt-4">
-                {['일','월','화','수','목','금','토'].map((d) => (
-                  <div key={d} className="text-center text-xs text-text-tertiary py-2">{d}</div>
-                ))}
-                {CALENDAR_DAYS.map((day) => {
-                  const hasIpo = IPOS.some((ipo) => parseInt(ipo.date) === day)
+              </>
+            ) : (
+              <>
+                <div ref={monthlyHeaderRef} className="sticky top-0 bg-white z-10 pt-[9px] pb-[9px]">
+                  <div className="flex items-center justify-between pr-1">
+                    <div className="flex items-center gap-[10px] mt-[2px]">
+                      {([['청약시작', '#E2468B'], ['청약마감', '#3660AC'], ['상장(예정)일', '#019989']] as const).map(([label, color]) => (
+                        <div key={label} className="flex items-center gap-[4px]">
+                          <div className="w-[5px] h-[5px] rounded-full" style={{ backgroundColor: color }} />
+                          <span className="text-[10px] font-medium" style={{ color }}>{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={scrollToTodayMonth}>오늘</button>
+                      <span className="w-px h-[14px] bg-[#D9DBE0]" />
+                      <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={() => setCalendarView('weekly')}>주별보기</button>
+                    </div>
+                  </div>
+                </div>
+                {Array.from({ length: 10 }, (_, i) => currentMonth.subtract(3 - i, 'month')).map((month) => {
+                  const isCurrentMonthSection = month.isSame(currentMonth, 'month')
+                  const isTodayMonth = month.isSame(dayjs().startOf('month'), 'month')
                   return (
-                    <div key={day} className="flex flex-col items-center py-2">
-                      <span className="text-sm text-text-primary">{day}</span>
-                      {hasIpo && <span className="w-1.5 h-1.5 rounded-full bg-pink mt-0.5" />}
+                    <div key={month.format('YYYY-MM')} ref={(el) => {
+                      if (isCurrentMonthSection) currentMonthSectionRef.current = el
+                      if (isTodayMonth) todayMonthRef.current = el
+                    }}>
+                      <MonthlyCalendarView month={month} events={calendarEvents} todayStr={todayStr} onShowMore={(date, evts) => setDaySheet({ date, events: evts })} onNavigate={handleSheetEventClick} />
                     </div>
                   )
                 })}
-              </div>
-              {/* 범례 */}
-              <div className="flex gap-4 mt-4 px-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-pink" />
-                  <span className="text-xs text-text-secondary">청약시작/마감</span>
+              </>
+            )}
+          </div>
+
+          {calendarView !== 'monthly' && <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-none px-4 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+            {bottomFilter === '관심' && filteredIpos.length === 0 && (
+              <div className="flex flex-col items-center pt-[160px]">
+                <div className="w-[64px] h-[64px] rounded-full bg-[#F0F1F4] flex items-center justify-center">
+                  <img src="/icons/heart.svg" width={26} height={26} alt="" />
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-teal" />
-                  <span className="text-xs text-text-secondary">상장(예정)일</span>
-                </div>
+                <span className="mt-[18px] text-[18px] font-bold text-[#001936]/[0.55]">관심 IPO를 등록해주세요</span>
               </div>
-            </div>
-          )}
+            )}
+            {uniqueDates.map((dateStr, idx) => {
+              const date = dayjs(dateStr)
+              const isToday = dateStr === todayStr
+              const dayIpos = filteredIpos.filter((ipo) => ipo.subscription_start === dateStr)
+              const prevDate = idx > 0 ? dayjs(uniqueDates[idx - 1]) : null
+              const showWeekDivider =
+                !prevDate ||
+                getWeekOfMonth(prevDate) !== getWeekOfMonth(date) ||
+                prevDate.month() !== date.month()
+              const nextDate = idx < uniqueDates.length - 1 ? dayjs(uniqueDates[idx + 1]) : null
+              const hasNextDateInSameWeek =
+                nextDate != null &&
+                getWeekOfMonth(nextDate) === getWeekOfMonth(date) &&
+                nextDate.month() === date.month()
+
+              return (
+                <div key={dateStr} className={cn(!showWeekDivider && idx > 0 && 'mt-[24px]')} ref={(el) => { if (el) dateSectionRefs.current.set(dateStr, el); else dateSectionRefs.current.delete(dateStr) }}>
+                  {showWeekDivider && (
+                    <WeekDivider
+                      label={`${date.month() + 1}월 ${getWeekOfMonth(date)}주차`}
+                    />
+                  )}
+
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 pl-[6px]">
+                      <span className="text-[18px] font-bold text-[#3A3D45]">{date.date()}일</span>
+                      {isToday ? (
+                        <span className="inline-flex items-center justify-center w-[44px] h-[25px] bg-[#F0F1F4] text-[#9AA0AB] text-[12px] font-semibold rounded-[8px]">
+                          오늘
+                        </span>
+                      ) : (
+                        <span className="text-[13px] font-medium text-[#9AA0AB]">
+                          {DAY_NAMES[date.day()]}
+                        </span>
+                      )}
+                    </div>
+
+                    {dayIpos.length === 0 ? (
+                      bottomFilter === '전체' && (
+                        <div className={cn(
+                          'flex items-center gap-3 ml-[7px] mt-[16px]',
+                          hasNextDateInSameWeek ? 'mb-[28px]' : 'mb-4',
+                        )}>
+                          <div className="w-11 h-11 rounded-full bg-[#F0F1F4] flex items-center justify-center">
+                            <img src="/icons/docs.svg" width={22} height={22} alt="" />
+                          </div>
+                          <span className="text-[17px] font-bold text-[#3A3D45] ml-1">소식이 없어요</span>
+                        </div>
+                      )
+                    ) : (
+                      <div className="space-y-[18px] mb-4">
+                        {dayIpos.map((ipo) => (
+                          <IpoCard key={ipo.id} ipo={ipo} onClick={() => navigate(`/ipo/${ipo.id}`)} isWishlisted={wishlistedIds.has(ipo.id)} onWishlistToggle={() => toggleWishlist(ipo.id)} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+            <div className={uniqueDates.length > 0 && uniqueDates[uniqueDates.length - 1] <= todayStr ? 'h-[150px]' : 'h-[335px]'} />
+          </div>}
+
         </>
       )}
 
       {tab === '청약내역/취소' && (
-        <div className="px-4 pt-4">
-          <div className="space-y-3">
-            {IPOS.map((ipo) => (
-              <IpoCard key={ipo.id} ipo={ipo} onClick={() => navigate(`/ipo/${ipo.id}`)} />
+        <div className="px-4 pt-4 space-y-3">
+          {ipos.map((ipo) => (
+            <IpoCard key={ipo.id} ipo={ipo} onClick={() => navigate(`/ipo/${ipo.id}`)} isWishlisted={wishlistedIds.has(ipo.id)} onWishlistToggle={() => toggleWishlist(ipo.id)} />
+          ))}
+        </div>
+      )}
+
+      {tab === "청약 일정" && (
+        <div className="fixed bottom-[91px] right-4 z-20">
+          <div className="flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)]">
+            {(["전체", "관심"] as BottomFilter[]).map((f) => (
+              <button
+                key={f}
+                onClick={() => setBottomFilter(f)}
+                className={cn(
+                  "px-5 py-1.5 rounded-[15px] text-[13px] transition-colors",
+                  bottomFilter === f
+                    ? "bg-white text-black font-semibold shadow-[0_2px_2px_rgba(0,0,0,0.05)]"
+                    : "text-[#999EA4] font-medium",
+                )}
+              >
+                {f}
+              </button>
             ))}
           </div>
         </div>
       )}
+
+      {daySheet && (
+        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setDaySheet(null)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative w-full bg-white rounded-t-2xl px-5 pt-4 pb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-[#E0E0E0] rounded-full mx-auto mb-4" />
+            <p className="text-base font-bold text-text-primary mb-3">
+              {dayjs(daySheet.date).format('M월 D일')} 청약 일정
+            </p>
+            <div className="space-y-2">
+              {daySheet.events.map((event, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSheetEventClick(event.id)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#F6F6F9] text-left"
+                >
+                  <div
+                    className="w-[3px] h-[18px] rounded-[2px] shrink-0"
+                    style={{ backgroundColor: EVENT_COLORS[event.type].bar }}
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{event.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: EVENT_COLORS[event.type].bar }}>
+                      {event.type}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }

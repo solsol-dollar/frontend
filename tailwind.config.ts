@@ -2,7 +2,6 @@ import type { Config } from 'tailwindcss'
 import animate from 'tailwindcss-animate'
 
 const config: Config = {
-  darkMode: false,
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
@@ -11,12 +10,12 @@ const config: Config = {
       },
       colors: {
         primary: {
-          DEFAULT: '#1C1FE8',
-          light: '#4A90FF',
-          foreground: '#FFFFFF',
-        },
-        orange: {
-          DEFAULT: '#FF6830',
+          DEFAULT: '#0922AC',
+          900: '#061875',
+          700: '#0922AC',
+          500: '#2545C7',
+          300: '#5B7BE5',
+          100: '#C5D1F5',
           foreground: '#FFFFFF',
         },
         'sky-blue': {
@@ -29,23 +28,43 @@ const config: Config = {
         teal: {
           DEFAULT: '#00C0A0',
         },
-        up: '#E53935',     // 주가 상승 (빨강)
-        down: '#1565C0',   // 주가 하락 (파랑)
-        surface: '#F5F6F8',
-        border: '#EEEEEE',
+        surface: {
+          DEFAULT: '#E8EDFB',
+          light: '#F0F3FD',
+          bg: '#F6F6F9',
+          subtle: '#FAFBFF',
+          neutral: '#F8FAFC',
+        },
+        success: '#16A34A',
+        danger: '#DC2626',
+        warning: '#F59E0B',
+        heart: '#EF4444',
+        up: '#E53935',
+        down: '#1565C0',
+        border: '#E5E7EB',
         text: {
-          primary: '#111111',
-          secondary: '#666666',
-          tertiary: '#999999',
+          primary: '#111827',
+          secondary: '#6B7280',
+          sub: '#6B7280',
+          tertiary: '#9CA3AF',
         },
       },
       maxWidth: {
-        mobile: '430px',
+        mobile: '360px',
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      animation: {
+        blink: 'blink 1.2s ease-in-out infinite',
+      },
+      keyframes: {
+        blink: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0' },
+        },
       },
     },
   },

@@ -1,143 +1,208 @@
-import { useNavigate } from 'react-router-dom'
-import { Heart, ChevronRight } from 'lucide-react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Heart } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import dayjs from 'dayjs'
 import { Header } from '@/components/common/Header'
+import { IpoStockHeader } from '@/features/ipo/components/IpoStockHeader'
+import { IpoOfferingInfo } from '@/features/ipo/components/IpoOfferingInfo'
+import {
+  getSubscriptionStatusBadgeClass,
+  getSubscriptionStatusTextClass,
+  type SubscriptionStatus,
+} from '@/features/ipo/utils/subscriptionStatus'
+import { useIpoDetail, useToggleFavorite } from '@/features/ipo/hooks/useIpo'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 
-const MOCK_IPO = {
-  id: 1, ticker: 'CRWV', name: 'CoreWeave', color: '#FF6830', dday: 'D-3',
-  priceRange: 'USD 20,000',
-  milestones: [
-    { label: '청약시작', date: '2026.06.02' },
-    { label: '청약마감', date: '2026.06.14', active: true },
-    { label: '청약대금납부', date: '2026.06.20' },
-    { label: '상장/환불예정일', date: '2026.06.28' },
-  ],
-  availableAmount: '$2,084,455',
-  trend: true,
-  comparison: [
-    { label: 'SOLSOL달러', amount: '$10,980,000', highlight: true },
-    { label: '타사 MTS', amount: '$10,980,000', highlight: false },
-  ],
-  newsScore: 62,
-  news: [
-    'CoreWeave, NASDAQ 최대 IPO 예정',
-    'CoreWeave, NASDAQ 최대 IPO 예정',
-  ],
+const MOCK_PERFORMANCE = [
+  { label: '최근 매출액', value: '333조', change: '+10.88%', positive: true },
+  { label: '영업이익', value: '43조', change: '+33.23%', positive: true },
+  { label: '순이익', value: '45조', change: '+31.22%', positive: true },
+]
+
+const MOCK_NEWS_SCORE = 62
+const MOCK_NEWS_SUMMARY =
+  'GPU 인프라 수요 급증 중이나, 매출 대비 부채 비율이 높아 재무 안정성 리스크가 존재합니다.'
+const MOCK_NEWS = [
+  { title: 'CoreWeave, NVIDIA와 $10B GPU 계약 체결', source: 'Reuters', date: '06.09' },
+  { title: 'CoreWeave, NVIDIA와 $10B GPU 계약 체결', source: 'Reuters', date: '06.09' },
+]
+
+const STATUS_MAP: Record<string, SubscriptionStatus> = {
+  UPCOMING: '청약예정',
+  OPEN: '청약가능',
+  CLOSED: '청약종료',
 }
 
 export function IpoDetailPage() {
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const ipo = MOCK_IPO
+  const ipoId = Number(id)
+
+  const { data, isLoading, isError } = useIpoDetail(ipoId)
+  const { mutate: toggleFav } = useToggleFavorite()
+
+  if (isLoading) {
+    return <div className="page-content" />
+  }
+
+  if (isNaN(ipoId) || isError || !data?.data) {
+    return (
+      <div className="mobile-container flex flex-col h-screen">
+        <Header showBack showNotification={false} showMypage={false} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-text-secondary">종목 정보를 불러올 수 없습니다.</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="text-sm text-primary font-semibold"
+          >
+            돌아가기
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const ipo = data.data
+  const status = STATUS_MAP[ipo.ipoStatus] ?? '청약종료'
+  const abbr = ipo.ticker.slice(0, 2).toUpperCase()
+  const avatarColor = generateLogoColor(ipo.ticker)
+
+  const priceDisplay =
+    ipo.confirmedOfferPrice != null
+      ? `USD ${ipo.confirmedOfferPrice.toFixed(2)}`
+      : [ipo.offerPriceMin, ipo.offerPriceMax]
+          .filter((p): p is number => p != null)
+          .map((p) => `USD ${p.toFixed(2)}`)
+          .join(' ~ ') || '미정'
+
+  const sharesDisplay =
+    ipo.numberOfShares != null ? `${ipo.numberOfShares.toLocaleString()} 주` : undefined
+
+  const milestones = [
+    { label: '청약시작일', date: ipo.subscriptionStartDate },
+    { label: '청약마감일', date: ipo.subscriptionEndDate },
+    ipo.refundDate ? { label: '환불(예정)일', date: ipo.refundDate } : null,
+    { label: '상장(예정)일', date: ipo.listingDate },
+  ]
+    .filter((m): m is { label: string; date: string } => m != null && !!m.date)
+    .map((m) => ({ ...m, date: dayjs(m.date).format('YYYY.MM.DD') }))
+
+  const ddayTarget =
+    status === '청약예정' ? ipo.subscriptionStartDate : ipo.subscriptionEndDate
+  const ddayDiff = dayjs(ddayTarget).startOf('day').diff(dayjs().startOf('day'), 'day')
+  const dday =
+    status === '청약종료'
+      ? ''
+      : ddayDiff === 0
+        ? 'D-Day'
+        : ddayDiff > 0
+          ? `D-${ddayDiff}`
+          : `D+${Math.abs(ddayDiff)}`
 
   return (
-    <div className="page-content">
+    <div className="mobile-container flex flex-col h-screen bg-[#F6F6F9]">
       <Header
         showBack
         showNotification={false}
         showMypage={false}
-        rightAction={<Heart size={22} className="text-text-tertiary" />}
+        rightAction={
+          <button
+            onClick={() => toggleFav({ ipoId, isFavorite: ipo.isFavorite })}
+            aria-label={ipo.isFavorite ? '관심 IPO 해제' : '관심 IPO 등록'}
+            className="p-1"
+          >
+            <Heart
+              size={22}
+              className={ipo.isFavorite ? 'text-[#CA3D40] fill-[#CA3D40]' : 'text-text-tertiary'}
+            />
+          </button>
+        }
       />
 
-      {/* 종목 헤더 */}
-      <section className="px-4 pt-4 pb-6 bg-white">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center text-white text-base font-bold"
-            style={{ backgroundColor: ipo.color }}
-          >
-            {ipo.ticker.slice(0, 2)}
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        <section className="px-5 py-6 bg-white">
+          <div className="mb-7">
+            <IpoStockHeader
+              avatarText={abbr}
+              avatarColor={avatarColor}
+              logoUrl={ipo.logoUrl}
+              name={ipo.companyName}
+              ticker={ipo.ticker}
+              status={status}
+              statusClassName={getSubscriptionStatusBadgeClass(status)}
+              secondaryText={dday || undefined}
+              secondaryClassName={dday ? getSubscriptionStatusTextClass(status) : undefined}
+            />
           </div>
+
+          <div className="h-2 bg-surface-bg -mx-5 mb-4" />
+
+          <IpoOfferingInfo
+            offeringPrice={priceDisplay}
+            offeringShares={sharesDisplay}
+            milestones={milestones}
+            footnote="※ 일정은 사전 고지없이 변경될 수 있습니다."
+          />
+        </section>
+
+        <section className="px-5 py-6 bg-white mt-2">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-base font-bold text-text-primary">실적현황</span>
+            <span className="text-xs text-text-tertiary">2025.12 기준</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {MOCK_PERFORMANCE.map((stat) => (
+              <div key={stat.label} className="bg-[#F6F6F9] rounded-xl p-3 flex flex-col items-center">
+                <p className="text-xs text-text-secondary mb-2 text-center">{stat.label}</p>
+                <p className="text-sm font-bold text-text-primary">{stat.value}</p>
+                <p className={cn('text-xs font-medium mt-1', stat.positive ? 'text-up' : 'text-down')}>
+                  {stat.change}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="px-5 py-6 bg-white mt-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-base font-bold text-text-primary">News Score</span>
+            <span className="text-base font-bold text-text-primary">
+              {MOCK_NEWS_SCORE}<span className="text-text-tertiary font-normal text-sm">/100</span>
+            </span>
+          </div>
+          <div className="h-1.5 bg-surface rounded-full overflow-hidden mb-4">
+            <div className="h-full bg-primary rounded-full" style={{ width: `${MOCK_NEWS_SCORE}%` }} />
+          </div>
+          <p className="text-sm text-text-secondary leading-relaxed mb-5">{MOCK_NEWS_SUMMARY}</p>
+          <p className="text-sm font-bold text-text-primary mb-1">관련 뉴스</p>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-text-primary">{ipo.name}</h1>
-              <span className="text-sm text-up font-semibold">{ipo.dday}</span>
-            </div>
-            <p className="text-sm text-text-secondary mt-0.5">청약가능금액: {ipo.priceRange}</p>
+            {MOCK_NEWS.map((n, i) => (
+              <div key={i} className="py-3 border-b border-border last:border-0">
+                <p className="text-sm font-semibold text-text-primary">{n.title}</p>
+                <p className="text-xs text-text-tertiary mt-1">{n.source} · {n.date}</p>
+              </div>
+            ))}
           </div>
-        </div>
+        </section>
+      </div>
 
-        {/* 타임라인 마일스톤 */}
-        <div className="mt-6 flex items-center relative">
-          <div className="absolute left-0 right-0 top-2.5 h-0.5 bg-border" />
-          {ipo.milestones.map((m, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center relative">
-              <div className={`w-5 h-5 rounded-full border-2 z-10 ${m.active ? 'bg-primary border-primary' : 'bg-white border-border'}`} />
-              <p className={`text-[10px] mt-1 text-center font-medium ${m.active ? 'text-primary' : 'text-text-tertiary'}`}>{m.label}</p>
-              <p className="text-[10px] text-text-tertiary text-center">{m.date}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 청약 가능 금액 */}
-      <section className="px-4 py-5 bg-white mt-2">
-        <p className="text-sm text-text-secondary">청약가능금액</p>
-        <p className="text-2xl font-bold text-text-primary mt-1">
-          {ipo.availableAmount}
-          <span className="text-sm font-normal text-text-tertiary ml-1">이 금액 한도로 가능해요</span>
-        </p>
-        {ipo.trend && (
-          <p className="text-xs text-up mt-2 font-medium">이 종목 지금 트렌드예요 ↑</p>
+      <div className="px-5 py-4 bg-white border-t border-border shrink-0">
+        {status === '청약종료' ? (
+          <button
+            onClick={() => navigate(`/securities/stocks/${id}`, { state: { tab: '호가' } })}
+            className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-base"
+          >
+            주식 구매하기
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate(`/ipo/${ipoId}/subscribe`)}
+            disabled={status === '청약예정'}
+            className="w-full bg-primary disabled:bg-border disabled:text-text-tertiary text-white py-4 rounded-xl font-semibold text-base"
+          >
+            청약신청
+          </button>
         )}
-
-        {/* 비교 표 */}
-        <div className="mt-4 rounded-xl overflow-hidden border border-border">
-          <div className="grid grid-cols-3 bg-surface text-xs text-text-secondary p-3">
-            <span>구분</span>
-            <span className="text-center text-primary font-semibold">SOL SOL달러</span>
-            <span className="text-center">타사 MTS</span>
-          </div>
-          {[
-            { label: 'Cost Fee', solsol: '$10,980', other: '$10,980' },
-            { label: 'USD 환전', solsol: '0원', other: '$10,980' },
-            { label: 'USD 20.00', solsol: '$10,980', other: '$10,980' },
-          ].map((row) => (
-            <div key={row.label} className="grid grid-cols-3 text-xs p-3 border-t border-border">
-              <span className="text-text-secondary">{row.label}</span>
-              <span className="text-center font-semibold text-primary">{row.solsol}</span>
-              <span className="text-center text-text-secondary">{row.other}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 청약 금액 입력 */}
-      <section className="px-4 py-5 bg-white mt-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-text-secondary">청약신청금액</span>
-          <span className="text-sm font-bold text-text-primary">USD 20,000</span>
-        </div>
-      </section>
-
-      {/* News Score */}
-      <section className="px-4 py-5 bg-white mt-2">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-base font-bold text-text-primary">News Score</span>
-          <span className="text-base font-bold text-text-primary">
-            {ipo.newsScore}<span className="text-text-tertiary text-sm">/100</span>
-          </span>
-        </div>
-        <div className="h-2 bg-surface rounded-full overflow-hidden">
-          <div className="h-full bg-primary rounded-full" style={{ width: `${ipo.newsScore}%` }} />
-        </div>
-        <div className="mt-4 space-y-2">
-          <p className="text-sm font-semibold text-text-primary">관련 뉴스</p>
-          {ipo.news.map((n, i) => (
-            <button key={i} className="w-full flex items-center justify-between text-left py-2 border-b border-border last:border-0">
-              <span className="text-sm text-text-secondary">{n}</span>
-              <ChevronRight size={16} className="text-text-tertiary flex-shrink-0" />
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* 청약하기 CTA */}
-      <div className="px-4 py-4">
-        <button
-          onClick={() => navigate(`/ipo/${ipo.id}/subscribe`)}
-          className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-base"
-        >
-          청약하기
-        </button>
       </div>
     </div>
   )

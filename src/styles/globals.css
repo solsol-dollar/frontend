@@ -7,19 +7,17 @@
     --radius: 0.75rem;
 
     /* Design Tokens */
-    --color-primary: #1C1FE8;
-    --color-primary-light: #4A90FF;
-    --color-orange: #FF6830;
+    --color-primary: #0922AC;
     --color-sky-blue: #29A9F5;
     --color-pink: #FF4B8B;
     --color-teal: #00C0A0;
     --color-up: #E53935;
     --color-down: #1565C0;
-    --color-surface: #F5F6F8;
-    --color-border: #EEEEEE;
-    --color-text-primary: #111111;
-    --color-text-secondary: #666666;
-    --color-text-tertiary: #999999;
+    --color-surface: #E8EDFB;
+    --color-border: #E5E7EB;
+    --color-text-primary: #111827;
+    --color-text-secondary: #6B7280;
+    --color-text-tertiary: #9CA3AF;
   }
 
   * {
@@ -27,11 +25,32 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  html, body {
+    overflow: hidden;
+    height: 100%;
+    /* PWA standalone: 노치/홈 인디케이터 safe area 확보 */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
   body {
     @apply bg-white text-text-primary font-sans;
-    /* 모바일 스크롤 최적화 */
-    -webkit-overflow-scrolling: touch;
     overscroll-behavior: none;
+    scrollbar-width: none;
+  }
+
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
   }
 
   /* 모바일 앱처럼 텍스트 선택 방지 (버튼, 탭 등) */
@@ -59,4 +78,40 @@
   .amount-negative {
     color: var(--color-down);
   }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .week-slide-left {
+    animation: week-slide-left 0.4s ease-out;
+  }
+
+  .week-slide-right {
+    animation: week-slide-right 0.4s ease-out;
+  }
+
+  .fade-slide-up {
+    animation: fade-slide-up 0.4s ease-out both;
+  }
+}
+
+@keyframes week-slide-left {
+  from { transform: translateX(30px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes week-slide-right {
+  from { transform: translateX(-30px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes fade-slide-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) translateX(var(--drift, 0px)) rotate(720deg); opacity: 0; }
 }
