@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
@@ -432,8 +432,10 @@ function IpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; o
 
 export function IpoCalendarPage() {
   const navigate = useNavigate()
+  const { state } = useLocation()
   const [tab, setTab] = useState<Tab>('청약 일정')
-  const [bottomFilter, setBottomFilter] = useState<BottomFilter>('전체')
+  const initialFilter = (state as { bottomFilter?: string })?.bottomFilter
+  const [bottomFilter, setBottomFilter] = useState<BottomFilter>(initialFilter === '관심' ? '관심' : '전체')
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
   const [calendarView, setCalendarView] = useState<CalendarView>('weekly')
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'))

@@ -13,7 +13,7 @@ export function useUpdateReturnPlanRatios() {
       returnPlanId: number
       allocations: AllocationItem[]
     }) => {
-      const res = await ledgerApi.put(`/api/v1/return-plans/${returnPlanId}`, { allocations })
+      const res = await ledgerApi.put(`/api/ledger/api/v1/return-plans/${returnPlanId}`, { allocations })
       return (res as unknown as ApiResponse<ReturnPlanResponse>).data
     },
   })

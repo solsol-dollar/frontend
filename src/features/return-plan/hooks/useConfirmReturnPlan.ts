@@ -8,7 +8,7 @@ export function useConfirmReturnPlan(returnPlanId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = await ledgerApi.put(`/api/v1/return-plans/${returnPlanId}/confirm`)
+      const res = await ledgerApi.put(`/api/ledger/api/v1/return-plans/${returnPlanId}/confirm`)
       return (res as unknown as ApiResponse<ReturnPlanConfirmResponse>).data
     },
     onSuccess: () => {
