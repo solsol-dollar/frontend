@@ -16,9 +16,10 @@ function buildWavePath(fillLevel: number, phase: number): string {
 
 interface Props {
   onDone: () => void
+  message?: string
 }
 
-export function LoadingStep({ onDone }: Props) {
+export function LoadingStep({ onDone, message = '계좌 정보를 불러오고 있어요' }: Props) {
   const [fill, setFill] = useState(0)
   const [phase, setPhase] = useState(0)
 
@@ -63,7 +64,7 @@ export function LoadingStep({ onDone }: Props) {
           <path fill="#0046ff" d={wavePath} />
         </g>
       </svg>
-      <p className="text-sm mt-5 text-text-tertiary">계좌 정보를 불러오고 있어요</p>
+      <p className="text-sm mt-5 text-text-tertiary">{message}</p>
     </div>
   )
 }
