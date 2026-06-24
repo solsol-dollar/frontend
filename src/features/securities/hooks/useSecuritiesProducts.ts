@@ -7,7 +7,7 @@ export function useSecuritiesProducts(type: ProductType, sort: ProductSortType =
   return useQuery({
     queryKey: ['securities', 'products', type, sort, keyword],
     queryFn: async () => {
-      const res = await serviceApi.get('/api/v1/securities/products', {
+      const res = await serviceApi.get('/api/service/api/v1/securities/products', {
         params: { type, sort, ...(keyword ? { keyword } : {}) },
       })
       const raw = (res as unknown as ApiResponse<any[]>).data

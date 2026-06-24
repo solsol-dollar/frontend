@@ -9,7 +9,7 @@ export function useStockDetail(productId: string) {
   return useQuery({
     queryKey: ['securities', 'product', productId],
     queryFn: async () => {
-      const res = await serviceApi.get(`/api/v1/securities/products/${productId}`)
+      const res = await serviceApi.get(`/api/service/api/v1/securities/products/${productId}`)
       const raw = (res as unknown as ApiResponse<any>).data
       return {
         productId: raw.id,
@@ -20,7 +20,7 @@ export function useStockDetail(productId: string) {
         currentPriceKrw: Math.round((raw.price ?? 0) * USD_KRW),
         dayChangeUsd: raw.change ?? 0,
         dayChangeRate: raw.changeRate ?? 0,
-        isUp: raw.sign !== '-',
+        isUp: raw.sign === '1' || raw.sign === '2',
         isWatchlisted: false,
       } satisfies ProductDetail
     },
@@ -33,7 +33,7 @@ export function useOrderBook(productId: string) {
   return useQuery({
     queryKey: ['securities', 'order-book', productId],
     queryFn: async () => {
-      const res = await serviceApi.get(`/api/v1/securities/products/${productId}/quotes`)
+      const res = await serviceApi.get(`/api/service/api/v1/securities/products/${productId}/quotes`)
       const raw = (res as unknown as ApiResponse<any>).data
       return {
         ticker: raw.ticker,
