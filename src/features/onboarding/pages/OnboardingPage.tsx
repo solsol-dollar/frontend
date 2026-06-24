@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { PinKeypad } from '@/features/onboarding/components/PinKeypad'
 import { LoadingStep } from '@/features/onboarding/components/LoadingStep'
 import { AccountSelectStep } from '@/features/onboarding/components/AccountSelectStep'
-import { loginWithPin, completeOnboarding } from '@/lib/auth'
+import { loginWithPin } from '@/lib/auth'
+import { useCompleteOnboarding } from '@/features/onboarding/hooks/useCompleteOnboarding'
 
 type Step = 'splash' | 'pin' | 'loading' | 'accounts'
 
 export function OnboardingPage() {
   const navigate = useNavigate()
+  const { complete } = useCompleteOnboarding()
   const [step, setStep] = useState<Step>('splash')
   const [pinError, setPinError] = useState<string | null>(null)
   const [pinKey, setPinKey] = useState(0)
@@ -60,10 +62,7 @@ export function OnboardingPage() {
   if (step === 'accounts')
     return (
       <AccountSelectStep
-        onConfirm={async () => {
-          await completeOnboarding()
-          navigate('/home', { state: { requestNotification: true } })
-        }}
+        onConfirm={() => complete(() => navigate('/home', { state: { requestNotification: true } }))}
       />
     )
   return (

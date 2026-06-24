@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import sleepingIcon from '@/assets/home/sleeping.svg'
 import changeupCard from '@/assets/home/changeup-card.png'
 import { Header } from '@/components/common/Header'
-import { registerPushToken } from '@/lib/firebase'
+import { useRequestNotification } from '@/features/home/hooks/useRequestNotification'
 import { cn } from '@/lib/utils'
 import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 import { useFavoriteIpos, getIpoDisplay, type FavoriteIpo } from '@/features/home/hooks/useFavoriteIpos'
@@ -46,13 +46,7 @@ function FavoriteIpoLogo({ ipo }: { ipo: FavoriteIpo }) {
 
 export function HomePage() {
   const navigate = useNavigate()
-  const location = useLocation()
-
-  useEffect(() => {
-    if (location.state?.requestNotification) {
-      registerPushToken()
-    }
-  }, [])
+  useRequestNotification()
 
   const { data: assets, isLoading: assetsLoading } = useHomeAssets()
   const { data: favoriteIpos, isLoading: iposLoading } = useFavoriteIpos()
