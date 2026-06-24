@@ -39,12 +39,11 @@ export function TransferConfirmPage() {
       <Header showBack title="송금" showNotification={false} showMypage={false} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <p className="text-[28px] font-semibold text-center leading-snug">
+        <p className="text-[20px] font-semibold text-center leading-snug">
           <span className="text-primary-500">{destName}</span>
           <span className="text-text-primary"> 계좌로</span>
         </p>
-        <p className="text-[28px] font-semibold text-text-primary text-center leading-snug">$ {amount}를</p>
-        <p className="text-[28px] font-semibold text-text-primary text-center leading-snug">옮길까요?</p>
+        <p className="text-[20px] font-semibold text-text-primary text-center leading-snug">$ {amount}를 옮길까요?</p>
       </div>
 
       <div className="px-5 mb-10">

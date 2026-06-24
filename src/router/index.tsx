@@ -43,6 +43,9 @@ import { StockSearchPage } from '@/features/securities/pages/StockSearchPage'
 
 // Mypage
 import { MyPage } from '@/features/mypage/pages/MyPage'
+import { ProductDetailPage } from '@/features/mypage/pages/ProductDetailPage'
+import { MaturityDatePage } from '@/features/mypage/pages/MaturityDatePage'
+import { ProductCompletePage } from '@/features/mypage/pages/ProductCompletePage'
 import { NotificationsPage } from '@/features/mypage/pages/NotificationsPage'
 import { NotificationSettingsPage } from '@/features/mypage/pages/NotificationSettingsPage'
 
@@ -64,6 +67,11 @@ export const router = createBrowserRouter([
   { path: '/home/exchange', element: <ExchangePage /> },
   { path: '/home/exchange/complete', element: <ExchangeCompletePage /> },
   { path: '/home/sleeping-dollar', element: <SleepingDollarPage /> },
+
+  // Mypage 상품 가입 플로우 — 바텀탭 없음
+  { path: '/mypage/product/:productId', element: <ProductDetailPage /> },
+  { path: '/mypage/product/:productId/maturity', element: <MaturityDatePage /> },
+  { path: '/mypage/product/:productId/complete', element: <ProductCompletePage /> },
 
   // Securities 서브 플로우 — 바텀탭 없음
   { path: '/securities/stocks/:id', element: <StockDetailPage /> },

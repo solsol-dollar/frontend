@@ -159,7 +159,7 @@ export function TransferHistoryPage() {
               </p>
               <button
                 onClick={() => navigate('/home/fill', { state: { toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } })}
-                className="w-full py-3 text-sm text-text-sub bg-surface-neutral rounded-xl"
+                className="w-full py-3 text-sm text-text-sub bg-surface-bg rounded-xl"
               >
                 채우기
               </button>
