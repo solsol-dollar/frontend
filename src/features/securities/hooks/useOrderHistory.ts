@@ -7,7 +7,7 @@ export function useOrderHistory() {
   return useQuery({
     queryKey: ['securities', 'order-history'],
     queryFn: async () => {
-      const res = await serviceApi.get('/api/v1/trade-orders')
+      const res = await serviceApi.get('/api/service/api/v1/trade-orders')
       const raw = (res as unknown as ApiResponse<any[]>).data
       return raw.map((item: any) => ({
         orderId: item.orderId,

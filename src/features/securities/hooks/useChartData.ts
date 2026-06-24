@@ -8,7 +8,7 @@ export function useChartData(productId: string, period: ChartPeriod) {
     queryFn: async () => {
       // axios interceptor가 res.data를 반환하므로 응답 자체가 { code, data } 구조임
       const res = await serviceApi.get<ChartResponse>(
-        `/api/v1/securities/products/${productId}/chart`,
+        `/api/service/api/v1/securities/products/${productId}/chart`,
         { params: { period } },
       )
       // interceptor가 res.data를 반환 → res는 실제로 { code: string, data: ChartResponse }

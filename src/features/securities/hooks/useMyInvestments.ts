@@ -7,7 +7,7 @@ export function useMyInvestments() {
   return useQuery({
     queryKey: ['securities', 'holdings'],
     queryFn: async () => {
-      const res = await serviceApi.get('/api/v1/securities/holdings')
+      const res = await serviceApi.get('/api/service/api/v1/securities/holdings')
       const raw = (res as unknown as ApiResponse<any>).data
       return {
         totalCurrentValueUsd: raw.totalCurrentValueUsd ?? 0,
@@ -20,7 +20,7 @@ export function useMyInvestments() {
           productId: h.productId,
           ticker: h.ticker,
           productName: h.productName,
-          productType: (h.exchangeName?.includes('NYSE') || h.exchangeName?.includes('NAS') ? 'OVERSEAS' : 'OVERSEAS') as 'OVERSEAS' | 'ETF',
+          productType: (h.productType as 'OVERSEAS' | 'ETF') ?? 'OVERSEAS',
           qty: h.totalQuantity ?? 0,
           avgPriceUsd: h.averagePrice ?? 0,
           currentValueUsd: h.evaluatedAmount ?? 0,

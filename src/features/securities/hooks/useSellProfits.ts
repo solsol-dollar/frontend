@@ -13,7 +13,7 @@ export function useSellProfits() {
   return useQuery({
     queryKey: ['securities', 'sell-profits'],
     queryFn: async () => {
-      const res = await serviceApi.get('/api/v1/trade-orders/profits')
+      const res = await serviceApi.get('/api/service/api/v1/trade-orders/profits')
       const raw = (res as unknown as ApiResponse<any>).data
       return {
         totalProfitKrw: raw.totalProfitKrw ?? 0,

@@ -6,7 +6,7 @@ export function useMarketIndices() {
   return useQuery({
     queryKey: ['securities', 'market-indices'],
     queryFn: async () => {
-      const res = await serviceApi.get('/api/v1/securities/market/indices')
+      const res = await serviceApi.get('/api/service/api/v1/securities/market/indices')
       return (res as unknown as ApiResponse<MarketIndex[]>).data
     },
     // 장 중 여부는 첫 응답에서 알 수 있으므로 항상 30초 refetch
