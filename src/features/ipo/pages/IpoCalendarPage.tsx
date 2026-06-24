@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
@@ -446,8 +446,10 @@ function IpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; o
 
 export function IpoCalendarPage() {
   const navigate = useNavigate()
+  const { state } = useLocation()
   const [tab, setTab] = useState<Tab>('청약 일정')
-  const [bottomFilter, setBottomFilter] = useState<BottomFilter>('전체')
+  const initialFilter = (state as { bottomFilter?: string })?.bottomFilter
+  const [bottomFilter, setBottomFilter] = useState<BottomFilter>(initialFilter === '관심' ? '관심' : '전체')
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
   const [calendarView, setCalendarViewRaw] = useState<CalendarView>(
     () => (sessionStorage.getItem('ipoCalendarView') as CalendarView | null) ?? 'weekly'
@@ -700,8 +702,12 @@ export function IpoCalendarPage() {
   }
 
   const handleSheetEventClick = (ipoId: number) => {
-    closeSheet()
-    setTimeout(() => navigate(`/ipo/${ipoId}`), 260)
+    if (daySheet) {
+      closeSheet()
+      setTimeout(() => navigate(`/ipo/${ipoId}`), 260)
+    } else {
+      navigate(`/ipo/${ipoId}`)
+    }
   }
 
   const handleSheetTouchStart = (e: React.TouchEvent) => {
@@ -840,7 +846,7 @@ export function IpoCalendarPage() {
                               </span>
                               <div className={cn(
                                 'mt-[10px] w-[33px] h-[33px] flex items-center justify-center rounded-[6px] text-[16px] font-semibold',
-                                isToday ? 'bg-[#E8E9EC] text-[#1A1A1A]' : isSelected ? 'bg-[#6B7280] text-white' : isSaturday || !hasEvents ? 'text-[#C8CBD2]' : 'text-[#1A1A1A]',
+                                isSelected ? 'bg-[#6B7280] text-white' : isToday ? 'bg-[#E8E9EC] text-[#1A1A1A]' : isSaturday || !hasEvents ? 'text-[#C8CBD2]' : 'text-[#1A1A1A]',
                               )}>
                                 {day.date()}
                               </div>

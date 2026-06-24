@@ -7,7 +7,7 @@ import type { ReturnPlanResponse } from '../types/returnPlan'
 export function useCreateReturnPlan() {
   return useMutation({
     mutationFn: async (subscriptionId: number) => {
-      const res = await ledgerApi.post('/api/v1/return-plans', { subscriptionId })
+      const res = await ledgerApi.post('/api/ledger/api/v1/return-plans', { subscriptionId })
       return (res as unknown as ApiResponse<ReturnPlanResponse>).data
     },
   })

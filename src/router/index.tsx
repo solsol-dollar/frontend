@@ -12,6 +12,7 @@ import { TransferCompletePage } from '@/features/home/pages/TransferCompletePage
 import { TransferHistoryPage } from '@/features/home/pages/TransferHistoryPage'
 import { FillPage } from '@/features/home/pages/FillPage'
 import { ExchangePage } from '@/features/home/pages/ExchangePage'
+import { ExchangeCompletePage } from '@/features/home/pages/ExchangeCompletePage'
 import { SleepingDollarPage } from '@/features/home/pages/SleepingDollarPage'
 
 // IPO
@@ -61,6 +62,7 @@ export const router = createBrowserRouter([
   { path: '/home/transfer/history', element: <TransferHistoryPage /> },
   { path: '/home/fill', element: <FillPage /> },
   { path: '/home/exchange', element: <ExchangePage /> },
+  { path: '/home/exchange/complete', element: <ExchangeCompletePage /> },
   { path: '/home/sleeping-dollar', element: <SleepingDollarPage /> },
 
   // Securities 서브 플로우 — 바텀탭 없음

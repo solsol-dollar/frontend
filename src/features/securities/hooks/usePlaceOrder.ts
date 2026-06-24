@@ -8,7 +8,7 @@ const USD_KRW = 1368.5
 export function usePlaceOrder() {
   return useMutation({
     mutationFn: async (req: TradeOrderRequest) => {
-      const res = await ledgerApi.post('/api/v1/trade-orders', req)
+      const res = await ledgerApi.post('/api/ledger/api/v1/trade-orders', req)
       const raw = (res as unknown as ApiResponse<any>).data
       const now = new Date()
       const hour = now.getHours() < 12 ? `오전 ${now.getHours()}시` : `오후 ${now.getHours() - 12 || 12}시`

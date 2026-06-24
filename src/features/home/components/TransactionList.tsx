@@ -1,19 +1,8 @@
 import { ChevronDown } from 'lucide-react'
 import { SolBankLogo } from './SolBankLogo'
+import type { TxItem, TxGroup } from '@/features/home/types/transaction'
 
-export interface TxItem {
-  id: number
-  name: string
-  time: string
-  amount: number
-  balance: number
-  type: '입금' | '출금' | '체크카드'
-}
-
-export interface TxGroup {
-  date: string
-  items: TxItem[]
-}
+export type { TxItem, TxGroup }
 
 interface Props {
   groups: TxGroup[]
@@ -40,14 +29,19 @@ export function TransactionList({ groups, showFilter, filter, onFilterClick }: P
             <div key={item.id} className="flex items-center gap-3 px-5 py-3">
               <SolBankLogo />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate">{item.name}</p>
+                <p className="text-sm font-medium text-text-primary flex items-center min-w-0">
+                  <span className="truncate">{item.name}</span>
+                  {item.label && <span className="flex-shrink-0">{item.label}</span>}
+                </p>
                 <p className="text-xs text-text-tertiary">{item.time}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-text-primary">
                   {item.amount > 0 ? '+' : '-'}$ {Math.abs(item.amount).toFixed(2)}
                 </p>
-                <p className="text-xs text-text-tertiary">${item.balance.toFixed(2)}</p>
+                {item.balance !== undefined && (
+                  <p className="text-xs text-text-tertiary">${item.balance.toFixed(2)}</p>
+                )}
               </div>
             </div>
           ))}
