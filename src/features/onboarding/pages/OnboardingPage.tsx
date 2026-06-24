@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { PinKeypad } from '@/features/onboarding/components/PinKeypad'
 import { LoadingStep } from '@/features/onboarding/components/LoadingStep'
 import { AccountSelectStep } from '@/features/onboarding/components/AccountSelectStep'
-import { NotificationPermissionStep } from '@/features/onboarding/components/NotificationPermissionStep'
 import { loginWithPin, completeOnboarding } from '@/lib/auth'
 
-type Step = 'splash' | 'pin' | 'loading' | 'accounts' | 'notification'
+type Step = 'splash' | 'pin' | 'loading' | 'accounts'
 
 export function OnboardingPage() {
   const navigate = useNavigate()
@@ -63,13 +62,10 @@ export function OnboardingPage() {
       <AccountSelectStep
         onConfirm={async () => {
           await completeOnboarding()
-          setStep('notification')
+          navigate('/home', { state: { requestNotification: true } })
         }}
       />
     )
-  if (step === 'notification')
-    return <NotificationPermissionStep onDone={() => navigate('/home')} />
-
   return (
     <div className="mobile-container flex flex-col h-screen bg-white px-4 pb-10">
       <div className="flex-1" />

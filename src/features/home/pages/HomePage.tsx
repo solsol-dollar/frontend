@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import { ChevronRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import sleepingIcon from '@/assets/home/sleeping.svg'
 import changeupCard from '@/assets/home/changeup-card.png'
 import { Header } from '@/components/common/Header'
+import { registerPushToken } from '@/lib/firebase'
 
 const ACCOUNTS = [
   { id: 1, name: '신한투자증권 CMA 계좌', balance: '$8,200.00', type: 'cma' },
@@ -17,6 +19,13 @@ const INTEREST_IPOS = [
 
 export function HomePage() {
   const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.state?.requestNotification) {
+      registerPushToken()
+    }
+  }, [])
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">

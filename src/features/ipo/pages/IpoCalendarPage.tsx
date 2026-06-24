@@ -840,7 +840,7 @@ export function IpoCalendarPage() {
                               </span>
                               <div className={cn(
                                 'mt-[10px] w-[33px] h-[33px] flex items-center justify-center rounded-[6px] text-[16px] font-semibold',
-                                isSelected ? 'bg-[#6B7280] text-white' : isSaturday || !hasEvents ? 'text-[#C8CBD2]' : 'text-[#1A1A1A]',
+                                isToday ? 'bg-[#E8E9EC] text-[#1A1A1A]' : isSelected ? 'bg-[#6B7280] text-white' : isSaturday || !hasEvents ? 'text-[#C8CBD2]' : 'text-[#1A1A1A]',
                               )}>
                                 {day.date()}
                               </div>
