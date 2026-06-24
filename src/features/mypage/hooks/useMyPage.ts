@@ -45,7 +45,10 @@ export function useCreateDepositAccount() {
       }
       return res.data
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mypage', 'accounts'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mypage', 'accounts'] })
+      qc.invalidateQueries({ queryKey: ['home', 'assets'] })
+    },
   })
 }
 
@@ -58,7 +61,10 @@ export function useCreateSavingsAccount() {
       }
       return res.data
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mypage', 'accounts'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mypage', 'accounts'] })
+      qc.invalidateQueries({ queryKey: ['home', 'assets'] })
+    },
   })
 }
 
@@ -71,6 +77,9 @@ export function useIssueCard() {
       }
       return res.data
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mypage', 'accounts'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mypage', 'accounts'] })
+      qc.invalidateQueries({ queryKey: ['home', 'assets'] })
+    },
   })
 }

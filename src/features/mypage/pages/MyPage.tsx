@@ -65,7 +65,8 @@ export function MyPage() {
     <div className="page-content min-h-screen bg-surface-bg">
       <Header title="마이페이지" showNotification showSearch showMypage={false} />
 
-      <div className="mx-4 mt-4 bg-white rounded-2xl overflow-hidden">
+      <p className="mx-5 mt-6 mb-3 text-xs font-medium text-text-tertiary">내 계좌</p>
+      <div className="mx-4 bg-white rounded-2xl overflow-hidden">
 
         {/* 증권 계좌 (항상 연결됨) */}
         {securitiesAccounts.length > 0 && (
@@ -101,7 +102,7 @@ export function MyPage() {
               ) : (
                 <button
                   onClick={() => navigate(`/mypage/product/${def.id}`)}
-                  className="flex-shrink-0 px-3 py-1.5 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
+                  className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
                 >
                   추가
                 </button>
@@ -109,9 +110,9 @@ export function MyPage() {
             </div>
           )
         })}
-
-        {/* 카드 섹션 구분선 */}
-        <div className="h-2 bg-surface-bg" />
+       </div>
+      <p className="mx-5 mt-6 mb-3 text-xs font-medium text-text-tertiary">내 카드</p>
+      <div className="mx-4 bg-white rounded-2xl overflow-hidden">
 
         {/* 카드 */}
         {cards.length > 0 ? (
@@ -138,7 +139,7 @@ export function MyPage() {
             </div>
             <button
               onClick={handleCardAdd}
-              className="flex-shrink-0 px-3 py-1.5 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
+              className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
             >
               추가
             </button>
