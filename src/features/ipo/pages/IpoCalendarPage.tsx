@@ -700,8 +700,12 @@ export function IpoCalendarPage() {
   }
 
   const handleSheetEventClick = (ipoId: number) => {
-    closeSheet()
-    setTimeout(() => navigate(`/ipo/${ipoId}`), 260)
+    if (daySheet) {
+      closeSheet()
+      setTimeout(() => navigate(`/ipo/${ipoId}`), 260)
+    } else {
+      navigate(`/ipo/${ipoId}`)
+    }
   }
 
   const handleSheetTouchStart = (e: React.TouchEvent) => {
