@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Info } from "lucide-react";
 import { Header } from "@/components/common/Header";
 import { DonutGauge } from "../components/DonutGauge";
@@ -7,31 +8,14 @@ import {
   ReturnPlanAllocationSection,
   type AllocationAccount,
 } from "../components/AllocationSplitEditor";
+import { useReturnPlanDetail } from "../hooks/useReturnPlanDetail";
+import { useUpdateReturnPlanRatios } from "../hooks/useUpdateReturnPlanRatios";
+import {
+  allocationItemsToSplits,
+  splitsToAllocationItems,
+} from "../utils/allocationMapper";
+import { useSubscriptionResultDetail } from "@/features/ipo/hooks/useSubscriptionResultDetail";
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
-
-const PENDING = {
-  name: "Klarna IPO",
-  refundDate: "2026.03.06",
-  dday: "D-3",
-  subscriptionAmount: "$3,000",
-  allocationRate: "30%",
-  allocatedAmount: "$900",
-  refundAmount: 2108,
-};
-
-const DISTRIBUTION = [
-  { label: "예수금", ratio: 20, legendLines: ["신한투자증권", "CMA 계좌"] },
-  {
-    label: "적립예금",
-    ratio: 50,
-    legendLines: ["신한 Value-up", "외화적립예금"],
-  },
-  {
-    label: "예금/카드",
-    ratio: 30,
-    legendLines: ["신한 외화", "체인지업 예금"],
-  },
-];
 
 const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
   {
@@ -55,12 +39,51 @@ const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
   },
 ];
 
+const formatUsd = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+
+function formatDday(refundDate: string | null): string | null {
+  if (!refundDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(refundDate);
+  const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  return diff === 0 ? "D-Day" : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
+}
+
 export function ReturnPlanPendingPage() {
+  const { id } = useParams();
+  const returnPlanId = Number(id);
   const [isEditing, setIsEditing] = useState(false);
-  const [splits, setSplits] = useState<[number, number]>([
-    DISTRIBUTION[0].ratio,
-    DISTRIBUTION[0].ratio + DISTRIBUTION[1].ratio,
-  ]);
+  const [splits, setSplits] = useState<[number, number]>([0, 0]);
+
+  const { data: plan } = useReturnPlanDetail(returnPlanId);
+  const { data: allocationResult } = useSubscriptionResultDetail(plan?.subscriptionId ?? NaN);
+  const updateRatios = useUpdateReturnPlanRatios();
+
+  useEffect(() => {
+    if (plan) setSplits(allocationItemsToSplits(plan.allocations));
+  }, [plan]);
+
+  const ratios: [number, number, number] = plan
+    ? [splits[0], splits[1] - splits[0], 100 - splits[1]]
+    : [0, 0, 0];
+  const refundAmount = plan?.totalRefundAmount ?? 0;
+
+  const handleToggleEdit = async () => {
+    if (!isEditing) {
+      if (plan) setSplits(allocationItemsToSplits(plan.allocations));
+      setIsEditing(true);
+      return;
+    }
+    try {
+      await updateRatios.mutateAsync({ returnPlanId, allocations: splitsToAllocationItems(splits) });
+      setIsEditing(false);
+    } catch (e) {
+      // TODO: 에러 토스트 처리
+      console.error("리턴 플랜 비율 수정 실패", e);
+      alert("비율 수정에 실패했어요. 잠시 후 다시 시도해주세요.");
+    }
+  };
 
   return (
     <div className="mobile-container flex flex-col h-screen">
@@ -75,25 +98,26 @@ export function ReturnPlanPendingPage() {
         <section className="bg-white">
           <div className="px-4 pt-4 pb-6">
             <p className="text-sm text-text-tertiary">
-              다음 IPO 환불일 | {PENDING.refundDate}
+              다음 IPO 환불일 | {plan?.refundDate ?? "-"}
             </p>
             <p className="text-xl font-bold text-text-primary mt-1">
-              {PENDING.name}
+              {plan?.sourceCompanyName ?? "불러오는 중..."}
             </p>
             <p className="mt-1">
-              <span className="text-3xl font-extrabold text-primary">
-                {PENDING.dday}
-              </span>
-              <span className="text-base text-text-secondary">
-                {" "}
-                일 후{" "}
-              </span>
+              {(() => {
+                const dday = formatDday(plan?.refundDate ?? null);
+                if (!dday) return null;
+                return (
+                  <>
+                    <span className="text-3xl font-extrabold text-primary">{dday}</span>
+                    {dday !== "D-Day" && <span className="text-base text-text-secondary"> 일 후 </span>}
+                  </>
+                );
+              })()}
               <span className="text-base font-bold text-text-primary">
-                ${PENDING.refundAmount.toLocaleString("en-US")}
+                {formatUsd(refundAmount)}
               </span>
-              <span className="text-base text-text-secondary">
-                가 리턴돼요!
-              </span>
+              <span className="text-base text-text-secondary">가 리턴돼요!</span>
             </p>
           </div>
 
@@ -104,19 +128,19 @@ export function ReturnPlanPendingPage() {
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">청약금</p>
                 <p className="text-base font-bold text-text-primary mt-1">
-                  {PENDING.subscriptionAmount}
+                  {allocationResult ? formatUsd(allocationResult.subscriptionAmount) : "-"}
                 </p>
               </div>
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">배정률</p>
                 <p className="text-base font-bold text-text-primary mt-1">
-                  {PENDING.allocationRate}
+                  {allocationResult?.allocationRate != null ? `${allocationResult.allocationRate}%` : "-"}
                 </p>
               </div>
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">배정금</p>
                 <p className="text-base font-bold text-text-primary mt-1">
-                  {PENDING.allocatedAmount}
+                  {allocationResult?.allocatedAmount != null ? formatUsd(allocationResult.allocatedAmount) : "-"}
                 </p>
               </div>
             </div>
@@ -125,27 +149,19 @@ export function ReturnPlanPendingPage() {
           {!isEditing && (
             <div className="px-4 pb-6">
               <div className="mt-6">
-                <DonutGauge
-                  ratios={[
-                    DISTRIBUTION[0].ratio,
-                    DISTRIBUTION[1].ratio,
-                    DISTRIBUTION[2].ratio,
-                  ]}
-                  amount={PENDING.refundAmount}
-                  message="분배될 예정입니다"
-                />
+                <DonutGauge ratios={ratios} amount={refundAmount} message="분배될 예정입니다" />
 
                 <div className="flex items-center justify-center gap-4 mt-4">
-                  {DISTRIBUTION.map((d, i) => (
-                    <div key={d.label} className="flex items-center gap-1.5">
+                  {ACCOUNTS.map((acc, i) => (
+                    <div key={acc.id} className="flex items-center gap-1.5">
                       <span
                         className="w-2 h-2 rounded-full flex-shrink-0"
                         style={{ backgroundColor: ZONE_COLORS[i] }}
                       />
                       <span className="text-xs text-text-secondary leading-tight">
-                        {d.legendLines[0]}
+                        {acc.nameLines?.[0]}
                         <br />
-                        {d.legendLines[1]}
+                        {acc.nameLines?.[1]}
                       </span>
                     </div>
                   ))}
@@ -157,9 +173,9 @@ export function ReturnPlanPendingPage() {
 
         {!isEditing && (
           <div className="px-4 py-5 bg-surface-bg space-y-3">
-            {DISTRIBUTION.map((d, i) => (
+            {ACCOUNTS.map((acc, i) => (
               <div
-                key={ACCOUNTS[i].id}
+                key={acc.id}
                 className="flex items-center gap-3 p-3 bg-white rounded-2xl fade-slide-up"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
@@ -170,21 +186,21 @@ export function ReturnPlanPendingPage() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-text-primary truncate">
-                    {ACCOUNTS[i].name}
+                    {acc.name}
                   </p>
                   <p className="text-xs text-text-tertiary truncate">
-                    {ACCOUNTS[i].desc}
+                    {acc.desc}
                   </p>
                 </div>
                 <div className="flex flex-col items-end flex-shrink-0">
                   <span className="text-sm font-bold text-text-primary">
-                    ${((PENDING.refundAmount * d.ratio) / 100).toFixed(2)}
+                    ${((refundAmount * ratios[i]) / 100).toFixed(2)}
                   </span>
                   <span
                     className="text-xs font-medium"
                     style={{ color: ZONE_COLORS[i] }}
                   >
-                    {d.ratio}%
+                    {ratios[i]}%
                   </span>
                 </div>
               </div>
@@ -207,7 +223,7 @@ export function ReturnPlanPendingPage() {
           <ReturnPlanAllocationSection
             description="설정하신 리턴플랜을 수정하실 수 있어요!"
             accounts={ACCOUNTS}
-            totalAmount={PENDING.refundAmount}
+            totalAmount={refundAmount}
             splits={splits}
             onSplitsChange={setSplits}
             bankIconSrc={solBankIcon}
@@ -217,18 +233,11 @@ export function ReturnPlanPendingPage() {
 
       <div className="px-4 pb-8 pt-3 bg-white border-t border-border">
         <button
-          onClick={() => {
-            if (!isEditing) {
-              setSplits([
-                DISTRIBUTION[0].ratio,
-                DISTRIBUTION[0].ratio + DISTRIBUTION[1].ratio,
-              ]);
-            }
-            setIsEditing((prev) => !prev);
-          }}
-          className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
+          onClick={handleToggleEdit}
+          disabled={updateRatios.isPending || !plan}
+          className="w-full bg-primary text-white py-4 rounded-xl font-semibold disabled:opacity-50"
         >
-          {isEditing ? "수정 완료" : "분배 수정하기"}
+          {updateRatios.isPending ? "저장 중..." : isEditing ? "수정 완료" : "분배 수정하기"}
         </button>
       </div>
     </div>

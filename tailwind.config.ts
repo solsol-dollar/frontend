@@ -59,11 +59,21 @@ const config: Config = {
       },
       animation: {
         blink: 'blink 1.2s ease-in-out infinite',
+        'char-in': 'char-in 0.15s ease-out',
+        'char-out': 'char-out 0.12s ease-in forwards',
       },
       keyframes: {
         blink: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0' },
+        },
+        'char-in': {
+          '0%': { transform: 'translateY(-60%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        'char-out': {
+          '0%': { transform: 'translateY(0)', opacity: '1' },
+          '100%': { transform: 'translateY(-60%)', opacity: '0' },
         },
       },
     },

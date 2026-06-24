@@ -10,3 +10,4 @@ dist-ssr/
 *.tsbuildinfo
 coverage/
 .idea/
+.env.production
