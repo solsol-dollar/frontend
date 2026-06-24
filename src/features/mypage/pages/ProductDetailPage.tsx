@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useCreateDepositAccount, useIssueCard } from '@/features/mypage/hooks/useMyPage'
 import shinhanLogo from '@/assets/home/shinhan-logo.svg'
 import checkIcon from '@/assets/home/check.svg'
@@ -53,8 +53,7 @@ export function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null)
 
   if (!product) {
-    navigate('/mypage', { replace: true })
-    return null
+    return <Navigate to="/mypage" replace />
   }
 
   const isPending = createDeposit.isPending || issueCard.isPending

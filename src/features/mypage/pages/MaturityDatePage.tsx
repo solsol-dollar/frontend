@@ -16,13 +16,15 @@ function buildMonths() {
   return Array.from({ length: 12 }, (_, i) => `${i + 1}월`)
 }
 
-function buildDays() {
-  return Array.from({ length: 31 }, (_, i) => `${i + 1}일`)
+function getDaysInMonth(year: string, month: string): string[] {
+  const y = parseInt(year)
+  const m = parseInt(month)
+  const count = new Date(y, m, 0).getDate()
+  return Array.from({ length: count }, (_, i) => `${i + 1}일`)
 }
 
 const YEARS = buildYears()
 const MONTHS = buildMonths()
-const DAYS = buildDays()
 
 function DrumColumn({ items, selected, onSelect }: {
   items: string[]
@@ -97,6 +99,14 @@ export function MaturityDatePage() {
   const [error, setError] = useState<string | null>(null)
   const createSavings = useCreateSavingsAccount()
 
+  const days = getDaysInMonth(year, month)
+
+  useEffect(() => {
+    const maxDay = days.length
+    const currentDay = parseInt(day)
+    if (currentDay > maxDay) setDay(`${maxDay}일`)
+  }, [year, month])
+
   const dateLabel = `${year.replace('년', '')}년 ${month.replace('월', '')}월 ${day.replace('일', '')}일`
 
   useEffect(() => {
@@ -107,10 +117,14 @@ export function MaturityDatePage() {
   const handleConfirm = async () => {
     setSheetOpen(false)
     setError(null)
+    const y = year.replace('년', '')
+    const m = month.replace('월', '').padStart(2, '0')
+    const d = day.replace('일', '').padStart(2, '0')
+    const maturityDate = `${y}-${m}-${d}`
     try {
-      const result = await createSavings.mutateAsync()
+      const result = await createSavings.mutateAsync(maturityDate)
       navigate(`/mypage/product/${productId}/complete`, {
-        state: { maturityDate: result.maturityDate ?? dateLabel },
+        state: { maturityDate: result.maturityDate ?? maturityDate },
       })
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
@@ -135,9 +149,7 @@ export function MaturityDatePage() {
           onClick={() => setSheetOpen(true)}
           className="w-full flex items-center justify-between px-4 py-4 bg-surface-bg rounded-xl"
         >
-          <span className={sheetOpen || dateLabel ? 'text-text-primary text-sm' : 'text-text-tertiary text-sm'}>
-            {dateLabel}
-          </span>
+          <span className="text-text-primary text-sm">{dateLabel}</span>
           <Calendar size={18} className="text-text-tertiary" />
         </button>
         {error && <p className="mt-3 text-sm text-danger">{error}</p>}
@@ -160,13 +172,13 @@ export function MaturityDatePage() {
         <div className="flex px-4">
           <DrumColumn items={YEARS} selected={year} onSelect={setYear} />
           <DrumColumn items={MONTHS} selected={month} onSelect={setMonth} />
-          <DrumColumn items={DAYS} selected={day} onSelect={setDay} />
+          <DrumColumn items={days} selected={day} onSelect={setDay} />
         </div>
 
-        <div className="flex mt- gap- px-">
+        <div className="flex">
           <button
             onClick={() => setSheetOpen(false)}
-            className="flex-1 py-5 text-base font-normal text-text-secondary bg-surface-bg "
+            className="flex-1 py-5 text-base font-normal text-text-secondary bg-surface-bg"
           >
             취소
           </button>
@@ -178,7 +190,7 @@ export function MaturityDatePage() {
             {createSavings.isPending ? '처리 중...' : '확인'}
           </button>
         </div>
-        <div className="pb-safe pb-" />
+        <div className="pb-8" />
       </div>
     </div>
   )

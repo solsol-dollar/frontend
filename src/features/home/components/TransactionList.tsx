@@ -24,7 +24,7 @@ export function TransactionList({ groups, showFilter, filter, onFilterClick }: P
               </button>
             </div>
           )}
-          <div className="flex flex-col items-center justify-center py-12 pb-20">
+          <div className={`flex flex-col items-center justify-center pb-20 ${showFilter ? 'pt-8' : 'pt-20'}`}>
             <p className="text-sm text-text-tertiary">거래 내역이 없어요</p>
           </div>
         </>

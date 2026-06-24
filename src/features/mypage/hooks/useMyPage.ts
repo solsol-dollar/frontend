@@ -24,13 +24,17 @@ interface MyPageData {
   cards: MyPageCard[]
 }
 
+interface ApiResponse<T> {
+  data: T
+  code?: number
+  message?: string
+}
+
 export function useMyPageAccounts() {
   return useQuery({
     queryKey: ['mypage', 'accounts'],
     queryFn: async () => {
-      const res = (await serviceApi.get('/api/service/api/v1/mypage/accounts')) as unknown as {
-        data: MyPageData
-      }
+      const res = (await serviceApi.get('/api/service/api/v1/mypage/accounts')) as ApiResponse<MyPageData>
       return res.data
     },
   })
@@ -40,9 +44,7 @@ export function useCreateDepositAccount() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = (await serviceApi.post('/api/service/api/v1/mypage/accounts/deposit')) as unknown as {
-        data: MyPageAccount
-      }
+      const res = (await serviceApi.post('/api/service/api/v1/mypage/accounts/deposit')) as ApiResponse<MyPageAccount>
       return res.data
     },
     onSuccess: () => {
@@ -55,10 +57,8 @@ export function useCreateDepositAccount() {
 export function useCreateSavingsAccount() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async () => {
-      const res = (await serviceApi.post('/api/service/api/v1/mypage/accounts/savings')) as unknown as {
-        data: MyPageAccount
-      }
+    mutationFn: async (maturityDate: string) => {
+      const res = (await serviceApi.post('/api/service/api/v1/mypage/accounts/savings', { maturityDate })) as ApiResponse<MyPageAccount>
       return res.data
     },
     onSuccess: () => {
@@ -72,9 +72,7 @@ export function useIssueCard() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async () => {
-      const res = (await serviceApi.post('/api/service/api/v1/mypage/cards')) as unknown as {
-        data: MyPageCard
-      }
+      const res = (await serviceApi.post('/api/service/api/v1/mypage/cards')) as ApiResponse<MyPageCard>
       return res.data
     },
     onSuccess: () => {
