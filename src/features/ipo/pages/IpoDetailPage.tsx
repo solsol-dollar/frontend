@@ -10,7 +10,7 @@ import {
   getSubscriptionStatusTextClass,
   type SubscriptionStatus,
 } from '@/features/ipo/utils/subscriptionStatus'
-import { useIpoDetail, useToggleFavorite } from '@/features/ipo/hooks/useIpo'
+import { useIpoDetail, useToggleFavorite, useIpoNews } from '@/features/ipo/hooks/useIpo'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 
 const MOCK_PERFORMANCE = [
@@ -22,10 +22,6 @@ const MOCK_PERFORMANCE = [
 const MOCK_NEWS_SCORE = 62
 const MOCK_NEWS_SUMMARY =
   'GPU 인프라 수요 급증 중이나, 매출 대비 부채 비율이 높아 재무 안정성 리스크가 존재합니다.'
-const MOCK_NEWS = [
-  { title: 'CoreWeave, NVIDIA와 $10B GPU 계약 체결', source: 'Reuters', date: '06.09' },
-  { title: 'CoreWeave, NVIDIA와 $10B GPU 계약 체결', source: 'Reuters', date: '06.09' },
-]
 
 const STATUS_MAP: Record<string, SubscriptionStatus> = {
   UPCOMING: '청약예정',
@@ -40,6 +36,7 @@ export function IpoDetailPage() {
 
   const { data, isLoading, isError } = useIpoDetail(ipoId)
   const { mutate: toggleFav } = useToggleFavorite()
+  const { data: newsData } = useIpoNews(ipoId)
 
   if (isLoading) {
     return <div className="page-content" />
@@ -176,11 +173,11 @@ export function IpoDetailPage() {
           <p className="text-sm text-text-secondary leading-relaxed mb-5">{MOCK_NEWS_SUMMARY}</p>
           <p className="text-sm font-bold text-text-primary mb-1">관련 뉴스</p>
           <div>
-            {MOCK_NEWS.map((n, i) => (
-              <div key={i} className="py-3 border-b border-border last:border-0">
+            {(newsData?.data ?? []).map((n) => (
+              <a key={n.id} href={n.url} target="_blank" rel="noopener noreferrer" className="block py-3 border-b border-border last:border-0">
                 <p className="text-sm font-semibold text-text-primary">{n.title}</p>
-                <p className="text-xs text-text-tertiary mt-1">{n.source} · {n.date}</p>
-              </div>
+                <p className="text-xs text-text-tertiary mt-1">{n.source} · {dayjs(n.publishedAt).format('YYYY.MM.DD')}</p>
+              </a>
             ))}
           </div>
         </section>

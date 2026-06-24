@@ -4,11 +4,13 @@ import { PinKeypad } from '@/features/onboarding/components/PinKeypad'
 import { LoadingStep } from '@/features/onboarding/components/LoadingStep'
 import { AccountSelectStep } from '@/features/onboarding/components/AccountSelectStep'
 import { loginWithPin } from '@/lib/auth'
+import { useCompleteOnboarding } from '@/features/onboarding/hooks/useCompleteOnboarding'
 
 type Step = 'splash' | 'pin' | 'loading' | 'accounts'
 
 export function OnboardingPage() {
   const navigate = useNavigate()
+  const { complete } = useCompleteOnboarding()
   const [step, setStep] = useState<Step>('splash')
   const [pinError, setPinError] = useState<string | null>(null)
   const [pinKey, setPinKey] = useState(0)
@@ -57,8 +59,12 @@ export function OnboardingPage() {
         onDone={() => (isCompleted ? navigate('/home') : setStep('accounts'))}
       />
     )
-  if (step === 'accounts') return <AccountSelectStep onConfirm={() => navigate('/home')} />
-
+  if (step === 'accounts')
+    return (
+      <AccountSelectStep
+        onConfirm={() => complete(() => navigate('/home', { state: { requestNotification: true } }))}
+      />
+    )
   return (
     <div className="mobile-container flex flex-col h-screen bg-white px-4 pb-10">
       <div className="flex-1" />

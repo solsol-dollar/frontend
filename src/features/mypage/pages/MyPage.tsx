@@ -1,104 +1,157 @@
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
+import { Check, ChevronRight } from 'lucide-react'
 import { Header } from '@/components/common/Header'
+import { useMyPageAccounts } from '@/features/mypage/hooks/useMyPage'
+import solBankIcon from '@/assets/common/sol-bank-icon.svg'
+import shinhanLogo from '@/assets/home/shinhan-logo.svg'
+import changeupCard from '@/assets/home/changeup-card.png'
 
-const ACCOUNTS = [
-  { id: 'cma', name: '신한투자증권 CMA 계좌', number: '270-91-175039', linked: true, tag: null },
-  {
-    id: 'valueup', name: '신한 Value-up 외화적립예금',
-    number: null, linked: false, tag: '연 3.2% 이자 SOLSOL에게',
-  },
+interface ProductDef {
+  id: string
+  accountType: 'DEPOSIT' | 'SAVINGS' | 'CARD'
+  name: string
+  description: string
+}
+
+const BANK_PRODUCT_DEFS: ProductDef[] = [
+  { id: 'valueup', accountType: 'SAVINGS', name: '신한 Value-up 외화적립예금', description: '연 3.2% 이자를 SOLSOL하게' },
+  { id: 'changeup', accountType: 'DEPOSIT', name: '신한 외화 체인지업 예금', description: '환율 걱정 없이 SOLSOL하게' },
 ]
+
+const CARD_PRODUCT_DEF: ProductDef = {
+  id: 'card',
+  accountType: 'CARD',
+  name: '신한카드 Change-up 체크',
+  description: '내 외화, 필요한 곳에 바로',
+}
+
+function SolBankLogo() {
+  return (
+    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+      <img src={solBankIcon} className="w-10 h-10 object-contain" alt="" />
+    </div>
+  )
+}
 
 export function MyPage() {
   const navigate = useNavigate()
+  const { data } = useMyPageAccounts()
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>()
+
+  const accounts = data?.accounts ?? []
+  const cards = data?.cards ?? []
+
+  const securitiesAccounts = accounts.filter((a) => a.accountType === 'SECURITIES')
+  const depositAccount = accounts.find((a) => a.accountType === 'DEPOSIT')
+  const savingsAccount = accounts.find((a) => a.accountType === 'SAVINGS')
+
+  const showToast = (msg: string) => {
+    clearTimeout(toastTimer.current)
+    setToast(msg)
+    toastTimer.current = setTimeout(() => setToast(null), 2000)
+  }
+
+  const handleCardAdd = () => {
+    if (!depositAccount) {
+      showToast('외화 체인지업 예금 계좌를 먼저 만들어주세요')
+      return
+    }
+    navigate('/mypage/product/card')
+  }
 
   return (
-    <div className="page-content">
+    <div className="page-content min-h-screen bg-surface-bg">
       <Header title="마이페이지" showNotification showSearch showMypage={false} />
 
-      {/* 연동 계좌 목록 */}
-      <section className="px-4 pt-4">
-        <div className="space-y-3">
-          {ACCOUNTS.map((acc) => (
-            <div key={acc.id} className="flex items-center gap-3 py-3 border-b border-border">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-[10px] font-bold">SOL</span>
+      <p className="mx-5 mt-6 mb-3 text-xs font-medium text-text-tertiary">내 계좌</p>
+      <div className="mx-4 bg-white rounded-2xl overflow-hidden">
+
+        {/* 증권 계좌 (항상 연결됨) */}
+        {securitiesAccounts.length > 0 && (
+          <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
+            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+              <img src={shinhanLogo} className="w-10 h-10 object-contain" alt="" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text-primary">신한투자증권 CMA 계좌</p>
+              <p className="text-xs text-text-tertiary mt-0.5">{securitiesAccounts[0].accountNumberMasked}</p>
+            </div>
+            <Check size={18} className="text-primary flex-shrink-0" />
+          </div>
+        )}
+
+        {/* 은행 상품 (연결 여부에 따라 ✓ or 추가) */}
+        {BANK_PRODUCT_DEFS.map((def, i) => {
+          const connected = def.accountType === 'SAVINGS' ? savingsAccount : depositAccount
+          return (
+            <div
+              key={def.id}
+              className={`flex items-center gap-3 px-4 py-4 ${i < BANK_PRODUCT_DEFS.length - 1 ? 'border-b border-border' : ''}`}
+            >
+              <SolBankLogo />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-text-primary">{def.name}</p>
+                <p className="text-xs text-text-tertiary mt-0.5">
+                  {connected ? connected.accountNumberMasked : def.description}
+                </p>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-text-primary">{acc.name}</p>
-                {acc.number && <p className="text-xs text-text-tertiary mt-0.5">{acc.number}</p>}
-                {acc.tag && <p className="text-xs text-text-secondary mt-0.5">{acc.tag}</p>}
-              </div>
-              {acc.linked ? (
-                <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                  <span className="text-white text-[10px]">✓</span>
-                </div>
+              {connected ? (
+                <Check size={18} className="text-primary flex-shrink-0" />
               ) : (
-                <button className="text-xs text-primary border border-primary rounded-full px-3 py-1">
+                <button
+                  onClick={() => navigate(`/mypage/product/${def.id}`)}
+                  className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
+                >
                   추가
                 </button>
               )}
             </div>
-          ))}
-        </div>
+          )
+        })}
+       </div>
+      <p className="mx-5 mt-6 mb-3 text-xs font-medium text-text-tertiary">내 카드</p>
+      <div className="mx-4 bg-white rounded-2xl overflow-hidden">
 
-        <button
-          onClick={() => {}}
-          className="flex items-center gap-1 mt-3 text-sm text-text-secondary"
-        >
-          내 계좌·카드 보기 및 추가 연동
-          <ChevronRight size={16} />
-        </button>
-      </section>
-
-      {/* 상품 추천 배너 */}
-      <section className="mx-4 mt-6 p-4 bg-white border border-border rounded-2xl">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-white font-bold">S</span>
+        {/* 카드 */}
+        {cards.length > 0 ? (
+          cards.map((card) => (
+            <div key={card.cardId} className="flex items-center gap-3 px-4 py-4">
+              <div className="w-10 h-14 flex items-center justify-center flex-shrink-0">
+                <img src={changeupCard} className="w-8 h-12 object-contain" alt="" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-text-primary">{card.cardName}</p>
+                <p className="text-xs text-text-tertiary mt-0.5">{card.cardNumberMasked}</p>
+              </div>
+              <Check size={18} className="text-primary flex-shrink-0" />
+            </div>
+          ))
+        ) : (
+          <div className="flex items-center gap-3 px-4 py-4">
+            <div className="w-10 h-14 flex items-center justify-center flex-shrink-0">
+              <img src={changeupCard} className="w-8 h-12 object-contain" alt="" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text-primary">{CARD_PRODUCT_DEF.name}</p>
+              <p className="text-xs text-text-tertiary mt-0.5">{CARD_PRODUCT_DEF.description}</p>
+            </div>
+            <button
+              onClick={handleCardAdd}
+              className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
+            >
+              추가
+            </button>
           </div>
-          <div>
-            <p className="text-base font-bold text-primary">신한 Value-up 외화적립예금</p>
-            <p className="text-sm text-text-secondary">이런 고객님에게 유리한 상품입니다</p>
-          </div>
-        </div>
-        <ul className="space-y-1.5 mb-4">
-          {[
-            '해외송금을 보내시는 개인 및 법인 고객',
-            '외화자산에 일정부분 투자하여 자산의 분산 운용 및 포트폴리오의 다양화를 바라고자 하는 고객',
-          ].map((item) => (
-            <li key={item} className="flex items-start gap-2 text-xs text-text-secondary">
-              <span className="text-primary mt-0.5 flex-shrink-0">✓</span>
-              {item}
-            </li>
-          ))}
-        </ul>
-        <button className="w-full bg-primary text-white py-3.5 rounded-xl font-semibold text-sm">
-          예금 만들기
-        </button>
-      </section>
+        )}
+      </div>
 
-      {/* 설정 메뉴 */}
-      <section className="px-4 mt-6">
-        {[
-          { label: '알림 설정', path: '/notifications/settings' },
-          { label: '앱 버전', value: '1.0.0' },
-        ].map((item) => (
-          <button
-            key={item.label}
-            onClick={() => item.path && navigate(item.path)}
-            className="w-full flex items-center justify-between py-4 border-b border-border"
-          >
-            <span className="text-sm text-text-primary">{item.label}</span>
-            {item.path ? (
-              <ChevronRight size={16} className="text-text-tertiary" />
-            ) : (
-              <span className="text-sm text-text-tertiary">{item.value}</span>
-            )}
-          </button>
-        ))}
-      </section>
+      {/* 토스트 */}
+      <div className={`fixed bottom-24 left-1/2 -translate-x-1/2 w-max max-w-[calc(100%-2rem)] bg-gray-800 text-white text-sm px-4 py-2.5 rounded-xl transition-all duration-300 z-50 ${toast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
+        {toast}
+      </div>
+
     </div>
   )
 }

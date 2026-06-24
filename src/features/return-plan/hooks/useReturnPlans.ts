@@ -8,7 +8,7 @@ export function useReturnPlans(page = 0, size = 20) {
   return useQuery({
     queryKey: ['returnPlans', page, size],
     queryFn: async () => {
-      const res = await ledgerApi.get('/api/v1/return-plans', { params: { page, size } })
+      const res = await ledgerApi.get('/api/ledger/api/v1/return-plans', { params: { page, size } })
       return (res as unknown as ApiResponse<{ returnPlans: ReturnPlanListItem[] }>).data.returnPlans
     },
   })

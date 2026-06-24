@@ -8,7 +8,7 @@ export function useReturnPlanDetail(returnPlanId: number) {
   return useQuery({
     queryKey: ['returnPlan', returnPlanId],
     queryFn: async () => {
-      const res = await ledgerApi.get(`/api/v1/return-plans/${returnPlanId}`)
+      const res = await ledgerApi.get(`/api/ledger/api/v1/return-plans/${returnPlanId}`)
       return (res as unknown as ApiResponse<ReturnPlanResponse>).data
     },
     enabled: Number.isFinite(returnPlanId),

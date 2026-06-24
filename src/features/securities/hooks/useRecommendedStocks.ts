@@ -12,10 +12,20 @@ export function useRecommendedStocks(ipoId?: number, type?: ProductType) {
   return useQuery({
     queryKey: ['securities', 'recommended', ipoId, type],
     queryFn: async () => {
-      const res = await serviceApi.get('/api/v1/securities/recommended', {
+      const res = await serviceApi.get('/api/service/api/v1/securities/recommended', {
         params: { ...(ipoId ? { ipoId } : {}), ...(type ? { type } : {}) },
       })
-      return (res as unknown as ApiResponse<RecommendedProduct[]>).data
+      const raw = (res as unknown as ApiResponse<any[]>).data
+      return raw.map(item => ({
+        productId: item.id,
+        ticker: item.ticker,
+        productName: item.productName,
+        productType: item.productType as ProductType,
+        currentPriceUsd: item.currentPrice ?? 0,
+        changeRateDay: item.changeRate ?? 0,
+        isUp: item.sign === '1' || item.sign === '2',
+        reason: item.reason,
+      })) satisfies RecommendedProduct[]
     },
     initialData: MOCK,
     staleTime: 1000 * 60 * 5,

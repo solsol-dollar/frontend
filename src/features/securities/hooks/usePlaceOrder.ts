@@ -1,14 +1,14 @@
 import { useMutation } from '@tanstack/react-query'
-import { ledgerApi } from '@/lib/axios'
+import { serviceApi } from '@/lib/axios'
 import type { ApiResponse, TradeOrderRequest, TradeOrderResponse } from '../types/securities'
 
 const USD_KRW = 1368.5
 
-// ORD-001: POST /api/v1/trade-orders
+// ORD-001: POST /api/v1/trade-orders (service-app:8081)
 export function usePlaceOrder() {
   return useMutation({
     mutationFn: async (req: TradeOrderRequest) => {
-      const res = await ledgerApi.post('/api/v1/trade-orders', req)
+      const res = await serviceApi.post('/api/service/api/v1/trade-orders', req)
       const raw = (res as unknown as ApiResponse<any>).data
       const now = new Date()
       const hour = now.getHours() < 12 ? `오전 ${now.getHours()}시` : `오후 ${now.getHours() - 12 || 12}시`

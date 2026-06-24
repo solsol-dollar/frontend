@@ -8,7 +8,7 @@ export function useSubscriptionResultDetail(subscriptionResultId: number) {
   return useQuery({
     queryKey: ['subscriptionResult', subscriptionResultId],
     queryFn: async () => {
-      const res = await ledgerApi.get(`/api/v1/subscription-results/${subscriptionResultId}`)
+      const res = await ledgerApi.get(`/api/ledger/api/v1/subscription-results/${subscriptionResultId}`)
       return (res as unknown as ApiResponse<AllocationResultDetail>).data
     },
     enabled: Number.isFinite(subscriptionResultId),

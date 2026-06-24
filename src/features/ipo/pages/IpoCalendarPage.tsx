@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
 import { ipoApi, type IpoListItem } from '@/features/ipo/api/ipoApi'
 import { ipoKeys, useIpoList } from '@/features/ipo/hooks/useIpo'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
+import { SubscriptionHistory } from '@/features/ipo/components/SubscriptionHistory'
 
 type Tab = '청약 일정' | '청약내역/취소'
 type BottomFilter = '전체' | '관심'
@@ -36,8 +37,8 @@ interface Ipo {
   logo_color: string
   logo_url: string | null
   status: 'closed' | 'open' | 'upcoming'
-  subscription_start: string
-  subscription_end: string
+  subscription_start: string | null
+  subscription_end: string | null
   listing_date: string
   price: number
   price_confirmed: number | null
@@ -56,7 +57,8 @@ function formatPrice(price: number): string {
   return `USD ${price.toFixed(2)}`
 }
 
-function formatPeriod(start: string, end: string): string {
+function formatPeriod(start: string | null, end: string | null): string {
+  if (!start || !end) return '-'
   const s = dayjs(start).format('YYYY.MM.DD')
   const e = dayjs(end)
   return start.substring(0, 4) === end.substring(0, 4)
@@ -108,7 +110,10 @@ function getMonthWeeks(month: dayjs.Dayjs): dayjs.Dayjs[][] {
   const weeks: dayjs.Dayjs[][] = [];
   let cur = firstMon;
   while (cur.isBefore(lastDay) || cur.isSame(lastDay, "day")) {
-    weeks.push(Array.from({ length: 5 }, (_, i) => cur.add(i, "day")));
+    const week = Array.from({ length: 5 }, (_, i) => cur.add(i, "day"));
+    if (week.some((d) => d.month() === month.month())) {
+      weeks.push(week);
+    }
     cur = cur.add(7, "day");
   }
   return weeks;
@@ -154,11 +159,20 @@ function MonthlyCalendarView({
             const isToday = dateStr === todayStr;
             const dayEvents = events.filter((e) => e.date === dateStr);
             const hasEvents = dayEvents.length > 0;
+            const isShowMore = dayEvents.length > 2;
             return (
-              <div key={dateStr} className="flex flex-col pt-[10px] min-w-0">
+              <div
+                key={dateStr}
+                data-date={dateStr}
+                className={cn(
+                  "flex flex-col pt-[10px] min-w-0 rounded-[6px]",
+                  isShowMore && "transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer",
+                )}
+                onClick={isShowMore ? () => onShowMore(dateStr, dayEvents) : undefined}
+              >
                 {isCurrentMonth && (
                   <>
-                    <div className="flex justify-center mb-[6px]">
+                    <div className="flex justify-center mb-[5px]">
                       <span
                         className={cn(
                           "text-[16px] font-semibold leading-none w-[28px] h-[28px] flex items-center justify-center rounded-[6px]",
@@ -166,7 +180,7 @@ function MonthlyCalendarView({
                             ? "bg-[#E8E9EC] text-[#1A1A1A]"
                             : hasEvents
                               ? "text-[#1A1A1A]"
-                              : "text-[#C8CBD2]",
+                                : "text-[#C8CBD2]",
                         )}
                       >
                         {day.date()}
@@ -177,13 +191,16 @@ function MonthlyCalendarView({
                         key={i}
                         role="button"
                         tabIndex={0}
-                        onClick={() =>
-                          dayEvents.length > 2
-                            ? onShowMore(dateStr, dayEvents)
-                            : onNavigate(event.id)
-                        }
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { dayEvents.length > 2 ? onShowMore(dateStr, dayEvents) : onNavigate(event.id) } }}
-                        className="flex items-center rounded-[5px] overflow-hidden h-[17px] mb-[2px] mr-[4px] cursor-pointer"
+                        onClick={(e) => {
+                          if (isShowMore) return
+                          e.stopPropagation()
+                          onNavigate(event.id)
+                        }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { isShowMore ? onShowMore(dateStr, dayEvents) : onNavigate(event.id) } }}
+                        className={cn(
+                          "flex items-center rounded-[5px] overflow-hidden h-[17px] mb-[2px] mr-[4px] cursor-pointer",
+                          !isShowMore && "transition-all duration-200 active:transition-none active:scale-[0.97] active:opacity-60 select-none",
+                        )}
                         style={{ backgroundColor: EVENT_COLORS[event.type].bg }}
                       >
                         <div
@@ -208,7 +225,6 @@ function MonthlyCalendarView({
                     ))}
                     {dayEvents.length > 2 && (
                       <button
-                        onClick={() => onShowMore(dateStr, dayEvents)}
                         className="text-[10px] font-normal text-text-tertiary h-[17px] leading-none pl-[3px] text-left"
                       >
                         +{dayEvents.length - 2}개
@@ -290,7 +306,9 @@ function WeekDivider({ label }: { label: string }) {
 }
 
 function computeDDay(subscriptionEnd: string): { label: string; isEnded: boolean } {
-  const diff = dayjs(subscriptionEnd).startOf('day').diff(dayjs().startOf('day'), 'day')
+  const d = dayjs(subscriptionEnd)
+  if (!subscriptionEnd || !d.isValid()) return { label: '', isEnded: false }
+  const diff = d.startOf('day').diff(dayjs().startOf('day'), 'day')
   if (diff < 0) return { label: '', isEnded: true }
   if (diff === 0) return { label: 'D-Day', isEnded: false }
   return { label: `D-${diff}`, isEnded: false }
@@ -298,11 +316,18 @@ function computeDDay(subscriptionEnd: string): { label: string; isEnded: boolean
 
 function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
   const isUpcoming = ipo.status === 'upcoming'
-  const { label: dDayLabel } = computeDDay(isUpcoming ? ipo.subscription_start : ipo.subscription_end)
+  const { label: dDayLabel } = computeDDay((isUpcoming ? ipo.subscription_start : ipo.subscription_end) ?? '')
   const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
+  const dragRef = useRef({ startX: 0, startY: 0, moved: false })
 
   return (
-    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
+    <div
+      role="button" tabIndex={0}
+      onPointerDown={(e) => { dragRef.current = { startX: e.clientX, startY: e.clientY, moved: false } }}
+      onPointerMove={(e) => { if (Math.abs(e.clientX - dragRef.current.startX) > 5 || Math.abs(e.clientY - dragRef.current.startY) > 5) dragRef.current.moved = true }}
+      onClick={(e) => { if (dragRef.current.moved || (e.target as Element).closest('button')) return; onClick() }}
+      onKeyDown={handleKey}
+      className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
       <div className="flex items-center justify-between mb-[13px]">
         <div className="flex items-center gap-[18px] min-w-0">
           <IpoLogo ipo={ipo} />
@@ -346,7 +371,7 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           e.stopPropagation();
           onWishlistToggle();
         }}
-        className="absolute bottom-[22px] right-[17px]"
+        className="absolute bottom-[14px] right-[9px] p-2"
       >
         <HeartIcon isActive={isWishlisted} />
       </button>
@@ -361,9 +386,16 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
     : null
 
   const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
+  const dragRef = useRef({ startX: 0, startY: 0, moved: false })
 
   return (
-    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
+    <div
+      role="button" tabIndex={0}
+      onPointerDown={(e) => { dragRef.current = { startX: e.clientX, startY: e.clientY, moved: false } }}
+      onPointerMove={(e) => { if (Math.abs(e.clientX - dragRef.current.startX) > 5 || Math.abs(e.clientY - dragRef.current.startY) > 5) dragRef.current.moved = true }}
+      onClick={(e) => { if (dragRef.current.moved || (e.target as Element).closest('button')) return; onClick() }}
+      onKeyDown={handleKey}
+      className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
       <img src="/icons/IPO_end.svg" width={50} height={17} alt="청약종료" className="absolute top-[17.5px] right-[17px] translate-x-[3px]" />
       <div className="flex items-center mb-[13px]">
         <div className="flex items-center gap-[18px] min-w-0">
@@ -389,21 +421,21 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
             </p>
           </div>
         </div>
+        <div className="flex items-center !mt-[6px]">
+          <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">상장일 대비</span>
+          {change != null && ipo.listing_change_pct != null ? (
+            <span className={cn('ml-[7px] text-[13px] font-medium', isPositive ? 'text-[#CA3D40]' : 'text-down')}>
+              <span className="text-[9px]">{isPositive ? '▲' : '▼'}</span>{isPositive ? '+' : '-'}{change.toFixed(2)} ({isPositive ? '+' : ''}{ipo.listing_change_pct.toFixed(2)}%)
+            </span>
+          ) : (
+            <span className="ml-[7px] text-[13px] font-medium text-[#7F858F]">-</span>
+          )}
+        </div>
         <div className="flex items-center">
           <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">상장일</span>
           <span className="ml-[7px] text-[13px] font-medium text-[#7F858F]">
             {dayjs(ipo.listing_date).format('YYYY.MM.DD')}
           </span>
-        </div>
-        <div className="flex items-center !mt-[6px]">
-          <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">상장일 대비</span>
-          {change != null && ipo.listing_change_pct != null ? (
-            <span className={cn('ml-[7px] text-[13px] font-medium', isPositive ? 'text-[#CA3D40]' : 'text-down')}>
-              {ipo.current_price!.toFixed(2)} <span className="text-[9px]">{isPositive ? '▲' : '▼'}</span>{change.toFixed(2)}({ipo.listing_change_pct.toFixed(2)}%)
-            </span>
-          ) : (
-            <span className="ml-[7px] text-[13px] font-medium text-[#7F858F]">-</span>
-          )}
         </div>
       </div>
       <button
@@ -411,7 +443,7 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           e.stopPropagation();
           onWishlistToggle();
         }}
-        className="absolute bottom-[22px] right-[17px]"
+        className="absolute bottom-[14px] right-[9px] p-2"
       >
         <HeartIcon isActive={isWishlisted} />
       </button>
@@ -428,12 +460,25 @@ function IpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; o
 
 export function IpoCalendarPage() {
   const navigate = useNavigate()
+  const { state } = useLocation()
   const [tab, setTab] = useState<Tab>('청약 일정')
-  const [bottomFilter, setBottomFilter] = useState<BottomFilter>('전체')
+  const initialFilter = (state as { bottomFilter?: string })?.bottomFilter
+  const [bottomFilter, setBottomFilter] = useState<BottomFilter>(initialFilter === '관심' ? '관심' : '전체')
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
-  const [calendarView, setCalendarView] = useState<CalendarView>('weekly')
+  const [calendarView, setCalendarViewRaw] = useState<CalendarView>(
+    () => (sessionStorage.getItem('ipoCalendarView') as CalendarView | null) ?? 'weekly'
+  )
+  const setCalendarView = useCallback((view: CalendarView) => {
+    sessionStorage.setItem('ipoCalendarView', view)
+    setCalendarViewRaw(view)
+  }, [])
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'))
   const [daySheet, setDaySheet] = useState<{ date: string; events: CalendarEvent[] } | null>(null)
+  const [sheetVisible, setSheetVisible] = useState(false)
+  const [sheetDragY, setSheetDragY] = useState(0)
+  const sheetTouchStartY = useRef(0)
+  const sheetIsDragging = useRef(false)
+  const sheetPanelRef = useRef<HTMLDivElement>(null)
 
   const dateSectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -441,6 +486,8 @@ export function IpoCalendarPage() {
   const monthlyHeaderRef = useRef<HTMLDivElement>(null)
   const currentMonthSectionRef = useRef<HTMLDivElement | null>(null)
   const todayMonthRef = useRef<HTMLDivElement | null>(null)
+  const monthSectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const isMonthlyTransitioning = useRef(false)
   const touchStartX = useRef<number>(0)
 
   const scrollToDate = (dateStr: string) => {
@@ -555,11 +602,16 @@ export function IpoCalendarPage() {
   const today = dayjs();
   const todayStr = today.format("YYYY-MM-DD");
 
-  const [selectedDate, setSelectedDate] = useState(todayStr)
+  const [selectedDate, setSelectedDate] = useState(
+    () => sessionStorage.getItem('ipoSelectedDate') ?? todayStr
+  )
 
   const dow = today.day()
   const monday = today.subtract((dow + 6) % 7, 'day')
-  const [displayWeekStart, setDisplayWeekStart] = useState(monday)
+  const [displayWeekStart, setDisplayWeekStart] = useState(() => {
+    const saved = sessionStorage.getItem('ipoDisplayWeekStart')
+    return saved ? dayjs(saved) : monday
+  })
 
   const animIdRef = useRef(0)
   const changeWeekRef = useRef<(newWeek: dayjs.Dayjs) => void>(() => {})
@@ -591,25 +643,46 @@ export function IpoCalendarPage() {
     const section = todayMonthRef.current
     if (!container || !section) return
     const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
-    container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 30
+    container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 15
   }
 
-  const allIpoDates = filteredIpos.map((ipo) => ipo.subscription_start)
+  const allIpoDates = filteredIpos.map((ipo) => ipo.subscription_start).filter((d): d is string => d !== null)
   const uniqueDates = bottomFilter === '관심'
     ? Array.from(new Set(allIpoDates)).sort()
     : Array.from(new Set([todayStr, ...allIpoDates])).sort()
 
+  const scrollRestored = useRef(false)
+
   useEffect(() => {
+    if (filteredIpos.length === 0) return
+    if (scrollRestored.current) return
+    scrollRestored.current = true
+
     requestAnimationFrame(() => {
-      const el = dateSectionRefs.current.get(todayStr)
       const container = scrollContainerRef.current
-      if (el && container) {
+      if (!container) return
+      const savedMonthly = sessionStorage.getItem('ipoMonthlyScrollTop')
+      if (savedMonthly && monthlyContainerRef.current) {
+        monthlyContainerRef.current.scrollTop = Number(savedMonthly)
+        sessionStorage.removeItem('ipoMonthlyScrollTop')
+        return
+      }
+      const saved = sessionStorage.getItem('ipoListScrollTop')
+      if (saved) {
+        container.scrollTop = Number(saved)
+        sessionStorage.removeItem('ipoListScrollTop')
+        sessionStorage.removeItem('ipoSelectedDate')
+        sessionStorage.removeItem('ipoDisplayWeekStart')
+        return
+      }
+      const el = dateSectionRefs.current.get(todayStr)
+      if (el) {
         const elTop = el.getBoundingClientRect().top
         const containerTop = container.getBoundingClientRect().top
         container.scrollTop += elTop - containerTop - DATE_SCROLL_TOP_PADDING
       }
     })
-  }, [])
+  }, [filteredIpos])
 
   useEffect(() => {
     let rafId: number | null = null
@@ -618,23 +691,24 @@ export function IpoCalendarPage() {
       rafId = requestAnimationFrame(() => {
         rafId = null
         const HEADER_OFFSET = 160
-        let closestDate: string | null = null
-        let closestDist = Infinity
+        const lastTwoDates = new Set(uniqueDates.slice(-2))
+        let topDate: string | null = null
+        let topPos: number | null = null
         dateSectionRefs.current.forEach((el, dateStr) => {
           const rect = el.getBoundingClientRect()
-          if (rect.bottom > HEADER_OFFSET) {
-            const dist = Math.abs(rect.top - HEADER_OFFSET)
-            if (dist < closestDist) {
-              closestDist = dist
-              closestDate = dateStr
+          const effectiveBottom = lastTwoDates.has(dateStr) ? rect.bottom : rect.bottom - 80
+          if (effectiveBottom > HEADER_OFFSET && rect.top < window.innerHeight) {
+            if (topPos === null || effectiveBottom < topPos) {
+              topPos = effectiveBottom
+              topDate = dateStr
             }
           }
         })
-        if (closestDate) {
-          const d = dayjs(closestDate)
+        if (topDate) {
+          const d = dayjs(topDate)
           const newWeekStart = d.subtract((d.day() + 6) % 7, 'day')
           changeWeekRef.current(newWeekStart)
-          setSelectedDate(closestDate)
+          setSelectedDate(topDate)
         }
       })
     }
@@ -649,21 +723,100 @@ export function IpoCalendarPage() {
 
   useEffect(() => {
     if (calendarView !== 'monthly') return
+    isMonthlyTransitioning.current = true
     requestAnimationFrame(() => {
       const container = monthlyContainerRef.current
       const section = currentMonthSectionRef.current
       if (container && section) {
         const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
-        container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 30
+        container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 15
       }
+      isMonthlyTransitioning.current = false
     })
   }, [calendarView])
 
+  useEffect(() => {
+    if (calendarView !== 'monthly') return
+    const container = monthlyContainerRef.current
+    if (!container) return
+    const handleMonthlyScroll = () => {
+      if (isMonthlyTransitioning.current) return
+      const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
+      const containerTop = container.getBoundingClientRect().top + headerHeight
+      let found: string | null = null
+      monthSectionRefs.current.forEach((el, monthStr) => {
+        if (found) return
+        const rect = el.getBoundingClientRect()
+        if (rect.bottom > containerTop) found = monthStr
+      })
+      if (found) setCurrentMonth(dayjs(found))
+    }
+    container.addEventListener('scroll', handleMonthlyScroll, { passive: true })
+    return () => container.removeEventListener('scroll', handleMonthlyScroll)
+  }, [calendarView])
+
+  const closeSheet = () => {
+    sheetIsDragging.current = false
+    setSheetDragY(window.innerHeight)
+    setTimeout(() => {
+      setSheetDragY(0)
+      setSheetVisible(false)
+      setDaySheet(null)
+    }, 260)
+  }
 
   const handleSheetEventClick = (ipoId: number) => {
-    setDaySheet(null)
+    if (monthlyContainerRef.current) {
+      sessionStorage.setItem('ipoMonthlyScrollTop', String(monthlyContainerRef.current.scrollTop))
+    }
     navigate(`/ipo/${ipoId}`)
   }
+
+  const handleSheetTouchStart = (e: React.TouchEvent) => {
+    sheetTouchStartY.current = e.touches[0].clientY
+    sheetIsDragging.current = true
+  }
+
+  const handleSheetTouchMove = (e: React.TouchEvent) => {
+    if (!sheetIsDragging.current) return
+    const dy = e.touches[0].clientY - sheetTouchStartY.current
+    if (dy > 0) setSheetDragY(dy)
+  }
+
+  const handleSheetTouchEnd = () => {
+    sheetIsDragging.current = false
+    if (sheetDragY > 80) {
+      setSheetDragY(window.innerHeight)
+      setTimeout(() => {
+        setSheetDragY(0)
+        setSheetVisible(false)
+        setDaySheet(null)
+      }, 260)
+    } else {
+      setSheetDragY(0)
+    }
+  }
+
+  useEffect(() => {
+    if (!daySheet) return
+    const id = requestAnimationFrame(() => {
+      setSheetVisible(true)
+      const container = monthlyContainerRef.current
+      const panel = sheetPanelRef.current
+      if (!container || !panel) return
+      const dayEl = container.querySelector(`[data-date="${daySheet.date}"]`) as HTMLElement | null
+      if (!dayEl) return
+      const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
+      const visibleTop = container.getBoundingClientRect().top + headerHeight
+      const sheetTop = window.innerHeight - panel.offsetHeight
+      const dayTop = dayEl.getBoundingClientRect().top
+      const dayBottom = dayEl.getBoundingClientRect().bottom
+      if (dayBottom > sheetTop - 16 || dayTop < visibleTop - 20) {
+        container.scrollBy({ top: dayBottom - (sheetTop - 16), behavior: 'smooth' })
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [daySheet])
 
   return (
     <div className="h-dvh flex flex-col bg-[#F6F6F9]">
@@ -718,7 +871,7 @@ export function IpoCalendarPage() {
                   <span className="w-px h-[14px] bg-[#D9DBE0]" />
                   <button
                     className="text-[12px] font-medium text-[#1A1A1A]"
-                    onClick={() => { setCalendarView('monthly'); setCurrentMonth(dayjs().startOf('month')) }}
+                    onClick={() => { setCalendarView('monthly'); setCurrentMonth(dayjs(selectedDate).startOf('month')) }}
                   >
                     월별보기
                   </button>
@@ -755,7 +908,7 @@ export function IpoCalendarPage() {
                               </span>
                               <div className={cn(
                                 'mt-[10px] w-[33px] h-[33px] flex items-center justify-center rounded-[6px] text-[16px] font-semibold',
-                                isSelected ? 'bg-[#6B7280] text-white' : isSaturday || !hasEvents ? 'text-[#C8CBD2]' : 'text-[#1A1A1A]',
+                                isSelected ? 'bg-[#6B7280] text-white' : isToday ? 'bg-[#E8E9EC] text-[#1A1A1A]' : isSaturday || !hasEvents ? 'text-[#C8CBD2]' : 'text-[#1A1A1A]',
                               )}>
                                 {day.date()}
                               </div>
@@ -782,15 +935,32 @@ export function IpoCalendarPage() {
                     <div className="flex items-center gap-4">
                       <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={scrollToTodayMonth}>오늘</button>
                       <span className="w-px h-[14px] bg-[#D9DBE0]" />
-                      <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={() => setCalendarView('weekly')}>주별보기</button>
+                      <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={() => {
+                        const today = dayjs()
+                        const targetDate = today.isSame(currentMonth, 'month') ? todayStr : currentMonth.format('YYYY-MM-DD')
+                        const target = dayjs(targetDate)
+                        const newWeekStart = target.subtract((target.day() + 6) % 7, 'day')
+                        setSelectedDate(targetDate)
+                        changeWeekRef.current(newWeekStart)
+                        setCalendarView('weekly')
+                        requestAnimationFrame(() => {
+                          const el = dateSectionRefs.current.get(targetDate)
+                          const container = scrollContainerRef.current
+                          if (el && container) {
+                            container.scrollTop += el.getBoundingClientRect().top - container.getBoundingClientRect().top - DATE_SCROLL_TOP_PADDING + 15
+                          }
+                        })
+                      }}>주별보기</button>
                     </div>
                   </div>
                 </div>
-                {Array.from({ length: 10 }, (_, i) => currentMonth.subtract(3 - i, 'month')).map((month) => {
+                {Array.from({ length: 12 }, (_, i) => dayjs('2026-01-01').add(i, 'month')).map((month) => {
                   const isCurrentMonthSection = month.isSame(currentMonth, 'month')
                   const isTodayMonth = month.isSame(dayjs().startOf('month'), 'month')
                   return (
                     <div key={month.format('YYYY-MM')} ref={(el) => {
+                      if (el) monthSectionRefs.current.set(month.format('YYYY-MM'), el)
+                      else monthSectionRefs.current.delete(month.format('YYYY-MM'))
                       if (isCurrentMonthSection) currentMonthSectionRef.current = el
                       if (isTodayMonth) todayMonthRef.current = el
                     }}>
@@ -808,7 +978,7 @@ export function IpoCalendarPage() {
                 <div className="w-[64px] h-[64px] rounded-full bg-[#F0F1F4] flex items-center justify-center">
                   <img src="/icons/heart.svg" width={26} height={26} alt="" />
                 </div>
-                <span className="mt-[18px] text-[18px] font-bold text-[#001936]/[0.55]">관심 IPO를 등록해주세요</span>
+                <span className="mt-[20px] text-[20px] font-bold text-[#001936]/[0.55]">관심 IPO를 등록해주세요</span>
               </div>
             )}
             {uniqueDates.map((dateStr, idx) => {
@@ -863,7 +1033,12 @@ export function IpoCalendarPage() {
                     ) : (
                       <div className="space-y-[18px] mb-4">
                         {dayIpos.map((ipo) => (
-                          <IpoCard key={ipo.id} ipo={ipo} onClick={() => navigate(`/ipo/${ipo.id}`)} isWishlisted={wishlistedIds.has(ipo.id)} onWishlistToggle={() => toggleWishlist(ipo.id)} />
+                          <IpoCard key={ipo.id} ipo={ipo} onClick={() => {
+                            if (scrollContainerRef.current) sessionStorage.setItem('ipoListScrollTop', String(scrollContainerRef.current.scrollTop))
+                            sessionStorage.setItem('ipoSelectedDate', selectedDate)
+                            sessionStorage.setItem('ipoDisplayWeekStart', displayWeekStart.format('YYYY-MM-DD'))
+                            navigate(`/ipo/${ipo.id}`)
+                          }} isWishlisted={wishlistedIds.has(ipo.id)} onWishlistToggle={() => toggleWishlist(ipo.id)} />
                         ))}
                       </div>
                     )}
@@ -871,19 +1046,13 @@ export function IpoCalendarPage() {
                 </div>
               )
             })}
-            <div className={uniqueDates.length > 0 && uniqueDates[uniqueDates.length - 1] <= todayStr ? 'h-[150px]' : 'h-[335px]'} />
+            <div className={uniqueDates.length > 0 && uniqueDates[uniqueDates.length - 1] <= todayStr ? 'h-[225px]' : 'h-[150px]'} />
           </div>}
 
         </>
       )}
 
-      {tab === '청약내역/취소' && (
-        <div className="px-4 pt-4 space-y-3">
-          {ipos.map((ipo) => (
-            <IpoCard key={ipo.id} ipo={ipo} onClick={() => navigate(`/ipo/${ipo.id}`)} isWishlisted={wishlistedIds.has(ipo.id)} onWishlistToggle={() => toggleWishlist(ipo.id)} />
-          ))}
-        </div>
-      )}
+      {tab === '청약내역/취소' && <SubscriptionHistory />}
 
       {tab === "청약 일정" && (
         <div className="fixed bottom-[91px] right-4 z-20">
@@ -907,11 +1076,19 @@ export function IpoCalendarPage() {
       )}
 
       {daySheet && (
-        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setDaySheet(null)}>
-          <div className="absolute inset-0 bg-black/40" />
+        <>
+          <div className="fixed inset-0 z-50" onClick={closeSheet} />
           <div
-            className="relative w-full bg-white rounded-t-2xl px-5 pt-4 pb-10"
+            ref={sheetPanelRef}
+            className="fixed left-0 right-0 bottom-0 z-50 bg-white rounded-t-2xl px-5 pt-4 pb-10 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]"
+            style={{
+              transform: `translateY(${sheetVisible ? sheetDragY : window.innerHeight}px)`,
+              transition: sheetIsDragging.current ? 'none' : 'transform 0.26s ease',
+            }}
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleSheetTouchStart}
+            onTouchMove={handleSheetTouchMove}
+            onTouchEnd={handleSheetTouchEnd}
           >
             <div className="w-10 h-1 bg-[#E0E0E0] rounded-full mx-auto mb-4" />
             <p className="text-base font-bold text-text-primary mb-3">
@@ -922,7 +1099,7 @@ export function IpoCalendarPage() {
                 <button
                   key={i}
                   onClick={() => handleSheetEventClick(event.id)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#F6F6F9] text-left"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#F6F6F9] text-left transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#ECEDF1] select-none"
                 >
                   <div
                     className="w-[3px] h-[18px] rounded-[2px] shrink-0"
@@ -938,7 +1115,7 @@ export function IpoCalendarPage() {
               ))}
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

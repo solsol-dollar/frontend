@@ -29,7 +29,10 @@ export function useToggleFavorite() {
   return useMutation({
     mutationFn: ({ ipoId, isFavorite }: { ipoId: number; isFavorite: boolean }) =>
       isFavorite ? ipoApi.removeFavorite(ipoId) : ipoApi.addFavorite(ipoId),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ipoKeys.all }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ipoKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['home', 'favorite-ipos'] })
+    },
   })
 }
 
@@ -37,5 +40,13 @@ export function useIpoFavorites(limit?: number) {
   return useQuery({
     queryKey: ipoKeys.favorites(limit),
     queryFn: () => ipoApi.getFavorites(limit),
+  })
+}
+
+export function useIpoNews(ipoId: number, size = 3) {
+  return useQuery({
+    queryKey: [...ipoKeys.detail(ipoId), 'news', size],
+    queryFn: () => ipoApi.getNews(ipoId, size),
+    enabled: ipoId > 0,
   })
 }

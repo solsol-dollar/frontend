@@ -22,12 +22,11 @@ export function TransferCompletePage() {
             alt="신한 로고"
             className="absolute w-20 h-20 left-1/2 -translate-x-1/2 bottom-full mb-6"
           />
-          <p className="text-[28px] font-semibold leading-snug">
+          <p className="text-[20px] font-semibold leading-snug">
             <span className="text-primary-500">{account.displayName}</span>
             <span className="text-text-primary"> 계좌로</span>
           </p>
-          <p className="text-[28px] font-semibold text-text-primary leading-snug">$ {amount}를</p>
-          <p className="text-[28px] font-semibold text-text-primary leading-snug">옮겼어요</p>
+          <p className="text-[20px] font-semibold text-text-primary leading-snug">$ {amount}를 옮겼어요</p>
         </div>
       </div>
       <div className="px-4 pb-10">

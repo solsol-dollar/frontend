@@ -76,7 +76,7 @@ export interface OrderBookResponse {
 }
 
 // ─── 마켓 인덱스 ──────────────────────────────────────────────
-// TODO: GET /api/v1/securities/market/indices (백엔드 구현 필요)
+// GET /api/v1/securities/market/indices
 export interface MarketIndex {
   name: string          // "S&P 500" | "나스닥" | "USD/KRW"
   value: number
@@ -87,7 +87,7 @@ export interface MarketIndex {
 }
 
 // ─── 주문 내역 ────────────────────────────────────────────────
-// TODO: GET /api/v1/trade-orders (백엔드 구현 필요)
+// GET /api/v1/trade-orders
 export type OrderType = 'BUY' | 'SELL'
 export type OrderStatus = 'COMPLETED' | 'PENDING' | 'CANCELLED'
 
@@ -103,7 +103,7 @@ export interface OrderHistoryItem {
 }
 
 // ─── 판매 수익 ────────────────────────────────────────────────
-// TODO: GET /api/v1/trade-orders/profits (백엔드 구현 필요)
+// GET /api/v1/trade-orders/profits
 export interface SellProfitItem {
   orderId: number
   date: string

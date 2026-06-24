@@ -45,6 +45,15 @@ export interface IpoDetailItem {
   logoUrl: string | null
 }
 
+export interface IpoNewsItem {
+  id: number
+  title: string
+  source: string
+  publishedAt: string
+  url: string
+  summary: string
+}
+
 export interface FavoriteIpoItem {
   id: number
   ipoId: number
@@ -83,4 +92,7 @@ export const ipoApi = {
 
   getFavorites: (limit?: number): Promise<ApiResponse<{ favorites: FavoriteIpoItem[] }>> =>
     serviceApi.get('/api/v1/favorites/ipos', limit ? { params: { limit } } : undefined),
+
+  getNews: (ipoId: number, size = 3): Promise<ApiResponse<IpoNewsItem[]>> =>
+    serviceApi.get(`/api/v1/ipos/${ipoId}/news`, { params: { size } }),
 }
