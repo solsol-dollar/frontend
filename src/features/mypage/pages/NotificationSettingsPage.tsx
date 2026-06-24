@@ -33,6 +33,7 @@ export function NotificationSettingsPage() {
   const allEnabled = ITEMS.every((item) => settings[item.key])
 
   const toggle = (key: SettingKey | 'all') => {
+    const prev = settings
     let next: Record<SettingKey, boolean>
     if (key === 'all') {
       const val = !allEnabled
@@ -41,7 +42,7 @@ export function NotificationSettingsPage() {
       next = { ...settings, [key]: !settings[key] }
     }
     setSettings(next)
-    update.mutate(next)
+    update.mutate(next, { onError: () => setSettings(prev) })
   }
 
   const rows = [
