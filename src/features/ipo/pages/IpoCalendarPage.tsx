@@ -110,7 +110,10 @@ function getMonthWeeks(month: dayjs.Dayjs): dayjs.Dayjs[][] {
   const weeks: dayjs.Dayjs[][] = [];
   let cur = firstMon;
   while (cur.isBefore(lastDay) || cur.isSame(lastDay, "day")) {
-    weeks.push(Array.from({ length: 5 }, (_, i) => cur.add(i, "day")));
+    const week = Array.from({ length: 5 }, (_, i) => cur.add(i, "day"));
+    if (week.some((d) => d.month() === month.month())) {
+      weeks.push(week);
+    }
     cur = cur.add(7, "day");
   }
   return weeks;
@@ -156,11 +159,20 @@ function MonthlyCalendarView({
             const isToday = dateStr === todayStr;
             const dayEvents = events.filter((e) => e.date === dateStr);
             const hasEvents = dayEvents.length > 0;
+            const isShowMore = dayEvents.length > 2;
             return (
-              <div key={dateStr} className="flex flex-col pt-[10px] min-w-0">
+              <div
+                key={dateStr}
+                data-date={dateStr}
+                className={cn(
+                  "flex flex-col pt-[10px] min-w-0 rounded-[6px]",
+                  isShowMore && "transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer",
+                )}
+                onClick={isShowMore ? () => onShowMore(dateStr, dayEvents) : undefined}
+              >
                 {isCurrentMonth && (
                   <>
-                    <div className="flex justify-center mb-[6px]">
+                    <div className="flex justify-center mb-[5px]">
                       <span
                         className={cn(
                           "text-[16px] font-semibold leading-none w-[28px] h-[28px] flex items-center justify-center rounded-[6px]",
@@ -168,7 +180,7 @@ function MonthlyCalendarView({
                             ? "bg-[#E8E9EC] text-[#1A1A1A]"
                             : hasEvents
                               ? "text-[#1A1A1A]"
-                              : "text-[#C8CBD2]",
+                                : "text-[#C8CBD2]",
                         )}
                       >
                         {day.date()}
@@ -179,13 +191,16 @@ function MonthlyCalendarView({
                         key={i}
                         role="button"
                         tabIndex={0}
-                        onClick={() =>
-                          dayEvents.length > 2
-                            ? onShowMore(dateStr, dayEvents)
-                            : onNavigate(event.id)
-                        }
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { dayEvents.length > 2 ? onShowMore(dateStr, dayEvents) : onNavigate(event.id) } }}
-                        className="flex items-center rounded-[5px] overflow-hidden h-[17px] mb-[2px] mr-[4px] cursor-pointer"
+                        onClick={(e) => {
+                          if (isShowMore) return
+                          e.stopPropagation()
+                          onNavigate(event.id)
+                        }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { isShowMore ? onShowMore(dateStr, dayEvents) : onNavigate(event.id) } }}
+                        className={cn(
+                          "flex items-center rounded-[5px] overflow-hidden h-[17px] mb-[2px] mr-[4px] cursor-pointer",
+                          !isShowMore && "transition-all duration-200 active:transition-none active:scale-[0.97] active:opacity-60 select-none",
+                        )}
                         style={{ backgroundColor: EVENT_COLORS[event.type].bg }}
                       >
                         <div
@@ -210,7 +225,6 @@ function MonthlyCalendarView({
                     ))}
                     {dayEvents.length > 2 && (
                       <button
-                        onClick={() => onShowMore(dateStr, dayEvents)}
                         className="text-[10px] font-normal text-text-tertiary h-[17px] leading-none pl-[3px] text-left"
                       >
                         +{dayEvents.length - 2}개
@@ -306,7 +320,7 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
   const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
 
   return (
-    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] text-left transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
       <div className="flex items-center justify-between mb-[13px]">
         <div className="flex items-center gap-[18px] min-w-0">
           <IpoLogo ipo={ipo} />
@@ -367,7 +381,7 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
   const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
 
   return (
-    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKey} className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
       <img src="/icons/IPO_end.svg" width={50} height={17} alt="청약종료" className="absolute top-[17.5px] right-[17px] translate-x-[3px]" />
       <div className="flex items-center mb-[13px]">
         <div className="flex items-center gap-[18px] min-w-0">
@@ -437,9 +451,20 @@ export function IpoCalendarPage() {
   const initialFilter = (state as { bottomFilter?: string })?.bottomFilter
   const [bottomFilter, setBottomFilter] = useState<BottomFilter>(initialFilter === '관심' ? '관심' : '전체')
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
-  const [calendarView, setCalendarView] = useState<CalendarView>('weekly')
+  const [calendarView, setCalendarViewRaw] = useState<CalendarView>(
+    () => (sessionStorage.getItem('ipoCalendarView') as CalendarView | null) ?? 'weekly'
+  )
+  const setCalendarView = useCallback((view: CalendarView) => {
+    sessionStorage.setItem('ipoCalendarView', view)
+    setCalendarViewRaw(view)
+  }, [])
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'))
   const [daySheet, setDaySheet] = useState<{ date: string; events: CalendarEvent[] } | null>(null)
+  const [sheetVisible, setSheetVisible] = useState(false)
+  const [sheetDragY, setSheetDragY] = useState(0)
+  const sheetTouchStartY = useRef(0)
+  const sheetIsDragging = useRef(false)
+  const sheetPanelRef = useRef<HTMLDivElement>(null)
 
   const dateSectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -666,10 +691,70 @@ export function IpoCalendarPage() {
   }, [calendarView])
 
 
-  const handleSheetEventClick = (ipoId: number) => {
-    setDaySheet(null)
-    navigate(`/ipo/${ipoId}`)
+  const closeSheet = () => {
+    sheetIsDragging.current = false
+    setSheetDragY(window.innerHeight)
+    setTimeout(() => {
+      setSheetDragY(0)
+      setSheetVisible(false)
+      setDaySheet(null)
+    }, 260)
   }
+
+  const handleSheetEventClick = (ipoId: number) => {
+    if (daySheet) {
+      closeSheet()
+      setTimeout(() => navigate(`/ipo/${ipoId}`), 260)
+    } else {
+      navigate(`/ipo/${ipoId}`)
+    }
+  }
+
+  const handleSheetTouchStart = (e: React.TouchEvent) => {
+    sheetTouchStartY.current = e.touches[0].clientY
+    sheetIsDragging.current = true
+  }
+
+  const handleSheetTouchMove = (e: React.TouchEvent) => {
+    if (!sheetIsDragging.current) return
+    const dy = e.touches[0].clientY - sheetTouchStartY.current
+    if (dy > 0) setSheetDragY(dy)
+  }
+
+  const handleSheetTouchEnd = () => {
+    sheetIsDragging.current = false
+    if (sheetDragY > 80) {
+      setSheetDragY(window.innerHeight)
+      setTimeout(() => {
+        setSheetDragY(0)
+        setSheetVisible(false)
+        setDaySheet(null)
+      }, 260)
+    } else {
+      setSheetDragY(0)
+    }
+  }
+
+  useEffect(() => {
+    if (!daySheet) return
+    const id = requestAnimationFrame(() => {
+      setSheetVisible(true)
+      const container = monthlyContainerRef.current
+      const panel = sheetPanelRef.current
+      if (!container || !panel) return
+      const dayEl = container.querySelector(`[data-date="${daySheet.date}"]`) as HTMLElement | null
+      if (!dayEl) return
+      const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
+      const visibleTop = container.getBoundingClientRect().top + headerHeight
+      const sheetTop = window.innerHeight - panel.offsetHeight
+      const dayTop = dayEl.getBoundingClientRect().top
+      const dayBottom = dayEl.getBoundingClientRect().bottom
+      if (dayBottom > sheetTop - 16 || dayTop < visibleTop - 20) {
+        container.scrollBy({ top: dayBottom - (sheetTop - 16), behavior: 'smooth' })
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [daySheet])
 
   return (
     <div className="h-dvh flex flex-col bg-[#F6F6F9]">
@@ -761,7 +846,7 @@ export function IpoCalendarPage() {
                               </span>
                               <div className={cn(
                                 'mt-[10px] w-[33px] h-[33px] flex items-center justify-center rounded-[6px] text-[16px] font-semibold',
-                                isSelected ? 'bg-[#6B7280] text-white' : isSaturday || !hasEvents ? 'text-[#C8CBD2]' : 'text-[#1A1A1A]',
+                                isSelected ? 'bg-[#6B7280] text-white' : isToday ? 'bg-[#E8E9EC] text-[#1A1A1A]' : isSaturday || !hasEvents ? 'text-[#C8CBD2]' : 'text-[#1A1A1A]',
                               )}>
                                 {day.date()}
                               </div>
@@ -907,11 +992,19 @@ export function IpoCalendarPage() {
       )}
 
       {daySheet && (
-        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setDaySheet(null)}>
-          <div className="absolute inset-0 bg-black/40" />
+        <>
+          <div className="fixed inset-0 z-50" onClick={closeSheet} />
           <div
-            className="relative w-full bg-white rounded-t-2xl px-5 pt-4 pb-10"
+            ref={sheetPanelRef}
+            className="fixed left-0 right-0 bottom-0 z-50 bg-white rounded-t-2xl px-5 pt-4 pb-10 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]"
+            style={{
+              transform: `translateY(${sheetVisible ? sheetDragY : window.innerHeight}px)`,
+              transition: sheetIsDragging.current ? 'none' : 'transform 0.26s ease',
+            }}
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleSheetTouchStart}
+            onTouchMove={handleSheetTouchMove}
+            onTouchEnd={handleSheetTouchEnd}
           >
             <div className="w-10 h-1 bg-[#E0E0E0] rounded-full mx-auto mb-4" />
             <p className="text-base font-bold text-text-primary mb-3">
@@ -938,7 +1031,7 @@ export function IpoCalendarPage() {
               ))}
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
