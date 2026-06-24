@@ -154,7 +154,7 @@ export function HomePage() {
                         e.stopPropagation()
                         navigate('/home/transfer', { state: { fromAccountId: assets.securities.usdAccountId, sourceName: 'CMA 계좌', sourceBalance: `$${assets.securities.usdBalance.toFixed(2)}` } })
                       }}
-                      className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary"
+                      className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
                     >
                       송금
                     </button>
@@ -194,7 +194,7 @@ export function HomePage() {
                           e.stopPropagation()
                           navigate('/home/transfer', { state: { fromAccountId: acc.accountId, sourceName: acc.accountName, sourceBalance: `$${acc.balance.toFixed(2)}` } })
                         }}
-                        className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary"
+                        className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
                       >
                         송금
                       </button>
@@ -229,7 +229,7 @@ export function HomePage() {
                   <p className="text-xs text-text-secondary truncate">{card.cardName}</p>
                   <p className="text-sm font-bold text-text-primary mt-0.5">—</p>
                 </div>
-                <button className="flex-shrink-0 px-4 py-2 bg-border rounded-md text-xs text-text-secondary">
+                <button className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-sm font-medium text-text-secondary">
                   내역
                 </button>
               </div>
