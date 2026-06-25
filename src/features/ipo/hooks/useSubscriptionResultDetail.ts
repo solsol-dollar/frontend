@@ -3,14 +3,20 @@ import { ledgerApi } from '@/lib/axios'
 import type { ApiResponse } from '@/features/securities/types/securities'
 import type { AllocationResultDetail } from '../types/allocation'
 
+export function subscriptionResultQueryKey(subscriptionResultId: number) {
+  return ['subscriptionResult', subscriptionResultId] as const
+}
+
+export async function fetchSubscriptionResult(subscriptionResultId: number): Promise<AllocationResultDetail> {
+  const res = await ledgerApi.get(`/api/ledger/api/v1/subscription-results/${subscriptionResultId}`)
+  return (res as unknown as ApiResponse<AllocationResultDetail>).data
+}
+
 // ALLOC-002: GET /api/v1/subscription-results/{subscriptionResultId}
 export function useSubscriptionResultDetail(subscriptionResultId: number) {
   return useQuery({
-    queryKey: ['subscriptionResult', subscriptionResultId],
-    queryFn: async () => {
-      const res = await ledgerApi.get(`/api/ledger/api/v1/subscription-results/${subscriptionResultId}`)
-      return (res as unknown as ApiResponse<AllocationResultDetail>).data
-    },
+    queryKey: subscriptionResultQueryKey(subscriptionResultId),
+    queryFn: () => fetchSubscriptionResult(subscriptionResultId),
     enabled: Number.isFinite(subscriptionResultId),
   })
 }

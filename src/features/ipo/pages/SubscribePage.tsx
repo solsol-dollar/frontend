@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Heart, Minus, Plus } from "lucide-react";
+import dayjs from "dayjs";
 import { Header } from "@/components/common/Header";
 import { IpoStockHeader } from "@/features/ipo/components/IpoStockHeader";
 import { IpoOfferingInfo } from "@/features/ipo/components/IpoOfferingInfo";
@@ -12,37 +13,69 @@ import {
 } from "@/features/ipo/utils/subscriptionStatus";
 import { cn } from "@/lib/utils";
 import shinhanBankIcon from "@/assets/common/shinhan-bank.svg";
-
-const MOCK_SUBSCRIPTION = {
-  ticker: "CRWV",
-  name: "CoreWeave",
-  color: "#FF6830",
-  // 공모가가 확정값일 수도, 범위(밴드)로 제시될 수도 있음
-  offeringPriceRange: { min: 18, max: 20 } as { min: number; max?: number },
-  milestones: [
-    { label: "청약시작일", date: "2026.06.24" },
-    { label: "청약마감일", date: "2026.09.04" },
-    { label: "환불(예정)일", date: "2026.09.05" },
-    { label: "상장(예정)일", date: "2026.09.06" },
-  ],
-  availableAmount: 1084455.32,
-  foreignBalance: 25340,
-  cmaBalanceKrw: 1548320,
-  exchangeRate: 1512.54,
-  exchangeableKrw: 102254,
-  exchangeableUsd: 66.84,
-  account: "270-91-175039[01] CMA 김희선",
-};
+import { useIpoDetail } from "@/features/ipo/hooks/useIpo";
+import { useCreateSubscription } from "@/features/ipo/hooks/useSubscriptions";
+import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
+import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
 
 export function SubscribePage() {
   const navigate = useNavigate();
-  useParams();
+  const { id } = useParams();
+  const ipoId = Number(id);
   const [liked, setLiked] = useState(false);
   const [amount, setAmount] = useState("");
   const [showPullModal, setShowPullModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const ipo = MOCK_SUBSCRIPTION;
+  const { data, isLoading, isError } = useIpoDetail(ipoId);
+  const { data: assets, isLoading: isAssetsLoading } = useHomeAssets();
+  const { mutate: createSubscription, isPending: isSubmitting } = useCreateSubscription();
+
+  if (isLoading || isAssetsLoading) {
+    return <div className="page-content" />;
+  }
+
+  if (isNaN(ipoId) || isError || !data?.data || !assets) {
+    return (
+      <div className="mobile-container flex flex-col h-screen">
+        <Header showBack showNotification={false} showMypage={false} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-text-secondary">종목 정보를 불러올 수 없습니다.</p>
+          <button onClick={() => navigate(-1)} className="text-sm text-primary font-semibold">
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const ipoDetail = data.data;
+  const { securities, exchangeRateInfo } = assets;
+  const ipo = {
+    ticker: ipoDetail.ticker,
+    name: ipoDetail.companyName,
+    color: generateLogoColor(ipoDetail.ticker),
+    offeringPriceRange: {
+      min: ipoDetail.offerPriceMin ?? 0,
+      max: ipoDetail.offerPriceMax ?? undefined,
+    } as { min: number; max?: number },
+    milestones: [
+      { label: "청약시작일", date: dayjs(ipoDetail.subscriptionStartDate).format("YYYY.MM.DD") },
+      { label: "청약마감일", date: dayjs(ipoDetail.subscriptionEndDate).format("YYYY.MM.DD") },
+      ...(ipoDetail.refundDate
+        ? [{ label: "환불(예정)일", date: dayjs(ipoDetail.refundDate).format("YYYY.MM.DD") }]
+        : []),
+      { label: "상장(예정)일", date: dayjs(ipoDetail.listingDate).format("YYYY.MM.DD") },
+    ],
+    availableAmount: securities.usdBalance,
+    foreignBalance: securities.usdBalance,
+    cmaBalanceKrw: securities.krwBalance,
+    exchangeRate: exchangeRateInfo.rate,
+    // 환전 가능액 전용 API가 아직 없어 보유 원화 잔액을 환율로 환산해 클라이언트에서 계산
+    exchangeableKrw: securities.krwBalance,
+    exchangeableUsd: securities.krwBalance / exchangeRateInfo.rate,
+    account: securities.accountNumberMasked,
+  };
   const status = getSubscriptionStatus(ipo.milestones);
   const dday = getSubscriptionDday(ipo.milestones);
 
@@ -62,10 +95,7 @@ export function SubscribePage() {
     Number.isInteger(numericAmount) &&
     numericAmount <= maxSubscribable;
 
-  const subscriptionFee = useMemo(() => {
-    if (!isValidAmount) return 0;
-    return numericAmount * 1.01;
-  }, [numericAmount, isValidAmount]);
+  const subscriptionFee = isValidAmount ? numericAmount * 1.01 : 0;
 
   const adjustAmount = (delta: number) => {
     setAmount((prev) => {
@@ -323,10 +353,30 @@ return (
               취소
             </button>
             <button
-              onClick={() => navigate('/ipo', { state: { tab: '청약내역/취소' } })}
-              className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold"
+              onClick={() => {
+                createSubscription(
+                  {
+                    ipoId,
+                    securitiesAccountId: securities.usdAccountId,
+                    subscriptionAmount: numericAmount,
+                    offerPrice: pricePerShareForEstimate,
+                  },
+                  {
+                    onSuccess: () => {
+                      setShowConfirmModal(false);
+                      navigate('/ipo', { state: { tab: '청약내역/취소' } });
+                    },
+                    onError: (e) => {
+                      console.error('청약 신청 실패', e);
+                      alert('청약 신청에 실패했어요. 잠시 후 다시 시도해주세요.');
+                    },
+                  },
+                );
+              }}
+              disabled={isSubmitting}
+              className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold disabled:opacity-50"
             >
-              확인
+              {isSubmitting ? '신청 중...' : '확인'}
             </button>
           </div>
         </div>

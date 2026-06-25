@@ -1,9 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueries } from '@tanstack/react-query'
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Info, SlidersHorizontal, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { IpoStockHeader } from '@/features/ipo/components/IpoStockHeader'
 import dayjs, { Dayjs } from 'dayjs'
+import { useSubscriptionList, useCancelSubscription, useConfirmSubscription } from '@/features/ipo/hooks/useSubscriptions'
+import { subscriptionResultQueryKey, fetchSubscriptionResult } from '@/features/ipo/hooks/useSubscriptionResultDetail'
+import type { SubscriptionRes } from '@/features/ipo/api/subscriptionApi'
+import type { AllocationResultDetail } from '@/features/ipo/types/allocation'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
+import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 
 type StatusType = '청약신청' | '취소완료' | '배정완료' | '상장완료'
 type PeriodMode = '월별' | '기간별'
@@ -41,8 +48,6 @@ interface Subscription {
   status: StatusType
   amount: string
   date: string
-  subscriptionStart: string
-  subscriptionEnd: string
   offeringPrice?: number
   confirmedPrice?: number
   listingDate?: string
@@ -50,6 +55,8 @@ interface Subscription {
   allocatedQty?: number
   returnRate?: string
   returnPositive?: boolean
+  canCancel: boolean
+  needsConfirm: boolean
 }
 
 // ─── 스크롤 피커 ──────────────────────────────────────────
@@ -252,19 +259,12 @@ function Confetti() {
 }
 
 // ─── 유틸 ────────────────────────────────────────────────
-function isInSubscriptionPeriod(sub: Subscription): boolean {
-  const today = dayjs().startOf('day')
-  return (
-    (today.isSame(dayjs(sub.subscriptionStart)) || today.isAfter(dayjs(sub.subscriptionStart))) &&
-    (today.isSame(dayjs(sub.subscriptionEnd)) || today.isBefore(dayjs(sub.subscriptionEnd)))
-  )
-}
-
-function needsReconfirmation(sub: Subscription): boolean {
-  if (sub.confirmedPrice == null || sub.offeringPrice == null) return false
-  const lower = sub.offeringPrice * 0.8
-  const upper = sub.offeringPrice * 1.2
-  return sub.confirmedPrice < lower || sub.confirmedPrice > upper
+function needsReconfirmation(sub: SubscriptionRes): boolean {
+  const base = sub.offerPriceMax ?? sub.offerPriceMin
+  if (sub.confirmedOfferPrice == null || base == null) return false
+  const lower = base * 0.8
+  const upper = base * 1.2
+  return sub.confirmedOfferPrice < lower || sub.confirmedOfferPrice > upper
 }
 
 function getEffectiveRange(f: FilterState): { start: Dayjs; end: Dayjs } {
@@ -295,34 +295,47 @@ function getCalendarCells(month: Dayjs): (Dayjs | null)[] {
   return cells
 }
 
-// ─── 목업 데이터 ──────────────────────────────────────────
-const SUBSCRIPTIONS: Subscription[] = [
-  {
-    id: 1, company: 'CoreWeave', ticker: 'CRWV', logoColor: '#FF6B35',
-    status: '청약신청', amount: 'USD 102',
-    date: '2026.06.15', subscriptionStart: '2026-06-15', subscriptionEnd: '2026-06-25',
-    offeringPrice: 20, confirmedPrice: 28, listingDate: '2026.07.04',
-  },
-  {
-    id: 2, company: 'Stripe', ticker: 'STRP', logoColor: '#635BFF',
-    status: '취소완료', amount: 'USD 280',
-    date: '2026.06.10', subscriptionStart: '2026-06-10', subscriptionEnd: '2026-06-20',
-    offeringPrice: 28, confirmedPrice: 30, listingDate: '2026.06.29',
-  },
-  {
-    id: 3, company: 'Klarna', ticker: 'KLAR', logoColor: '#FFB3C7',
-    status: '배정완료', amount: 'USD 500',
-    date: '2026.05.20', subscriptionStart: '2026-05-20', subscriptionEnd: '2026-05-25',
-    offeringPrice: 25, confirmedPrice: 25, listingDate: '2026.06.10', allocatedQty: 5,
-  },
-  {
-    id: 4, company: 'CoreWeave', ticker: 'CRWV', logoColor: '#FF6B35',
-    status: '상장완료', amount: 'USD 102',
-    date: '2026.05.01', subscriptionStart: '2026-05-01', subscriptionEnd: '2026-05-10',
-    offeringPrice: 20, confirmedPrice: 20, currentPrice: 'USD 24.80',
-    allocatedQty: 3, returnRate: '+24.0%', returnPositive: true,
-  },
-]
+// ─── API 데이터 → 화면 모델 매핑 ───────────────────────────
+function deriveStatus(sub: SubscriptionRes, currentPrice: number | null | undefined): StatusType {
+  if (sub.subscriptionStatus === 'CANCELLED') return '취소완료'
+  const today = dayjs().startOf('day')
+  const listed = sub.listingDate != null && !dayjs(sub.listingDate).isAfter(today, 'day')
+  if (!listed) return '청약신청'
+  return currentPrice != null ? '상장완료' : '배정완료'
+}
+
+function toSubscription(sub: SubscriptionRes, result: AllocationResultDetail | undefined): Subscription {
+  const status = deriveStatus(sub, result?.currentPrice)
+  const offeringPrice = sub.confirmedOfferPrice ?? sub.offerPriceMax ?? sub.offerPriceMin ?? undefined
+  const confirmedPrice = sub.confirmedOfferPrice ?? offeringPrice
+
+  let returnRate: string | undefined
+  let returnPositive: boolean | undefined
+  if (result?.currentPrice != null && confirmedPrice) {
+    const rate = ((result.currentPrice - confirmedPrice) / confirmedPrice) * 100
+    returnPositive = rate >= 0
+    returnRate = `${rate >= 0 ? '+' : ''}${rate.toFixed(1)}%`
+  }
+
+  return {
+    id: sub.subscriptionId,
+    company: sub.companyName,
+    ticker: sub.ticker,
+    logoColor: generateLogoColor(sub.ticker),
+    status,
+    amount: `USD ${sub.subscriptionAmount.toLocaleString('en-US')}`,
+    date: dayjs(sub.subscribedAt).format('YYYY.MM.DD'),
+    offeringPrice,
+    confirmedPrice,
+    listingDate: sub.listingDate ? dayjs(sub.listingDate).format('YYYY.MM.DD') : undefined,
+    currentPrice: result?.currentPrice != null ? `USD ${result.currentPrice.toFixed(2)}` : undefined,
+    allocatedQty: result?.allocatedShares ?? undefined,
+    returnRate,
+    returnPositive,
+    canCancel: status === '청약신청',
+    needsConfirm: status === '청약신청' && sub.subscriptionStatus === 'REQUESTED' && needsReconfirmation(sub),
+  }
+}
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -343,6 +356,32 @@ function getAbbr(company: string): string {
 export function SubscriptionHistory() {
   const navigate = useNavigate()
   const today = dayjs().startOf('day')
+
+  const { data: listData, isLoading: isListLoading } = useSubscriptionList()
+  const { data: assets } = useHomeAssets()
+  const cancelSubscription = useCancelSubscription()
+  const confirmSubscription = useConfirmSubscription()
+  const rawSubscriptions = listData?.data.subscriptions ?? []
+  const accountNumberMasked = assets?.securities.accountNumberMasked ?? '-'
+
+  const pendingResultIds = rawSubscriptions
+    .filter((s) => s.subscriptionStatus !== 'CANCELLED' && s.listingDate && !dayjs(s.listingDate).isAfter(today, 'day'))
+    .map((s) => s.subscriptionId)
+
+  const resultQueries = useQueries({
+    queries: pendingResultIds.map((id) => ({
+      queryKey: subscriptionResultQueryKey(id),
+      queryFn: () => fetchSubscriptionResult(id),
+    })),
+  })
+
+  const resultMap = new Map<number, AllocationResultDetail>()
+  pendingResultIds.forEach((id, i) => {
+    const data = resultQueries[i]?.data
+    if (data) resultMap.set(id, data)
+  })
+
+  const SUBSCRIPTIONS = rawSubscriptions.map((sub) => toSubscription(sub, resultMap.get(sub.subscriptionId)))
 
   const YEARS = Array.from({ length: today.year() - 2020 + 2 }, (_, i) => 2020 + i)
 
@@ -378,7 +417,6 @@ export function SubscriptionHistory() {
 
   // 청약확정등록 확인 모달
   const [confirmRegTarget, setConfirmRegTarget] = useState<number | null>(null)
-  const [confirmedRegIds, setConfirmedRegIds] = useState<Set<number>>(new Set())
   const confirmRegItem = SUBSCRIPTIONS.find((s) => s.id === confirmRegTarget)
 
   // 배정결과 스크래치
@@ -478,7 +516,7 @@ export function SubscriptionHistory() {
     <div className="flex-1 flex flex-col overflow-hidden bg-[#F6F6F9]">
       {/* 계좌 정보 */}
       <div className="px-4 py-3 border-b border-border shrink-0">
-        <span className="text-sm text-text-secondary">270-91-175039[01] CMA 김희선</span>
+        <span className="text-sm text-text-secondary">{accountNumberMasked}</span>
       </div>
 
       {/* 조회 조건 버튼 */}
@@ -550,13 +588,9 @@ export function SubscriptionHistory() {
                 </div>
 
                 {/* 버튼 영역 */}
-                {sub.status === '청약신청' && (() => {
-                  const inPeriod = isInSubscriptionPeriod(sub)
-                  const needsConfirm = needsReconfirmation(sub) && !confirmedRegIds.has(sub.id)
-                  if (!inPeriod && !needsConfirm) return null
-                  return (
-                    <div className="px-4 pb-4 flex gap-2">
-                      {inPeriod && (
+                {sub.status === '청약신청' && (sub.canCancel || sub.needsConfirm) && (
+                  <div className="px-4 pb-4 flex gap-2">
+                      {sub.canCancel && (
                         <button
                           onClick={() => setCancelTarget(sub.id)}
                           className="flex-1 py-3 rounded-xl text-sm font-semibold text-text-secondary bg-[#F0F1F4]"
@@ -564,7 +598,7 @@ export function SubscriptionHistory() {
                           취소
                         </button>
                       )}
-                      {needsConfirm && (
+                      {sub.needsConfirm && (
                         <button
                           onClick={() => setConfirmRegTarget(sub.id)}
                           className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-primary"
@@ -572,9 +606,8 @@ export function SubscriptionHistory() {
                           청약확정등록
                         </button>
                       )}
-                    </div>
-                  )
-                })()}
+                  </div>
+                )}
 
                 {sub.status === '배정완료' && (
                   <div className="px-4 pb-4 flex gap-2">
@@ -600,7 +633,13 @@ export function SubscriptionHistory() {
             )
           })}
 
-          {filtered.length === 0 && (
+          {isListLoading && (
+            <div className="flex items-center justify-center py-16">
+              <p className="text-sm text-text-tertiary">불러오는 중...</p>
+            </div>
+          )}
+
+          {!isListLoading && filtered.length === 0 && (
             <div className="flex items-center justify-center py-16">
               <p className="text-sm text-text-tertiary">해당 조건에 내역이 없습니다.</p>
             </div>
@@ -942,10 +981,14 @@ export function SubscriptionHistory() {
             </button>
             <button
               onClick={() => {
-                if (confirmRegTarget !== null) setConfirmedRegIds((prev) => new Set([...prev, confirmRegTarget]))
+                if (confirmRegTarget == null) return
+                confirmSubscription.mutate(confirmRegTarget, {
+                  onError: () => alert('청약확정등록에 실패했어요. 잠시 후 다시 시도해주세요.'),
+                })
                 setConfirmRegTarget(null)
               }}
-              className="flex-1 py-3.5 bg-primary text-white rounded-xl text-sm font-semibold"
+              disabled={confirmSubscription.isPending}
+              className="flex-1 py-3.5 bg-primary text-white rounded-xl text-sm font-semibold disabled:opacity-50"
             >
               확인
             </button>
@@ -977,7 +1020,7 @@ export function SubscriptionHistory() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-secondary">환불계좌</span>
-              <span className="text-sm font-medium text-text-primary">270-91-175039[01] CMA</span>
+              <span className="text-sm font-medium text-text-primary">{accountNumberMasked}</span>
             </div>
           </div>
           <div className="flex gap-3">
@@ -988,8 +1031,15 @@ export function SubscriptionHistory() {
               돌아가기
             </button>
             <button
-              onClick={() => setCancelTarget(null)}
-              className="flex-1 py-4 bg-primary text-white rounded-xl text-sm font-semibold"
+              onClick={() => {
+                if (cancelTarget == null) return
+                cancelSubscription.mutate(cancelTarget, {
+                  onError: () => alert('청약 취소에 실패했어요. 잠시 후 다시 시도해주세요.'),
+                })
+                setCancelTarget(null)
+              }}
+              disabled={cancelSubscription.isPending}
+              className="flex-1 py-4 bg-primary text-white rounded-xl text-sm font-semibold disabled:opacity-50"
             >
               취소확정
             </button>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import dayjs from "dayjs";
 import { Header } from "@/components/common/Header";
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
 import {
@@ -9,25 +10,11 @@ import {
 import { splitsToAllocationItems } from "@/features/return-plan/utils/allocationMapper";
 import { useCreateReturnPlan } from "@/features/return-plan/hooks/useCreateReturnPlan";
 import { useUpdateReturnPlanRatios } from "@/features/return-plan/hooks/useUpdateReturnPlanRatios";
+import { useSubscriptionResultDetail } from "@/features/ipo/hooks/useSubscriptionResultDetail";
+import { useSubscriptionList } from "@/features/ipo/hooks/useSubscriptions";
+import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
 
 const MARGIN_RATE = 1.01; // 청약대행증거금 = 청약신청금액의 101%
-const FEE_RATE = 0.005; // 배정금액의 0.5%는 청약 수수료로 차감
-
-const RESULT = {
-  ticker: "CRWV",
-  name: "CoreWeave",
-  color: "#FF6830",
-  status: "배정완료",
-  subscriptionRequestAmount: 100,
-  allocatedShares: 1,
-  finalOfferingPrice: 32.0,
-  refundDate: "2026.09.05",
-};
-
-const subscriptionMargin = RESULT.subscriptionRequestAmount * MARGIN_RATE;
-const allocatedAmount = RESULT.finalOfferingPrice * RESULT.allocatedShares;
-const subscriptionFee = allocatedAmount * FEE_RATE;
-const refundAmount = subscriptionMargin - allocatedAmount - subscriptionFee;
 
 const formatUsd = (n: number) => `USD ${n.toFixed(2)}`;
 
@@ -104,15 +91,36 @@ function InfoRow({
 export function AllocationResultPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const subscriptionId = Number(id);
   const [splits, setSplits] = useState<[number, number]>([40, 80]);
   const [showEtfSheet, setShowEtfSheet] = useState(false);
+
+  const { data: resultDetail } = useSubscriptionResultDetail(subscriptionId);
+  const { data: listData } = useSubscriptionList();
+  const subscription = listData?.data.subscriptions.find(
+    (s) => s.subscriptionId === subscriptionId,
+  );
 
   const createPlan = useCreateReturnPlan();
   const updateRatios = useUpdateReturnPlanRatios();
   const isReserving = createPlan.isPending || updateRatios.isPending;
 
+  const ticker = subscription?.ticker ?? "";
+  const name = subscription?.companyName ?? "불러오는 중...";
+  const color = ticker ? generateLogoColor(ticker) : "#E5E7EB";
+  const subscriptionRequestAmount = resultDetail?.subscriptionAmount ?? subscription?.subscriptionAmount ?? 0;
+  const allocatedShares = resultDetail?.allocatedShares ?? 0;
+  const subscriptionMargin = subscriptionRequestAmount * MARGIN_RATE;
+  const allocatedAmount = resultDetail?.allocatedAmount ?? 0;
+  const refundAmount = resultDetail?.refundAmount ?? 0;
+  const subscriptionFee = subscriptionMargin - allocatedAmount - refundAmount;
+  const finalOfferingPrice =
+    allocatedShares > 0 ? allocatedAmount / allocatedShares : subscription?.confirmedOfferPrice ?? 0;
+  const refundDate = subscription?.listingDate
+    ? dayjs(subscription.listingDate).format("YYYY.MM.DD")
+    : "-";
+
   const handleReserve = async () => {
-    const subscriptionId = Number(id);
     if (!id || Number.isNaN(subscriptionId)) {
       console.error("subscriptionId가 없습니다");
       return;
@@ -147,20 +155,20 @@ export function AllocationResultPage() {
           <div className="flex items-center gap-3 px-4 pt-5 pb-5">
             <div
               className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-              style={{ backgroundColor: RESULT.color }}
+              style={{ backgroundColor: color }}
             >
-              {RESULT.ticker.slice(0, 2)}
+              {ticker.slice(0, 2)}
             </div>
             <div className="flex-1">
               <p className="text-base font-bold text-text-primary">
-                {RESULT.name}
+                {name}
               </p>
               <p className="text-xs text-text-tertiary mt-0.5">
-                {RESULT.ticker}
+                {ticker}
               </p>
             </div>
             <span className="px-3 py-1 rounded-full border border-primary text-primary text-xs font-semibold flex-shrink-0">
-              {RESULT.status}
+              배정완료
             </span>
           </div>
 
@@ -169,16 +177,16 @@ export function AllocationResultPage() {
           <div className="px-10 pt-5 pb-2 space-y-3">
             <InfoRow
               label="청약신청금액"
-              value={formatUsd(RESULT.subscriptionRequestAmount)}
+              value={formatUsd(subscriptionRequestAmount)}
             />
             <InfoRow
               label="청약대행증거금"
               value={formatUsd(subscriptionMargin)}
             />
-            <InfoRow label="배정 수량" value={`${RESULT.allocatedShares}주`} />
+            <InfoRow label="배정 수량" value={`${allocatedShares}주`} />
             <InfoRow
               label="최종 공모가"
-              value={formatUsd(RESULT.finalOfferingPrice)}
+              value={formatUsd(finalOfferingPrice)}
             />
             <InfoRow
               label="청약 수수료"
@@ -189,7 +197,7 @@ export function AllocationResultPage() {
               value={formatUsd(refundAmount)}
               valueClassName="text-sm font-bold text-primary"
             />
-            <InfoRow label="환불(예정)일" value={RESULT.refundDate} />
+            <InfoRow label="환불(예정)일" value={refundDate} />
           </div>
           <p className="px-10 pt-1 text-[11px] text-text-tertiary">
             ※ 배정금액의 0.5%는 청약 수수료로 차감되어 환불돼요.
