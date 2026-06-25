@@ -12,7 +12,6 @@ import {
   getSubscriptionStatusTextClass,
 } from "@/features/ipo/utils/subscriptionStatus";
 import { cn } from "@/lib/utils";
-import shinhanBankIcon from "@/assets/common/shinhan-bank.svg";
 import { useIpoDetail } from "@/features/ipo/hooks/useIpo";
 import { useCreateSubscription } from "@/features/ipo/hooks/useSubscriptions";
 import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
@@ -24,10 +23,9 @@ export function SubscribePage() {
   const ipoId = Number(id);
   const [liked, setLiked] = useState(false);
   const [amount, setAmount] = useState("");
-  const [showPullModal, setShowPullModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const { data, isLoading, isError } = useIpoDetail(ipoId);
+  const { data, isLoading, isError, refetch: refetchIpoDetail } = useIpoDetail(ipoId);
   const { data: assets, isLoading: isAssetsLoading } = useHomeAssets();
   const { mutate: createSubscription, isPending: isSubmitting } = useCreateSubscription();
 
@@ -51,6 +49,7 @@ export function SubscribePage() {
 
   const ipoDetail = data.data;
   const { securities, exchangeRateInfo } = assets;
+  const depositAccount = assets.accounts.find((a) => a.accountType === "DEPOSIT");
   const ipo = {
     ticker: ipoDetail.ticker,
     name: ipoDetail.companyName,
@@ -68,7 +67,7 @@ export function SubscribePage() {
         : []),
     ],
     availableAmount: securities.usdBalance,
-    foreignBalance: securities.usdBalance,
+    foreignBalance: depositAccount?.balance ?? 0,
     cmaBalanceKrw: securities.krwBalance,
     exchangeRate: exchangeRateInfo.rate,
     // 환전 가능액 전용 API가 아직 없어 보유 원화 잔액을 환율로 환산해 클라이언트에서 계산
@@ -86,6 +85,9 @@ export function SubscribePage() {
       : `USD ${minPrice.toFixed(2)}`;
   // 예상 청약 가능 수량은 상단 공모가(최대값) 기준으로 보수적으로 계산
   const pricePerShareForEstimate = maxPrice ?? minPrice;
+  // 청약 신청 시 서버가 ipos.confirmed_offer_price와 정확히 일치하는지 검증하므로
+  // 확정가가 있으면 그 값을, 없으면(미확정 IPO) 밴드 내 추정가를 그대로 보낸다
+  const offerPriceForSubmit = ipoDetail.confirmedOfferPrice ?? pricePerShareForEstimate;
 
   const numericAmount = Number(amount || 0);
   const maxSubscribable = Math.floor(ipo.availableAmount / 1.01);
@@ -258,8 +260,19 @@ return (
           </p>
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => setShowPullModal(true)}
-              className="p-3 border border-border rounded-xl text-left"
+              onClick={() =>
+                depositAccount &&
+                navigate("/home/transfer", {
+                  state: {
+                    fromAccountId: depositAccount.accountId,
+                    sourceName: depositAccount.accountName,
+                    sourceBalance: `$${depositAccount.balance.toFixed(2)}`,
+                    toAccountId: securities.usdAccountId,
+                  },
+                })
+              }
+              disabled={!depositAccount}
+              className="p-3 border border-border rounded-xl text-left disabled:opacity-40"
             >
               <p className="text-xs font-semibold text-text-primary">
                 외화통장에서 끌어오기
@@ -353,13 +366,17 @@ return (
               취소
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
+                // 상세 조회 시점과 신청 시점 사이 공모가가 확정/변경됐을 수 있어 최신값으로 재조회 후 전송
+                const fresh = await refetchIpoDetail();
+                const freshOfferPrice =
+                  fresh.data?.data.confirmedOfferPrice ?? offerPriceForSubmit;
                 createSubscription(
                   {
                     ipoId,
                     securitiesAccountId: securities.usdAccountId,
                     subscriptionAmount: numericAmount,
-                    offerPrice: pricePerShareForEstimate,
+                    offerPrice: freshOfferPrice,
                   },
                   {
                     onSuccess: () => {
@@ -377,60 +394,6 @@ return (
               className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold disabled:opacity-50"
             >
               {isSubmitting ? '신청 중...' : '확인'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-
-
-      {/* 외화통장에서 끌어오기 안내 시트 */}
-      <div
-        className={cn(
-          'fixed inset-0 z-20 bg-black/20 transition-opacity duration-300',
-          showPullModal ? 'opacity-100' : 'opacity-0 pointer-events-none',
-        )}
-        onClick={() => setShowPullModal(false)}
-      />
-      <div
-        aria-hidden={!showPullModal}
-        {...(!showPullModal ? { inert: '' } : {})}
-        className={cn(
-          'fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-30 transition-transform duration-300 ease-out',
-          showPullModal ? 'translate-y-0' : 'translate-y-[calc(100%+1rem)]',
-        )}
-      >
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 rounded-full bg-border" />
-        </div>
-        <div className="px-6 pt-3 pb-7">
-          <p className="text-lg font-semibold text-text-primary mb-6">외화통장에서 끌어오기</p>
-
-          <div className="flex flex-col items-center text-center gap-4 mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center p-2">
-              <img src={shinhanBankIcon} alt="신한은행" className="w-full h-full" />
-            </div>
-            <div>
-              <p className="text-base font-bold text-text-primary mb-1">신한 슈퍼SOL로 이동합니다</p>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                외화통장 자금을 끌어오려면<br />신한 슈퍼SOL 앱에서 진행해 주세요.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => setShowPullModal(false)}
-              className="flex-1 py-4 bg-surface text-text-secondary rounded-xl font-semibold"
-            >
-              취소
-            </button>
-            <button
-              onClick={() => setShowPullModal(false)}
-              className="flex-1 py-4 text-white rounded-xl font-semibold"
-              style={{ backgroundColor: '#0046FF' }}
-            >
-              앱 열기
             </button>
           </div>
         </div>
