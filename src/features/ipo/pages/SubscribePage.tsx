@@ -62,10 +62,10 @@ export function SubscribePage() {
     milestones: [
       { label: "청약시작일", date: dayjs(ipoDetail.subscriptionStartDate).format("YYYY.MM.DD") },
       { label: "청약마감일", date: dayjs(ipoDetail.subscriptionEndDate).format("YYYY.MM.DD") },
+      { label: "상장(예정)일", date: dayjs(ipoDetail.listingDate).format("YYYY.MM.DD") },
       ...(ipoDetail.refundDate
         ? [{ label: "환불(예정)일", date: dayjs(ipoDetail.refundDate).format("YYYY.MM.DD") }]
         : []),
-      { label: "상장(예정)일", date: dayjs(ipoDetail.listingDate).format("YYYY.MM.DD") },
     ],
     availableAmount: securities.usdBalance,
     foreignBalance: securities.usdBalance,

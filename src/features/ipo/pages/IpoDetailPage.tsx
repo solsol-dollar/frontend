@@ -78,8 +78,8 @@ export function IpoDetailPage() {
   const milestones = [
     { label: '청약시작일', date: ipo.subscriptionStartDate },
     { label: '청약마감일', date: ipo.subscriptionEndDate },
-    ipo.refundDate ? { label: '환불(예정)일', date: ipo.refundDate } : null,
     { label: '상장(예정)일', date: ipo.listingDate },
+    ipo.refundDate ? { label: '환불(예정)일', date: ipo.refundDate } : null,
   ]
     .filter((m): m is { label: string; date: string } => m != null && !!m.date)
     .map((m) => ({ ...m, date: dayjs(m.date).format('YYYY.MM.DD') }))
