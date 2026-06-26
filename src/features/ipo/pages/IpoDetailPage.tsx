@@ -198,6 +198,7 @@ export function IpoDetailPage() {
     return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
+
   const { data, isLoading, isError } = useIpoDetail(ipoId)
   const { mutate: toggleFav } = useToggleFavorite()
   const { data: newsData } = useIpoNews(ipoId)
