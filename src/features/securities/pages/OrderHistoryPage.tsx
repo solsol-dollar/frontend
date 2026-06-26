@@ -22,7 +22,7 @@ export function OrderHistoryPage() {
     <div className="flex flex-col h-screen overflow-hidden bg-surface-bg">
       <Header showBack showNotification={false} showMypage={false} title="주문 내역" />
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-20">
         {orders.length === 0 && (
           <div className="flex flex-col items-center justify-center h-64 gap-2">
             <p className="text-sm font-medium text-text-secondary">주문 내역이 없습니다</p>
@@ -38,7 +38,7 @@ export function OrderHistoryPage() {
               {items.map((order) => (
                 <div key={order.orderId} className="flex items-center px-4 py-3.5 border-b border-border last:border-0">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary">{order.productName}</p>
+                    <p className="text-sm font-medium text-text-primary truncate">{order.productName}</p>
                     <p className={cn(
                       'text-xs mt-0.5',
                       order.orderType === 'BUY' ? 'text-up' : 'text-down',

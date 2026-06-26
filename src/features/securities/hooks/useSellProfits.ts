@@ -8,7 +8,6 @@ function formatDate(dateStr: string): string {
   return `${String(d.getFullYear()).slice(2)}.${d.getMonth() + 1}.${d.getDate()}`
 }
 
-// TODO: GET /api/v1/trade-orders/profits (백엔드 구현 필요)
 export function useSellProfits() {
   return useQuery({
     queryKey: ['securities', 'sell-profits'],

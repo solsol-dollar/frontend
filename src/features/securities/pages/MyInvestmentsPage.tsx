@@ -58,11 +58,11 @@ export function MyInvestmentsPage() {
     <div className="flex flex-col h-screen overflow-hidden bg-surface-bg">
       <Header showBack showNotification={false} showMypage={false} />
 
-      <div className="flex-1 overflow-y-auto pb-6">
+      <div className="flex-1 overflow-y-auto pb-20">
         {/* 투자 요약 */}
         <section className="bg-white px-4 pt-4 pb-5">
           <p className="text-xs text-text-tertiary mb-1">내 투자</p>
-          <p className="text-3xl font-bold text-text-primary">
+          <p className="text-2xl font-bold text-text-primary">
             ${data?.totalCurrentValueUsd.toLocaleString('en-US')}
           </p>
           <div className="flex gap-3 mt-3">

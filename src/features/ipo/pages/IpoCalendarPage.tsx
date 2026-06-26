@@ -643,13 +643,13 @@ export function IpoCalendarPage() {
     const section = todayMonthRef.current
     if (!container || !section) return
     const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
-    container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 15
+    container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 10
   }
 
   const allIpoDates = filteredIpos.map((ipo) => ipo.subscription_start).filter((d): d is string => d !== null)
-  const uniqueDates = bottomFilter === '관심'
-    ? Array.from(new Set(allIpoDates)).sort()
-    : Array.from(new Set([todayStr, ...allIpoDates])).sort()
+  const uniqueDates = Array.from(new Set(bottomFilter === '관심' ? allIpoDates : [todayStr, ...allIpoDates])).sort()
+  const uniqueDatesRef = useRef(uniqueDates)
+  uniqueDatesRef.current = uniqueDates
 
   const scrollRestored = useRef(false)
 
@@ -665,6 +665,9 @@ export function IpoCalendarPage() {
       if (savedMonthly && monthlyContainerRef.current) {
         monthlyContainerRef.current.scrollTop = Number(savedMonthly)
         sessionStorage.removeItem('ipoMonthlyScrollTop')
+        sessionStorage.removeItem('ipoListScrollTop')
+        sessionStorage.removeItem('ipoSelectedDate')
+        sessionStorage.removeItem('ipoDisplayWeekStart')
         return
       }
       const saved = sessionStorage.getItem('ipoListScrollTop')
@@ -691,12 +694,11 @@ export function IpoCalendarPage() {
       rafId = requestAnimationFrame(() => {
         rafId = null
         const HEADER_OFFSET = 160
-        const lastTwoDates = new Set(uniqueDates.slice(-2))
         let topDate: string | null = null
         let topPos: number | null = null
         dateSectionRefs.current.forEach((el, dateStr) => {
           const rect = el.getBoundingClientRect()
-          const effectiveBottom = lastTwoDates.has(dateStr) ? rect.bottom : rect.bottom - 80
+          const effectiveBottom = rect.bottom - 80
           if (effectiveBottom > HEADER_OFFSET && rect.top < window.innerHeight) {
             if (topPos === null || effectiveBottom < topPos) {
               topPos = effectiveBottom
@@ -729,9 +731,11 @@ export function IpoCalendarPage() {
       const section = currentMonthSectionRef.current
       if (container && section) {
         const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
-        container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 15
+        container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 10
       }
-      isMonthlyTransitioning.current = false
+      requestAnimationFrame(() => {
+        isMonthlyTransitioning.current = false
+      })
     })
   }, [calendarView])
 
@@ -954,6 +958,7 @@ export function IpoCalendarPage() {
                     </div>
                   </div>
                 </div>
+                <div className="pt-[10px]" />
                 {Array.from({ length: 12 }, (_, i) => dayjs('2026-01-01').add(i, 'month')).map((month) => {
                   const isCurrentMonthSection = month.isSame(currentMonth, 'month')
                   const isTodayMonth = month.isSame(dayjs().startOf('month'), 'month')
@@ -968,6 +973,7 @@ export function IpoCalendarPage() {
                     </div>
                   )
                 })}
+                <div className="h-[110px]" />
               </>
             )}
           </div>
@@ -1046,7 +1052,25 @@ export function IpoCalendarPage() {
                 </div>
               )
             })}
-            <div className={uniqueDates.length > 0 && uniqueDates[uniqueDates.length - 1] <= todayStr ? 'h-[225px]' : 'h-[150px]'} />
+            {bottomFilter === '전체' ? (
+              <div className="h-[450px] flex flex-col justify-end px-[6px] pb-[100px]">
+                <p className="text-[12px] font-medium text-[#9AA0AB] mb-[8px]">유의사항</p>
+                <ul className="space-y-[6px]">
+                  {[
+                    '미국 공모주 청약에 대한 배정은 국내의 균등/비례 배정 방식과 달라 미국 현지 IPO 중개회사 내부 기준에 따라 진행되며, 배정받지 못할 수도 있습니다.',
+                    '현지 사정으로 청약이 취소(중단)될 수 있습니다.',
+                    '청약 취소는 청약 기간 중에만 가능합니다.',
+                  ].map((text, i) => (
+                    <li key={i} className="flex gap-[6px] text-[11px] text-[#9AA0AB] leading-[1.5]">
+                      <span className="shrink-0">•</span>
+                      <span>{text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="h-[280px]" />
+            )}
           </div>}
 
         </>
@@ -1055,8 +1079,8 @@ export function IpoCalendarPage() {
       {tab === '청약내역/취소' && <SubscriptionHistory />}
 
       {tab === "청약 일정" && (
-        <div className="fixed bottom-[91px] right-4 z-20">
-          <div className="flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)]">
+        <div className="fixed bottom-[91px] left-1/2 -translate-x-1/2 w-full max-w-mobile px-4 flex justify-end z-20 pointer-events-none">
+          <div className="flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)] pointer-events-auto">
             {(["전체", "관심"] as BottomFilter[]).map((f) => (
               <button
                 key={f}
