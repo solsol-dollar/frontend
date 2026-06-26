@@ -229,9 +229,16 @@ export function HomePage() {
                 <img src={changeupCard} className="w-8 h-15 object-cover" alt="카드 이미지" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-text-secondary truncate">{card.cardName}</p>
-                  <p className="text-sm font-bold text-text-primary mt-0.5">—</p>
+                  <p className="text-sm font-bold text-text-primary mt-0.5">
+                    {card.monthlySpend != null
+                      ? `$${card.monthlySpend.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                      : '—'}
+                  </p>
                 </div>
-                <button className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-sm font-medium text-text-secondary">
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate('/home/card/history') }}
+                  className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-sm font-medium text-text-secondary"
+                >
                   내역
                 </button>
               </div>
