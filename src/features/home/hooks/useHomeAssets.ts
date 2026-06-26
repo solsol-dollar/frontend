@@ -8,6 +8,9 @@ export interface Securities {
   usdBalance: number
   krwBalance: number
   totalUsdBalance: number
+  // 진행 중인 청약에 묶인 홀딩액을 제외하고 지금 바로 신청에 쓸 수 있는 금액
+  usdAvailableBalance: number
+  krwAvailableBalance: number
 }
 
 export interface Account {

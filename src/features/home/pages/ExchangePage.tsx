@@ -17,6 +17,8 @@ export function ExchangePage() {
   const { state } = useLocation()
   const direction: 'dollar-to-won' | 'won-to-dollar' = state?.direction ?? 'dollar-to-won'
   const isDollarToWon = direction === 'dollar-to-won'
+  const returnTo: string | undefined = state?.returnTo
+  const depth: number = state?.depth ?? 0
 
   const { data: assets } = useHomeAssets()
   const rate = assets?.exchangeRateInfo?.rate ?? 0
@@ -69,7 +71,7 @@ export function ExchangePage() {
         direction: isDollarToWon ? 'USD_TO_KRW' : 'KRW_TO_USD',
         sourceAmount: amountNum,
       })
-      navigate('/home/exchange/complete', { state: { result } })
+      navigate('/home/exchange/complete', { state: { result, returnTo, depth: depth + 1 } })
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       setErrorMsg(msg ?? '환전 중 오류가 발생했습니다')

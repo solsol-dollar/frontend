@@ -22,6 +22,8 @@ export function TransferPage() {
   const sourceName: string = state?.sourceName ?? '내 외화 통장'
   const sourceBalance: string = state?.sourceBalance ?? '$0.00'
   const fixedToAccountId: number | undefined = state?.toAccountId
+  const returnTo: string | undefined = state?.returnTo
+  const depth: number = state?.depth ?? 0
 
   const { data: assets } = useHomeAssets()
 
@@ -165,6 +167,8 @@ export function TransferPage() {
               sourceBalance,
               destBalance: `$${selected!.balance.toFixed(2)}`,
               amount,
+              returnTo,
+              depth: depth + 1,
             },
           })}
           className="w-full bg-primary text-white py-3 font-semibold"

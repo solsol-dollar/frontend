@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Heart, Minus, Plus } from "lucide-react";
 import dayjs from "dayjs";
@@ -13,9 +13,11 @@ import {
 } from "@/features/ipo/utils/subscriptionStatus";
 import { cn } from "@/lib/utils";
 import { useIpoDetail } from "@/features/ipo/hooks/useIpo";
-import { useCreateSubscription } from "@/features/ipo/hooks/useSubscriptions";
+import { useCreateSubscription, useSubscriptionList } from "@/features/ipo/hooks/useSubscriptions";
 import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
 import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
+import { PinKeypad } from "@/features/onboarding/components/PinKeypad";
+import { loginWithPin } from "@/lib/auth";
 
 export function SubscribePage() {
   const navigate = useNavigate();
@@ -24,12 +26,44 @@ export function SubscribePage() {
   const [liked, setLiked] = useState(false);
   const [amount, setAmount] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState<string | null>(null);
+  const [showPinScreen, setShowPinScreen] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinKey, setPinKey] = useState(0);
+  const pinErrorTimerRef = useRef<number | null>(null);
 
   const { data, isLoading, isError, refetch: refetchIpoDetail } = useIpoDetail(ipoId);
   const { data: assets, isLoading: isAssetsLoading } = useHomeAssets();
-  const { mutate: createSubscription, isPending: isSubmitting } = useCreateSubscription();
+  const { mutate: createSubscription } = useCreateSubscription();
+  const { data: subscriptionListData, isLoading: isSubscriptionListLoading } = useSubscriptionList({ ipoId });
+  const alreadySubscribed = (subscriptionListData?.data.subscriptions ?? []).some(
+    (s) => s.subscriptionStatus !== 'CANCELLED',
+  );
 
-  if (isLoading || isAssetsLoading) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollKey = `subscribe-scroll-${ipoId}`;
+
+  useEffect(() => {
+    if (isLoading || isAssetsLoading) return;
+    const saved = sessionStorage.getItem(scrollKey);
+    if (saved && scrollRef.current) {
+      scrollRef.current.scrollTop = Number(saved);
+    }
+  }, [isLoading, isAssetsLoading, scrollKey]);
+
+  useEffect(() => {
+    return () => {
+      if (pinErrorTimerRef.current !== null) window.clearTimeout(pinErrorTimerRef.current);
+    };
+  }, []);
+
+  const saveScrollPosition = () => {
+    if (scrollRef.current) {
+      sessionStorage.setItem(scrollKey, String(scrollRef.current.scrollTop));
+    }
+  };
+
+  if (isLoading || isAssetsLoading || isSubscriptionListLoading) {
     return <div className="page-content" />;
   }
 
@@ -39,6 +73,20 @@ export function SubscribePage() {
         <Header showBack showNotification={false} showMypage={false} />
         <div className="flex-1 flex flex-col items-center justify-center gap-3">
           <p className="text-sm text-text-secondary">종목 정보를 불러올 수 없습니다.</p>
+          <button onClick={() => navigate(-1)} className="text-sm text-primary font-semibold">
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (alreadySubscribed) {
+    return (
+      <div className="mobile-container flex flex-col h-screen">
+        <Header showBack showNotification={false} showMypage={false} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-text-secondary">이미 청약 신청한 종목이에요.</p>
           <button onClick={() => navigate(-1)} className="text-sm text-primary font-semibold">
             돌아가기
           </button>
@@ -66,7 +114,7 @@ export function SubscribePage() {
         ? [{ label: "환불(예정)일", date: dayjs(ipoDetail.refundDate).format("YYYY.MM.DD") }]
         : []),
     ],
-    availableAmount: securities.usdBalance,
+    availableAmount: securities.usdAvailableBalance,
     foreignBalance: depositAccount?.balance ?? 0,
     cmaBalanceKrw: securities.krwBalance,
     exchangeRate: exchangeRateInfo.rate,
@@ -99,6 +147,40 @@ export function SubscribePage() {
 
   const subscriptionFee = isValidAmount ? numericAmount * 1.01 : 0;
 
+  const handlePinEnter = async (pin: string) => {
+    setPinError(null);
+    try {
+      await loginWithPin(pin);
+      setShowPinScreen(false);
+      const fresh = await refetchIpoDetail();
+      const freshOfferPrice = fresh.data?.data.confirmedOfferPrice ?? offerPriceForSubmit;
+      createSubscription(
+        {
+          ipoId,
+          securitiesAccountId: securities.usdAccountId,
+          subscriptionAmount: numericAmount,
+          offerPrice: freshOfferPrice,
+        },
+        {
+          onSuccess: () => {
+            navigate('/ipo', { state: { tab: '청약내역/취소' } });
+          },
+          onError: (e) => {
+            console.error('청약 신청 실패', e);
+            setErrorModalMessage('청약 신청에 실패했어요. 잠시 후 다시 시도해주세요.');
+          },
+        },
+      );
+    } catch {
+      setPinError('비밀번호가 올바르지 않습니다');
+      if (pinErrorTimerRef.current !== null) window.clearTimeout(pinErrorTimerRef.current);
+      pinErrorTimerRef.current = window.setTimeout(() => {
+        setPinError(null);
+        setPinKey((k) => k + 1);
+      }, 3000);
+    }
+  };
+
   const adjustAmount = (delta: number) => {
     setAmount((prev) => {
       if (!prev) return delta > 0 ? "100" : "";
@@ -128,7 +210,7 @@ return (
         }
       />
 
-      <div className="flex-1 overflow-y-auto bg-surface-bg">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-surface-bg">
         {/* 종목 정보 */}
         <section className="px-4 py-6 bg-white">
           <div className="mb-7">
@@ -163,6 +245,7 @@ return (
 
           {/* 청약 가능 금액 */}
           <div className="px-4 pt-4 pb-3">
+            <p className="text-xs text-text-tertiary mb-1">신청가능금액</p>
             <span className="text-2xl font-bold text-text-primary">
               ${ipo.availableAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
@@ -260,17 +343,20 @@ return (
           </p>
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() =>
-                depositAccount &&
+              onClick={() => {
+                if (!depositAccount) return;
+                saveScrollPosition();
                 navigate("/home/transfer", {
                   state: {
                     fromAccountId: depositAccount.accountId,
                     sourceName: depositAccount.accountName,
                     sourceBalance: `$${depositAccount.balance.toFixed(2)}`,
                     toAccountId: securities.usdAccountId,
+                    returnTo: `/ipo/${ipoId}/subscribe`,
+                    depth: 1,
                   },
-                })
-              }
+                });
+              }}
               disabled={!depositAccount}
               className="p-3 border border-border rounded-xl text-left disabled:opacity-40"
             >
@@ -282,7 +368,10 @@ return (
               </p>
             </button>
             <button
-              onClick={() => navigate('/home/exchange', { state: { direction: 'won-to-dollar' } })}
+              onClick={() => {
+                saveScrollPosition();
+                navigate('/home/exchange', { state: { direction: 'won-to-dollar', returnTo: `/ipo/${ipoId}/subscribe`, depth: 1 } });
+              }}
               className="p-3 border border-border rounded-xl text-left"
             >
               <div className="flex items-center gap-1">
@@ -366,38 +455,45 @@ return (
               취소
             </button>
             <button
-              onClick={async () => {
-                // 상세 조회 시점과 신청 시점 사이 공모가가 확정/변경됐을 수 있어 최신값으로 재조회 후 전송
-                const fresh = await refetchIpoDetail();
-                const freshOfferPrice =
-                  fresh.data?.data.confirmedOfferPrice ?? offerPriceForSubmit;
-                createSubscription(
-                  {
-                    ipoId,
-                    securitiesAccountId: securities.usdAccountId,
-                    subscriptionAmount: numericAmount,
-                    offerPrice: freshOfferPrice,
-                  },
-                  {
-                    onSuccess: () => {
-                      setShowConfirmModal(false);
-                      navigate('/ipo', { state: { tab: '청약내역/취소' } });
-                    },
-                    onError: (e) => {
-                      console.error('청약 신청 실패', e);
-                      alert('청약 신청에 실패했어요. 잠시 후 다시 시도해주세요.');
-                    },
-                  },
-                );
+              onClick={() => {
+                setShowConfirmModal(false);
+                setShowPinScreen(true);
               }}
-              disabled={isSubmitting}
-              className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold disabled:opacity-50"
+              className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold"
             >
-              {isSubmitting ? '신청 중...' : '확인'}
+              확인
             </button>
           </div>
         </div>
       </div>
+
+      {showPinScreen && (
+        <div className="fixed inset-0 z-[80]">
+          <PinKeypad
+            key={pinKey}
+            onEnter={handlePinEnter}
+            onBack={() => {
+              setShowPinScreen(false);
+              setShowConfirmModal(true);
+            }}
+            error={pinError}
+          />
+        </div>
+      )}
+
+      {errorModalMessage && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-6">
+          <div className="w-full max-w-[340px] bg-white rounded-2xl px-5 py-6 text-center">
+            <p className="text-sm font-medium text-text-primary mb-6 break-keep">{errorModalMessage}</p>
+            <button
+              onClick={() => setErrorModalMessage(null)}
+              className="w-full py-3 bg-primary text-white rounded-xl font-semibold"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

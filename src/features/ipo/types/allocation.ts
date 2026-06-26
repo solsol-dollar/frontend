@@ -3,6 +3,7 @@ export interface AllocationResultDetail {
   subscriptionResultId: number
   subscriptionAmount: number
   allocatedAmount: number | null
+  feeAmount: number | null
   refundAmount: number | null
   allocationRate: number | null
   allocatedShares: number | null

@@ -10,6 +10,7 @@ import {
 import { splitsToAllocationItems } from "@/features/return-plan/utils/allocationMapper";
 import { useCreateReturnPlan } from "@/features/return-plan/hooks/useCreateReturnPlan";
 import { useUpdateReturnPlanRatios } from "@/features/return-plan/hooks/useUpdateReturnPlanRatios";
+import { useReturnPlans } from "@/features/return-plan/hooks/useReturnPlans";
 import { useSubscriptionResultDetail } from "@/features/ipo/hooks/useSubscriptionResultDetail";
 import { useSubscriptionList } from "@/features/ipo/hooks/useSubscriptions";
 import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
@@ -97,9 +98,11 @@ export function AllocationResultPage() {
 
   const { data: resultDetail } = useSubscriptionResultDetail(subscriptionId);
   const { data: listData } = useSubscriptionList();
+  const { data: returnPlans } = useReturnPlans();
   const subscription = listData?.data.subscriptions.find(
     (s) => s.subscriptionId === subscriptionId,
   );
+  const existingPlan = returnPlans?.find((p) => p.subscriptionId === subscriptionId);
 
   const createPlan = useCreateReturnPlan();
   const updateRatios = useUpdateReturnPlanRatios();
@@ -176,17 +179,17 @@ export function AllocationResultPage() {
 
           <div className="px-10 pt-5 pb-2 space-y-3">
             <InfoRow
+              label="공모가"
+              value={formatUsd(finalOfferingPrice)}
+            />
+            <InfoRow label="배정 수량" value={`${allocatedShares}주`} />
+            <InfoRow
               label="청약신청금액"
               value={formatUsd(subscriptionRequestAmount)}
             />
             <InfoRow
               label="청약대행증거금"
               value={formatUsd(subscriptionMargin)}
-            />
-            <InfoRow label="배정 수량" value={`${allocatedShares}주`} />
-            <InfoRow
-              label="최종 공모가"
-              value={formatUsd(finalOfferingPrice)}
             />
             <InfoRow
               label="청약 수수료"
@@ -218,13 +221,22 @@ export function AllocationResultPage() {
       </div>
 
       <div className="px-4 pb-8 pt-3 bg-white border-t border-border">
-        <button
-          onClick={handleReserve}
-          disabled={isReserving}
-          className="w-full bg-primary text-white py-4 rounded-xl font-semibold disabled:opacity-50"
-        >
-          {isReserving ? "예약 중..." : "분배 예약하기"}
-        </button>
+        {existingPlan ? (
+          <button
+            onClick={() => navigate(`/return-plan/pending/${existingPlan.returnPlanId}`)}
+            className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
+          >
+            리턴플랜 보기
+          </button>
+        ) : (
+          <button
+            onClick={handleReserve}
+            disabled={isReserving}
+            className="w-full bg-primary text-white py-4 rounded-xl font-semibold disabled:opacity-50"
+          >
+            {isReserving ? "예약 중..." : "분배 예약하기"}
+          </button>
+        )}
       </div>
 
       <div

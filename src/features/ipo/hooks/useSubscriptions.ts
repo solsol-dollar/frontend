@@ -24,17 +24,6 @@ export function useCreateSubscription() {
   })
 }
 
-export function useConfirmSubscription() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (subscriptionId: number) => subscriptionApi.confirm(subscriptionId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: subscriptionKeys.all })
-      queryClient.invalidateQueries({ queryKey: ['subscriptionResults'] })
-    },
-  })
-}
-
 export function useCancelSubscription() {
   const queryClient = useQueryClient()
   return useMutation({

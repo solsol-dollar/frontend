@@ -1,7 +1,7 @@
 import { ledgerApi } from '@/lib/axios'
 import type { ApiResponse } from '@/features/securities/types/securities'
 
-export type SubscriptionStatusCode = 'REQUESTED' | 'CONFIRMED' | 'CANCELLED'
+export type SubscriptionStatusCode = 'CONFIRMED' | 'CANCELLED'
 
 export interface SubscriptionRes {
   subscriptionId: number
@@ -47,9 +47,6 @@ export interface SubscriptionListParams {
 export const subscriptionApi = {
   create: (body: CreateSubscriptionRequest): Promise<ApiResponse<SubscriptionRes>> =>
     ledgerApi.post('/api/ledger/api/v1/subscriptions', body),
-
-  confirm: (subscriptionId: number): Promise<ApiResponse<SubscriptionRes>> =>
-    ledgerApi.put(`/api/ledger/api/v1/subscriptions/${subscriptionId}/confirm`),
 
   cancel: (subscriptionId: number): Promise<ApiResponse<SubscriptionCancelRes>> =>
     ledgerApi.delete(`/api/ledger/api/v1/subscriptions/${subscriptionId}`),
