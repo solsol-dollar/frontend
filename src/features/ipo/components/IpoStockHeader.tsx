@@ -66,14 +66,18 @@ export function IpoStockHeader({
         </div>
       </div>
       <div className="flex flex-col items-end gap-1">
-        <span
-          className={cn(
-            'text-xs px-2 py-0.5 rounded-full border font-semibold',
-            statusClassName,
-          )}
-        >
-          {status}
-        </span>
+        {status === '청약종료' ? (
+          <img src="/icons/IPO_end.svg" alt="청약종료" width={50} height={17} />
+        ) : (
+          <span
+            className={cn(
+              'text-xs px-2 py-0.5 rounded-full border font-semibold',
+              statusClassName,
+            )}
+          >
+            {status}
+          </span>
+        )}
         {secondaryText && (
           <span className={cn('text-sm font-bold', secondaryClassName)}>{secondaryText}</span>
         )}
