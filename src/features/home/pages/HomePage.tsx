@@ -229,7 +229,11 @@ export function HomePage() {
                 <img src={changeupCard} className="w-8 h-15 object-cover" alt="카드 이미지" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-text-secondary truncate">{card.cardName}</p>
-                  <p className="text-sm font-bold text-text-primary mt-0.5">—</p>
+                  <p className="text-sm font-bold text-text-primary mt-0.5">
+                    {card.monthlySpend != null
+                      ? `$${card.monthlySpend.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                      : '—'}
+                  </p>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate('/home/card/history') }}
