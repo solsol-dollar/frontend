@@ -12,6 +12,7 @@ import {
 } from '@/features/ipo/utils/subscriptionStatus'
 import { useIpoDetail, useToggleFavorite, useIpoNews } from '@/features/ipo/hooks/useIpo'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
+import { ClosedIpoDetailPage } from '@/features/ipo/pages/ClosedIpoDetailPage'
 
 const MOCK_PERFORMANCE = [
   { label: '최근 매출액', value: '333조', change: '+10.88%', positive: true },
@@ -60,6 +61,11 @@ export function IpoDetailPage() {
   }
 
   const ipo = data.data
+
+  if (ipo.ipoStatus === 'CLOSED') {
+    return <ClosedIpoDetailPage ipoId={ipoId} ipo={ipo} />
+  }
+
   const status = STATUS_MAP[ipo.ipoStatus] ?? '청약종료'
   const abbr = ipo.ticker.slice(0, 2).toUpperCase()
   const avatarColor = generateLogoColor(ipo.ticker)

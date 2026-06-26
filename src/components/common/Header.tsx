@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 interface HeaderProps {
   title?: string
+  centerContent?: React.ReactNode
   showBack?: boolean
   showNotification?: boolean
   showMypage?: boolean
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export function Header({
   title,
+  centerContent,
   showBack = false,
   showNotification = true,
   showMypage = true,
@@ -34,7 +36,11 @@ export function Header({
           </svg>
         </button>
 
-        {title && (
+        {centerContent ? (
+          <div className="absolute left-1/2 -translate-x-1/2">
+            {centerContent}
+          </div>
+        ) : title && (
           <span className="absolute left-1/2 -translate-x-1/2 text-base font-semibold text-text-primary">
             {title}
           </span>
