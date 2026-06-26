@@ -224,8 +224,9 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
   const [_period, setPeriod] = useState<'분기' | '반기' | '연간'>('분기')
   const [showStickyInfo, setShowStickyInfo] = useState(false)
   const [showScoreInfo, setShowScoreInfo] = useState(false)
-  const [showNewsList, setShowNewsList] = useState(false)
+  const [showNewsList, setShowNewsList] = useState(() => sessionStorage.getItem(`ipo-news-open-${ipoId}`) === 'true')
   const stockHeaderRef = useRef<HTMLElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const el = stockHeaderRef.current
@@ -236,6 +237,16 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
     )
     observer.observe(el)
     return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const saved = sessionStorage.getItem(`ipo-scroll-${ipoId}`)
+    if (saved) el.scrollTop = Number(saved)
+    const onScroll = () => sessionStorage.setItem(`ipo-scroll-${ipoId}`, String(el.scrollTop))
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
   const status = '청약종료' as const
@@ -288,7 +299,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
         }
       />
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide">
         <section ref={stockHeaderRef} className="px-5 pt-4 pb-5 bg-white">
           <IpoStockHeader
             avatarText={abbr}
@@ -373,7 +384,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
             return (
               <button
                 className="flex items-center gap-2 mb-4"
-                onClick={() => setShowNewsList((v) => !v)}
+                onClick={() => setShowNewsList((v) => { const next = !v; sessionStorage.setItem(`ipo-news-open-${ipoId}`, String(next)); return next })}
               >
                 <div className="flex -space-x-1.5">
                   {sources.map((src, i) => {
@@ -409,18 +420,16 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
           {showNewsList && (
             <div className="overflow-visible">
               {(newsData?.data ?? []).map((n) => (
-                <a
+                <button
                   key={n.id}
-                  href={n.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block py-3 px-1 -mx-1 rounded-sm border-b border-[#F0F1F4] last:border-0 transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none"
+                  onClick={() => navigate(`/ipo/${ipoId}/news/${n.id}`, { state: { news: n } })}
+                  className="block w-full text-left py-3 px-3 -mx-3 rounded-sm border-b border-[#F0F1F4] last:border-0 transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none"
                 >
                   <p className="text-[14px] font-semibold text-[#111827] leading-snug">{n.title}</p>
                   <p className="text-[12px] text-[#9AA0AB] mt-1">
                     {n.source} · {dayjs(n.publishedAt).format('MM.DD')}
                   </p>
-                </a>
+                </button>
               ))}
             </div>
           )}

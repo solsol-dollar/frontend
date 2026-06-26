@@ -48,6 +48,7 @@ export interface IpoDetailItem {
 export interface IpoNewsItem {
   id: number
   title: string
+  titleKo?: string
   source: string
   publishedAt: string
   url: string
