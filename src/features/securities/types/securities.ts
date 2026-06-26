@@ -156,3 +156,23 @@ export interface TradeOrderResponse {
   estimatedTotalKrw: number
   scheduledAt: string   // "오늘 오후 10시 30분 주문 예정"
 }
+
+// ─── 종목 통계 ────────────────────────────────────────────────
+// SEC-007: GET /api/v1/securities/products/{id}/stats
+export interface ProductStats {
+  ticker: string
+  week52High: number | null
+  week52Low: number | null
+  returns: Record<'1M' | '3M' | '6M' | '1Y', number>  // 수익률(%)
+}
+
+// ─── 종목 랭킹 ────────────────────────────────────────────────
+// SEC-008: GET /api/v1/securities/products/ranking?type=gainer|loser|volume&limit=10
+export interface RankingItem {
+  id: number
+  ticker: string
+  productName: string
+  close: number
+  changeRate: number
+  sign: string
+}

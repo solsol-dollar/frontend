@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 export type MarketStatus = 'pre' | 'open' | 'after' | 'closed'
 
 export function getUsMarketStatus(): MarketStatus {
@@ -33,4 +35,13 @@ export const MARKET_STATUS_CLASS: Record<MarketStatus, string> = {
   open: 'text-success bg-success/10',
   after: 'text-text-secondary bg-surface',
   closed: 'text-text-tertiary bg-surface',
+}
+
+export function useMarketStatus(): MarketStatus {
+  const [status, setStatus] = useState<MarketStatus>(getUsMarketStatus)
+  useEffect(() => {
+    const id = setInterval(() => setStatus(getUsMarketStatus()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+  return status
 }

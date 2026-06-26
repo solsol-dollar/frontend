@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useStockDetail } from '../hooks/useStockDetail'
 import { usePlaceOrder } from '../hooks/usePlaceOrder'
+import { useMyInvestments } from '../hooks/useMyInvestments'
 import type { TradeOrderResponse } from '../types/securities'
+import { useMarketStatus } from '../utils/marketHours'
 
 const FEE_RATE = 0.0025
 
@@ -12,6 +15,15 @@ export function BuyPage() {
   const navigate = useNavigate()
   const { data: stock } = useStockDetail(id)
   const { mutate: placeOrder, isPending } = usePlaceOrder()
+  const { data: holdings } = useMyInvestments()
+
+  const availableCash = holdings?.cashUsd ?? 0
+  const maxBuyQty = stock?.currentPriceUsd && stock.currentPriceUsd > 0
+    ? Math.floor(availableCash / stock.currentPriceUsd)
+    : 0
+
+  const marketStatus = useMarketStatus()
+  const canTrade = marketStatus === 'open'
 
   const [qty, setQty] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
@@ -46,16 +58,16 @@ export function BuyPage() {
     <div className="flex flex-col h-screen bg-surface-bg">
       {/* 헤더 */}
       <div className="bg-white px-4 py-3 flex items-center justify-between border-b border-border">
-        <button onClick={() => navigate(-1)}>
-          <span className="text-xl text-text-secondary">←</span>
+        <button onClick={() => navigate(-1)} className="p-1">
+          <ArrowLeft size={20} className="text-text-secondary" />
         </button>
-        <div className="text-center">
-          <p className="text-sm font-semibold text-text-primary">{stock?.productName}</p>
+        <div className="flex-1 text-center min-w-0 px-3">
+          <p className="text-sm font-semibold text-text-primary truncate">{stock?.ticker} · {stock?.productName}</p>
           <p className={cn('text-xs', stock?.isUp ? 'text-up' : 'text-down')}>
-            {stock?.isUp ? '+' : ''}{stock?.dayChangeUsd.toFixed(2)} ({stock?.isUp ? '+' : ''}{stock?.dayChangeRate.toFixed(1)}%)
+            ${stock?.currentPriceUsd.toFixed(2)} {stock?.isUp ? '+' : ''}{stock?.dayChangeRate.toFixed(1)}%
           </p>
         </div>
-        <div className="w-6" />
+        <div className="w-8 flex-shrink-0" />
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
@@ -77,7 +89,7 @@ export function BuyPage() {
             <button
               onClick={() => setQty(String(Math.max(0, qtyNum - 1)))}
               disabled={qtyNum <= 0}
-              className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-xl font-medium text-text-primary disabled:opacity-30"
+              className="w-11 h-11 rounded-full border border-border flex items-center justify-center text-xl font-medium text-text-primary disabled:opacity-30"
             >
               −
             </button>
@@ -91,12 +103,14 @@ export function BuyPage() {
             />
             <button
               onClick={() => setQty(String(qtyNum + 1))}
-              className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-xl font-medium text-text-primary"
+              className="w-11 h-11 rounded-full border border-border flex items-center justify-center text-xl font-medium text-text-primary"
             >
               +
             </button>
           </div>
-          <p className="text-xs text-text-tertiary mt-3 text-center">구매가능 10,000 · 최대 0주</p>
+          <p className="text-xs text-text-tertiary mt-3 text-center">
+            구매가능 ${availableCash.toLocaleString('en-US', { minimumFractionDigits: 2 })} · 최대 {maxBuyQty}주
+          </p>
         </div>
 
         {/* 예상 금액 */}
@@ -119,10 +133,15 @@ export function BuyPage() {
       </div>
 
       {/* 구매하기 버튼 */}
-      <div className="px-4 py-4 bg-white border-t border-border">
+      <div className="px-4 pt-3 pb-4 bg-white border-t border-border">
+        {!canTrade && (
+          <p className="text-center text-[11px] text-text-tertiary mb-2">
+            미국 장 마감 중 · 23:30 ~ 06:00에 거래 가능
+          </p>
+        )}
         <button
           onClick={() => setShowConfirm(true)}
-          disabled={!qtyNum}
+          disabled={!qtyNum || !canTrade}
           className="w-full py-4 bg-up text-white rounded-2xl font-semibold text-base disabled:opacity-40"
         >
           구매하기
