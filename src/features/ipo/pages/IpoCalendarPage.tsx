@@ -38,7 +38,7 @@ interface Ipo {
   status: 'closed' | 'open' | 'upcoming'
   subscription_start: string | null
   subscription_end: string | null
-  listing_date: string
+  listing_date: string | null
   price: number
   price_confirmed: number | null
   is_favorite: boolean

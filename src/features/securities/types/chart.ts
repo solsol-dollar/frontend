@@ -1,12 +1,13 @@
 export type ChartPeriod = '5MIN' | '1D' | '1W' | '1M'
 
-export type UiPeriod = '5분' | '일' | '주' | '월'
+export type UiPeriod = '실시간' | '5분' | '일' | '주' | '월'
 
 export const PERIOD_MAP: Record<UiPeriod, ChartPeriod> = {
-  '5분': '5MIN',
-  '일':  '1D',
-  '주':  '1W',
-  '월':  '1M',
+  '실시간': '5MIN',  // 베이스 데이터는 5분봉, 현재가는 5초 폴링으로 업데이트
+  '5분':   '5MIN',
+  '일':    '1D',
+  '주':    '1W',
+  '월':    '1M',
 }
 
 export interface ChartCandle {
