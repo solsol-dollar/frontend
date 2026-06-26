@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, ChevronRight } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { useMyPageAccounts } from '@/features/mypage/hooks/useMyPage'
 import solBankIcon from '@/assets/common/sol-bank-icon.svg'

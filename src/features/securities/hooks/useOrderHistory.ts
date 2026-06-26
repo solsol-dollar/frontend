@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { serviceApi } from '@/lib/axios'
 import type { ApiResponse, OrderHistoryItem } from '../types/securities'
 
-// TODO: GET /api/v1/trade-orders (백엔드 구현 필요)
 export function useOrderHistory() {
   return useQuery({
     queryKey: ['securities', 'order-history'],

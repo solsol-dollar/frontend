@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 import { router } from '@/router'
 import { queryClient } from '@/lib/queryClient'
+import { PwaUpdatePrompt } from '@/components/common/PwaUpdatePrompt'
 import '@/styles/globals.css'
 
 dayjs.locale('ko')
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
+      <PwaUpdatePrompt />
     </QueryClientProvider>
   </StrictMode>,
 )
