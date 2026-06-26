@@ -148,14 +148,14 @@ function NewsScoreChart({ before, after, offerPrice, currentPrice }: { before: n
       <text x={x1} y={H - 3} textAnchor="middle" fill="#9AA0AB" fontSize={13}>상장 전</text>
       {offerPrice != null && (
         <text x={x1} y={H + 13} textAnchor="middle" fill="#9AA0AB" fontSize={11}>
-          (${offerPrice.toLocaleString()})
+          (${offerPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
         </text>
       )}
 
       <text x={x2} y={H - 3} textAnchor="middle" fill="#111827" fontSize={13} fontWeight={600}>상장 후</text>
       {currentPrice != null && (
         <text x={x2} y={H + 13} textAnchor="middle" fill="#111827" fontSize={11} fontWeight={600}>
-          (${currentPrice.toLocaleString()})
+          (${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
         </text>
       )}
     </svg>
@@ -259,7 +259,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
             <div className="flex items-center gap-[5px] leading-none">
               {currentPrice != null && (
                 <span className="text-[12px] font-bold text-[#111827]">
-                  ${currentPrice.toLocaleString()}
+                  ${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               )}
               {priceChangePct != null && (
@@ -328,6 +328,10 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
                 from { transform: translateY(100%); }
                 to   { transform: translateY(15%); }
               }
+              @keyframes moli-float {
+                0%, 100% { transform: translateY(15%); }
+                50%       { transform: translateY(8%); }
+              }
             `}</style>
             <div className="flex gap-3 items-center">
               <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-[#7C6FEC] flex items-end justify-center">
@@ -335,7 +339,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
                   src="/icons/moli.png"
                   alt=""
                   className="w-10 h-10 object-contain"
-                  style={{ animation: 'moli-rise 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards' }}
+                  style={{ animation: 'moli-rise 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards, moli-float 2.5s ease-in-out 0.9s infinite' }}
                 />
               </div>
               <div className="relative bg-[#F0EFFE] rounded-[12px] px-3 py-[10px]" style={{ maxWidth: 'calc(100% - 54px)' }}>
@@ -403,14 +407,14 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
           })()}
 
           {showNewsList && (
-            <div>
+            <div className="overflow-visible">
               {(newsData?.data ?? []).map((n) => (
                 <a
                   key={n.id}
                   href={n.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block py-3 border-b border-[#F0F1F4] last:border-0"
+                  className="block py-3 px-1 -mx-1 rounded-sm border-b border-[#F0F1F4] last:border-0 transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none"
                 >
                   <p className="text-[14px] font-semibold text-[#111827] leading-snug">{n.title}</p>
                   <p className="text-[12px] text-[#9AA0AB] mt-1">
