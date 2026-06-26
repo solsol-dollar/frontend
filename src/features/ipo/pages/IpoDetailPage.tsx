@@ -362,7 +362,7 @@ export function IpoDetailPage() {
         </section>
 
         <section className="px-5 pt-5 pb-1 bg-white mt-[13px]">
-          <p className="text-[15px] font-bold text-[#111827] mb-3">관련 뉴스</p>
+          <p className="text-[15px] font-bold text-[#111827] mb-3">SOLSOL한 뉴스 요약</p>
           <div className="bg-[#F6F6F9] rounded-[12px] px-4 py-[14px] mb-4 flex flex-col gap-2 mt-4">
             {MOCK_NEWS_SUMMARY.split(/(?<=\.)\s+/).filter(Boolean).map((item, i) => (
               <div key={i} className="flex gap-2">

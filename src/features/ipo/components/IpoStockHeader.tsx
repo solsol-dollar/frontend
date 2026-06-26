@@ -43,15 +43,29 @@ export function IpoStockHeader({
     const wrap = wrapRef.current
     const el = nameRef.current
     if (!wrap || !el) return
-    setOverflow(Math.max(0, el.scrollWidth - wrap.clientWidth))
-    setDragOffset(0)
-  }, [name])
+    const measure = () => {
+      setOverflow(Math.max(0, el.scrollWidth - wrap.clientWidth))
+      setDragOffset(0)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(wrap)
+    return () => ro.disconnect()
+  }, [name, size])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (overflow === 0) return
+    const el = nameRef.current
+    if (el) {
+      const matrix = new DOMMatrix(window.getComputedStyle(el).transform)
+      const currentX = Math.max(-overflow, Math.min(0, matrix.m41))
+      setDragOffset(currentX)
+      startOffsetRef.current = currentX
+    } else {
+      startOffsetRef.current = dragOffset
+    }
     setIsDragging(true)
     startXRef.current = e.touches[0].clientX
-    startOffsetRef.current = dragOffset
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
