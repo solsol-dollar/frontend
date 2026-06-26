@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 
 interface IpoStockHeaderProps {
@@ -29,12 +29,60 @@ export function IpoStockHeader({
   size = 'lg',
 }: IpoStockHeaderProps) {
   const [imgError, setImgError] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const nameRef = useRef<HTMLElement>(null)
+  const [overflow, setOverflow] = useState(0)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const startXRef = useRef(0)
+  const startOffsetRef = useRef(0)
+
   useEffect(() => { setImgError(false) }, [logoUrl])
+
+  useEffect(() => {
+    const wrap = wrapRef.current
+    const el = nameRef.current
+    if (!wrap || !el) return
+    setOverflow(Math.max(0, el.scrollWidth - wrap.clientWidth))
+    setDragOffset(0)
+  }, [name])
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (overflow === 0) return
+    setIsDragging(true)
+    startXRef.current = e.touches[0].clientX
+    startOffsetRef.current = dragOffset
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || overflow === 0) return
+    const delta = e.touches[0].clientX - startXRef.current
+    setDragOffset(Math.max(-overflow, Math.min(0, startOffsetRef.current + delta)))
+  }
+
+  const handleTouchEnd = () => setIsDragging(false)
+
   const showLogo = !!logoUrl && !imgError
+  const nameClass = 'text-base font-bold text-text-primary whitespace-nowrap'
+  const nameStyle: React.CSSProperties = overflow > 0
+    ? isDragging
+      ? { display: 'inline-block', transform: `translateX(${dragOffset}px)`, transition: 'none' }
+      : {
+          display: 'inline-block',
+          animation: 'ipo-name-scroll 7s ease-in-out infinite',
+          ['--scroll-amount' as string]: `-${overflow}px`,
+        }
+    : {}
 
   return (
     <div className={cn('flex justify-between', align === 'start' ? 'items-start' : 'items-center')}>
-      <div className="flex items-center gap-3">
+      <style>{`
+        @keyframes ipo-name-scroll {
+          0%, 20%  { transform: translateX(0); }
+          80%, 100% { transform: translateX(var(--scroll-amount)); }
+        }
+      `}</style>
+      <div className="flex items-center gap-3 min-w-0 flex-1 mr-3">
         {showLogo ? (
           <img
             src={logoUrl!}
@@ -56,18 +104,30 @@ export function IpoStockHeader({
             {avatarText}
           </div>
         )}
-        <div>
-          {size === 'lg' ? (
-            <h1 className="text-base font-bold text-text-primary">{name}</h1>
-          ) : (
-            <p className="text-base font-bold text-text-primary">{name}</p>
-          )}
+        <div className="min-w-0 flex-1">
+          <div
+            ref={wrapRef}
+            className="overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {size === 'lg' ? (
+              <h1 ref={nameRef as React.RefObject<HTMLHeadingElement>} className={nameClass} style={nameStyle}>{name}</h1>
+            ) : (
+              <p ref={nameRef as React.RefObject<HTMLParagraphElement>} className={nameClass} style={nameStyle}>{name}</p>
+            )}
+          </div>
           <p className="text-sm text-text-secondary mt-0.5">{ticker}</p>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
         {status === '청약종료' ? (
-          <img src="/icons/IPO_end.svg" alt="청약종료" width={50} height={17} />
+          <img src="/icons/IPO_end.svg" alt="청약종료" width={50} height={17} className="mt-[-18px]" />
+        ) : status === '청약가능' ? (
+          <img src="/icons/IPO_ready.svg" alt="청약가능" width={50} height={17} className="mt-[1px]" />
+        ) : status === '청약예정' ? (
+          <img src="/icons/IPO_upcoming.svg" alt="청약예정" width={50} height={17} className="mt-[1px]"/>
         ) : (
           <span
             className={cn(

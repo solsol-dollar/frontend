@@ -26,18 +26,29 @@ export function IpoOfferingInfo({
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const activeFlags = milestones.map((m) => today >= parseMilestoneDate(m.date))
+  const allActive = activeFlags.every(Boolean)
+  const lastActiveIndex = activeFlags.reduce((acc, flag, i) => (flag ? i : acc), -1)
+  const pulseIndex = allActive ? -1 : lastActiveIndex === -1 ? 0 : lastActiveIndex
 
   return (
     <>
-      <div className="space-y-4">
+      <style>{`
+        @keyframes milestone-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(115, 103, 219, 0.5); }
+          70% { box-shadow: 0 0 0 6px rgba(115, 103, 219, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(115, 103, 219, 0); }
+        }
+        .milestone-pulse { animation: milestone-pulse 2s ease-out infinite; }
+      `}</style>
+      <div className="space-y-[14px]">
         <div className="flex items-center">
           <span className="text-sm text-text-secondary w-24 flex-shrink-0">공모(예정)가</span>
-          <span className="text-sm font-semibold text-text-primary">{offeringPrice}</span>
+          <span className="text-base font-semibold text-text-primary">{offeringPrice}</span>
         </div>
         {offeringShares && (
           <div className="flex items-center">
             <span className="text-sm text-text-secondary w-24 flex-shrink-0">공모주식수</span>
-            <span className="text-sm font-semibold text-text-primary">{offeringShares}</span>
+            <span className="text-base font-semibold text-text-primary">{offeringShares}</span>
           </div>
         )}
 
@@ -49,8 +60,9 @@ export function IpoOfferingInfo({
                 <div className="flex flex-col items-center">
                   <div
                     className={cn(
-                      'w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5',
-                      activeFlags[i] ? 'bg-primary' : 'border-2 border-border bg-white',
+                      'w-2 h-2 rounded-full flex-shrink-0 mt-[7px]',
+                      activeFlags[i] ? 'bg-primary' : 'bg-text-tertiary',
+                      i === pulseIndex && 'milestone-pulse',
                     )}
                   />
                   {i < milestones.length - 1 && (
@@ -64,7 +76,7 @@ export function IpoOfferingInfo({
                 </div>
                 <p
                   className={cn(
-                    'text-sm pb-4 leading-5',
+                    'text-sm pb-4 leading-5 pt-[1px]',
                     activeFlags[i] ? 'font-semibold text-text-primary' : 'text-text-tertiary',
                   )}
                 >
@@ -76,7 +88,7 @@ export function IpoOfferingInfo({
         </div>
       </div>
 
-      {footnote && <p className="text-xs text-text-tertiary text-right mt-3">{footnote}</p>}
+      {footnote && <p className="text-[11px] text-text-tertiary text-right mt-3 mb-[-8px] mr-[-8px]">{footnote}</p>}
     </>
   )
 }
