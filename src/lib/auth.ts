@@ -14,7 +14,7 @@ export async function loginWithPin(pin: string): Promise<LoginResponse> {
 }
 
 export async function completeOnboarding(): Promise<void> {
-  await serviceApi.post('/api/v1/onboarding')
+  await serviceApi.post('/api/service/api/v1/onboarding')
 }
 
 export async function logout(): Promise<void> {

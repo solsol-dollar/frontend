@@ -79,20 +79,20 @@ export const ipoApi = {
     page?: number
     size?: number
   }): Promise<ApiResponse<IpoListData>> =>
-    serviceApi.get('/api/v1/ipos', { params }),
+    serviceApi.get('/api/service/api/v1/ipos', { params }),
 
   getDetail: (ipoId: number): Promise<ApiResponse<IpoDetailItem>> =>
-    serviceApi.get(`/api/v1/ipos/${ipoId}`),
+    serviceApi.get(`/api/service/api/v1/ipos/${ipoId}`),
 
   addFavorite: (ipoId: number): Promise<ApiResponse<unknown>> =>
-    serviceApi.post(`/api/v1/ipos/${ipoId}/favorites`),
+    serviceApi.post(`/api/service/api/v1/ipos/${ipoId}/favorites`),
 
   removeFavorite: (ipoId: number): Promise<ApiResponse<null>> =>
-    serviceApi.delete(`/api/v1/ipos/${ipoId}/favorites`),
+    serviceApi.delete(`/api/service/api/v1/ipos/${ipoId}/favorites`),
 
   getFavorites: (limit?: number): Promise<ApiResponse<{ favorites: FavoriteIpoItem[] }>> =>
-    serviceApi.get('/api/v1/favorites/ipos', limit ? { params: { limit } } : undefined),
+    serviceApi.get('/api/service/api/v1/favorites/ipos', limit ? { params: { limit } } : undefined),
 
   getNews: (ipoId: number, size = 3): Promise<ApiResponse<IpoNewsItem[]>> =>
-    serviceApi.get(`/api/v1/ipos/${ipoId}/news`, { params: { size } }),
+    serviceApi.get(`/api/service/api/v1/ipos/${ipoId}/news`, { params: { size } }),
 }
