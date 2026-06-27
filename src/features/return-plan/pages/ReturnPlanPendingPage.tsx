@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import dayjs from "dayjs";
 import { Info } from "lucide-react";
 import { Header } from "@/components/common/Header";
 import { DonutGauge } from "../components/DonutGauge";
@@ -68,6 +69,9 @@ export function ReturnPlanPendingPage() {
     ? [splits[0], splits[1] - splits[0], 100 - splits[1]]
     : [0, 0, 0];
   const refundAmount = plan?.totalRefundAmount ?? 0;
+  const isPastDeadline = plan?.refundDate
+    ? dayjs().isAfter(dayjs(plan.refundDate).hour(20).minute(0).second(0))
+    : false;
 
   const handleToggleEdit = async () => {
     if (!isEditing) {
@@ -234,10 +238,10 @@ export function ReturnPlanPendingPage() {
       <div className="px-4 pb-8 pt-3 bg-white border-t border-border">
         <button
           onClick={handleToggleEdit}
-          disabled={updateRatios.isPending || !plan}
+          disabled={updateRatios.isPending || !plan || isPastDeadline}
           className="w-full bg-primary text-white py-4 rounded-xl font-semibold disabled:opacity-50"
         >
-          {updateRatios.isPending ? "저장 중..." : isEditing ? "수정 완료" : "분배 수정하기"}
+          {updateRatios.isPending ? "저장 중..." : isPastDeadline ? "수정 마감" : isEditing ? "수정 완료" : "분배 수정하기"}
         </button>
       </div>
     </div>

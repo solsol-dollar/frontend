@@ -145,7 +145,7 @@ export function IpoStockHeader({
         ) : (
           <span
             className={cn(
-              'text-xs px-2 py-0.5 rounded-full border font-semibold',
+              'text-xs px-2 py-0.5 rounded-full border font-semibold whitespace-nowrap',
               statusClassName,
             )}
           >

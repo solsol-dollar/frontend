@@ -9,8 +9,8 @@ export function splitsToAllocationItems([a, b]: [number, number]): AllocationIte
 
   return [
     { destinationType: 'SECURITIES', ratio: securities },
-    { destinationType: 'FX_SAVINGS', ratio: fxSavings },
-    { destinationType: 'FX_ACCOUNT', ratio: fxAccount },
+    { destinationType: 'SAVINGS', ratio: fxSavings },
+    { destinationType: 'DEPOSIT', ratio: fxAccount },
   ]
 }
 
@@ -18,6 +18,6 @@ export function allocationItemsToSplits(allocations: AllocationItem[]): [number,
   const ratioOf = (type: DestinationType) =>
     allocations.find((a) => a.destinationType === type)?.ratio ?? 0
   const securities = ratioOf('SECURITIES')
-  const fxSavings = ratioOf('FX_SAVINGS')
+  const fxSavings = ratioOf('SAVINGS')
   return [securities, securities + fxSavings]
 }

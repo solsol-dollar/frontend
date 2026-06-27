@@ -21,3 +21,13 @@ export const ledgerApi = createInstance('')
 
 // 조회/AI + 인증 (IPO, 증권, 홈, auth) — Vite proxy: /api/v1, /api/service → 8081
 export const serviceApi = createInstance('')
+
+if (import.meta.env.DEV) {
+  ledgerApi.interceptors.request.use((config) => {
+    const raw = localStorage.getItem('dev_user_id')
+    if (raw != null) {
+      config.headers['X-User-Id'] = Number(raw)
+    }
+    return config
+  })
+}

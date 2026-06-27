@@ -10,6 +10,7 @@ import {
   type SubscriptionStatus,
 } from '@/features/ipo/utils/subscriptionStatus'
 import { useIpoDetail, useToggleFavorite, useIpoNews } from '@/features/ipo/hooks/useIpo'
+import { useSubscriptionList } from '@/features/ipo/hooks/useSubscriptions'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 import { ClosedIpoDetailPage } from '@/features/ipo/pages/ClosedIpoDetailPage'
 
@@ -202,6 +203,10 @@ export function IpoDetailPage() {
   const { data, isLoading, isError } = useIpoDetail(ipoId)
   const { mutate: toggleFav } = useToggleFavorite()
   const { data: newsData } = useIpoNews(ipoId)
+  const { data: subscriptionListData } = useSubscriptionList({ ipoId })
+  const alreadySubscribed = (subscriptionListData?.data.subscriptions ?? []).some(
+    (s) => s.subscriptionStatus !== 'CANCELLED',
+  )
 
   if (isLoading) {
     return <div className="page-content" />
@@ -249,6 +254,7 @@ export function IpoDetailPage() {
     ipo.refundDate ? { label: '환불(예정)일', date: ipo.refundDate } : null,
   ]
     .filter((m): m is { label: string; date: string } => m != null && !!m.date)
+    .sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
     .map((m) => ({ ...m, date: dayjs(m.date).format('YYYY.MM.DD') }))
 
   const ddayTarget =
@@ -477,10 +483,10 @@ export function IpoDetailPage() {
         ) : (
           <button
             onClick={() => navigate(`/ipo/${ipoId}/subscribe`)}
-            disabled={status === '청약예정'}
+            disabled={status === '청약예정' || alreadySubscribed}
             className="w-full bg-primary disabled:bg-border disabled:text-text-tertiary text-white py-4 rounded-xl font-semibold text-base"
           >
-            청약신청
+            {alreadySubscribed ? '청약신청 완료' : '청약신청'}
           </button>
         )}
       </div>
