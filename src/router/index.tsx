@@ -85,7 +85,7 @@ export const router = createBrowserRouter([
   { path: '/ipo/:id', element: <IpoDetailPage /> },
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
   { path: '/ipo/:id/result', element: <AllocationResultPage /> },
-  { path: '/return-plan/history', element: <ReturnPlanHistoryPage /> },
+{ path: '/return-plan/history', element: <ReturnPlanHistoryPage /> },
   { path: '/return-plan/pending/:id', element: <ReturnPlanPendingPage /> },
   { path: '/return-plan/result/:id', element: <ReturnPlanResultDetailPage /> },
   { path: '/return-plan/allocation', element: <ReturnPlanSettingsPage /> },
