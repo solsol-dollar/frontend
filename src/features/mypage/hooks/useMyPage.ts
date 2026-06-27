@@ -92,7 +92,7 @@ export function useNotifications(params?: { isRead?: boolean; page?: number; siz
   return useQuery({
     queryKey: ['mypage', 'notifications', params],
     queryFn: async () => {
-      const res = (await serviceApi.get('/api/v1/mypage/notifications', { params: { page: 0, size: 50, ...params } })) as ApiResponse<{ notifications: Notification[] }>
+      const res = (await serviceApi.get('/api/service/api/v1/mypage/notifications', { params: { page: 0, size: 50, ...params } })) as ApiResponse<{ notifications: Notification[] }>
       return res.data.notifications
     },
   })
@@ -102,7 +102,7 @@ export function useMarkNotificationRead() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (notificationId: number) => {
-      await serviceApi.put(`/api/v1/mypage/notifications/${notificationId}/read`)
+      await serviceApi.put(`/api/service/api/v1/mypage/notifications/${notificationId}/read`)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mypage', 'notifications'] })
@@ -114,7 +114,7 @@ export function useNotificationSettings() {
   return useQuery({
     queryKey: ['mypage', 'notification-settings'],
     queryFn: async () => {
-      const res = (await serviceApi.get('/api/v1/mypage/notification-settings')) as ApiResponse<NotificationSettings>
+      const res = (await serviceApi.get('/api/service/api/v1/mypage/notification-settings')) as ApiResponse<NotificationSettings>
       return res.data
     },
   })
@@ -124,7 +124,7 @@ export function useUpdateNotificationSettings() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (body: Omit<NotificationSettings, 'fcmRegistered'>) => {
-      await serviceApi.put('/api/v1/mypage/notification-settings', body)
+      await serviceApi.put('/api/service/api/v1/mypage/notification-settings', body)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mypage', 'notification-settings'] })
