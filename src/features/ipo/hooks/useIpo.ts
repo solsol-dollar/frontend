@@ -50,3 +50,11 @@ export function useIpoNews(ipoId: number, size = 3) {
     enabled: ipoId > 0,
   })
 }
+
+export function useIpoScore(ipoId: number) {
+  return useQuery({
+    queryKey: ['ipo-score', ipoId],
+    queryFn: () => ipoApi.getScore(ipoId),
+    enabled: ipoId > 0,
+  })
+}

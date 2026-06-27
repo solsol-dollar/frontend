@@ -45,6 +45,18 @@ export interface IpoDetailItem {
   logoUrl: string | null
 }
 
+export interface IpoScoreItem {
+  ipoId: number
+  ticker: string
+  finalScore: number
+  grade: string
+  reason: string | null
+  summary: string | null
+  topNewsIds: number[] | null
+  newsCount: number | null
+  scoredAt: string
+}
+
 export interface IpoNewsItem {
   id: number
   title: string
@@ -96,4 +108,7 @@ export const ipoApi = {
 
   getNews: (ipoId: number, size = 3): Promise<ApiResponse<IpoNewsItem[]>> =>
     serviceApi.get(`/api/v1/ipos/${ipoId}/news`, { params: { size } }),
+
+  getScore: (ipoId: number): Promise<ApiResponse<IpoScoreItem>> =>
+    serviceApi.get(`/api/v1/ipos/${ipoId}/score`),
 }
