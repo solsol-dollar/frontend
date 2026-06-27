@@ -9,14 +9,10 @@ import {
   getSubscriptionStatusBadgeClass,
   type SubscriptionStatus,
 } from '@/features/ipo/utils/subscriptionStatus'
-import { useIpoDetail, useToggleFavorite, useIpoNews } from '@/features/ipo/hooks/useIpo'
+import { useIpoDetail, useToggleFavorite, useIpoNews, useIpoScore } from '@/features/ipo/hooks/useIpo'
 import { useSubscriptionList } from '@/features/ipo/hooks/useSubscriptions'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 import { ClosedIpoDetailPage } from '@/features/ipo/pages/ClosedIpoDetailPage'
-
-const MOCK_SCORE = 62
-const MOCK_INFO_TEXT = '청약 경쟁률이 높고 주요 기관 투자자들의 참여가 확인되어 긍정적인 시장 반응이 기대돼요.'
-const MOCK_NEWS_SUMMARY = 'GPU 인프라 수요 급증 중이나, 매출 대비 부채 비율이 높아 재무 안정성 리스크가 존재합니다. 주요 기관 투자자들의 참여로 청약 경쟁률이 높게 형성될 것으로 예상됩니다. 시장 변동성이 높은 가운데 단기 수익 실현 가능성에 주목하는 의견이 다수입니다.'
 
 const SOURCE_LOGO_MAP: Record<string, string> = {
   'Yahoo Finance': '/icons/Yahoo Finance.png',
@@ -203,6 +199,8 @@ export function IpoDetailPage() {
   const { data, isLoading, isError } = useIpoDetail(ipoId)
   const { mutate: toggleFav } = useToggleFavorite()
   const { data: newsData } = useIpoNews(ipoId)
+  const { data: scoreData } = useIpoScore(ipoId)
+  const score = scoreData?.data
   const { data: subscriptionListData } = useSubscriptionList({ ipoId })
   const alreadySubscribed = (subscriptionListData?.data.subscriptions ?? []).some(
     (s) => s.subscriptionStatus !== 'CANCELLED',
@@ -342,7 +340,7 @@ export function IpoDetailPage() {
             </button>
           </div>
 
-          <NewsScoreGauge score={MOCK_SCORE} />
+          <NewsScoreGauge score={score?.finalScore ?? 0} />
 
           <div className="mt-4">
             <style>{`
@@ -373,7 +371,7 @@ export function IpoDetailPage() {
                     borderRight: '7px solid #F0EFFE',
                   }}
                 />
-                <p className="text-[13px] text-[#3A3D45] leading-[1.6]">{MOCK_INFO_TEXT}</p>
+                <p className="text-[13px] text-[#3A3D45] leading-[1.6]">{score?.reason ?? ''}</p>
               </div>
             </div>
           </div>
@@ -382,7 +380,7 @@ export function IpoDetailPage() {
         <section className="px-5 pt-5 pb-1 bg-white mt-[13px]">
           <p className="text-[15px] font-bold text-[#111827] mb-3">SOLSOL한 뉴스 요약</p>
           <div className="bg-[#F6F6F9] rounded-[12px] px-4 py-[14px] mb-4 flex flex-col gap-2 mt-4">
-            {MOCK_NEWS_SUMMARY.split(/(?<=\.)\s+/).filter(Boolean).map((item, i) => (
+            {(score?.summary ?? '').split(/(?<=\.)\s+/).filter(Boolean).map((item, i) => (
               <div key={i} className="flex gap-2">
                 <span className="text-[13px] text-[#7C6FEC] shrink-0">•</span>
                 <p className="text-[13px] text-[#3A3D45] leading-[1.6]">{item}</p>
