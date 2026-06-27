@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.56.2",
+    "@visx/curve": "^4.0.0",
+    "@visx/shape": "^4.0.0",
     "axios": "^1.7.7",
     "dayjs": "^1.11.13",
     "firebase": "^10.14.1",

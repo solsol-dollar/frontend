@@ -11,9 +11,9 @@ export interface IpoListItem {
   ticker: string
   companyName: string
   ipoStatus: string
-  subscriptionStartDate: string
-  subscriptionEndDate: string
-  listingDate: string
+  subscriptionStartDate: string | null
+  subscriptionEndDate: string | null
+  listingDate: string | null
   offerPriceMin: number | null
   offerPriceMax: number | null
   confirmedOfferPrice: number | null
@@ -31,9 +31,9 @@ export interface IpoDetailItem {
   exchangeName: string
   sector: string
   ipoStatus: string
-  subscriptionStartDate: string
-  subscriptionEndDate: string
-  listingDate: string
+  subscriptionStartDate: string | null
+  subscriptionEndDate: string | null
+  listingDate: string | null
   refundDate: string | null
   depositDate: string | null
   offerPriceMin: number | null
@@ -48,6 +48,7 @@ export interface IpoDetailItem {
 export interface IpoNewsItem {
   id: number
   title: string
+  titleKo?: string
   source: string
   publishedAt: string
   url: string
