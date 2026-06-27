@@ -70,7 +70,7 @@ function getTxAmount(tx: Transaction): number {
   return -tx.amount
 }
 
-const TYPE_LABEL: Record<Transaction['type'], string> = {
+const TYPE_LABEL: Record<Transaction['type'], '입금' | '출금' | '체크카드' | '환전'> = {
   IN: '입금',
   OUT: '출금',
   EXCHANGE: '환전',
