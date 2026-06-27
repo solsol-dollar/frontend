@@ -13,6 +13,8 @@ export function useApplyReturnPlanPreset(returnPlanId: number) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['returnPlan', returnPlanId] })
+      queryClient.invalidateQueries({ queryKey: ['returnPlans'] })
+      queryClient.invalidateQueries({ queryKey: ['returnPlanSummary'] })
     },
   })
 }

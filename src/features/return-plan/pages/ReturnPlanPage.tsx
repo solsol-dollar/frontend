@@ -13,12 +13,10 @@ export function ReturnPlanPage() {
   const { data: returnPlans = [] } = useReturnPlans()
   const { data: summary } = useReturnPlanSummary()
 
-  const totalRefund = summary?.totalRefundAmount ?? 0
   const securitiesAmount = summary?.securitiesAmount ?? 0
   const savingsAmount = summary?.savingsAmount ?? 0
   const accountAmount = summary?.accountAmount ?? 0
 
-  const refundCount = useCountUp(totalRefund)
   const amount0 = useCountUp(securitiesAmount)
   const amount1 = useCountUp(savingsAmount)
   const amount2 = useCountUp(accountAmount)
@@ -60,7 +58,7 @@ export function ReturnPlanPage() {
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {lastExecuted ? (
           <section className="px-4 pt-2 pb-5 bg-white shrink-0">
-            <p className="text-sm text-text-tertiary">최근 환불금 · {formatUsd(refundCount)}</p>
+            <p className="text-sm text-text-tertiary">최근 실행건 · {formatUsd(lastExecuted.totalRefundAmount)}</p>
 
             <div className="flex items-center justify-between mt-2">
               <h2 className="text-2xl font-bold text-text-primary">{lastExecuted.sourceCompanyName}</h2>

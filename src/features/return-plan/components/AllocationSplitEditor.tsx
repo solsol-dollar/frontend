@@ -10,7 +10,8 @@ const FALLBACK_PRESETS = [
 ]
 const TOOLTIP_COLOR = '#6366F1'
 
-const formatDollar = (n: number) => `$${Math.floor(n)}`
+const formatDollar = (n: number) =>
+  `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 function DualRangeSlider({
   values,
@@ -71,7 +72,7 @@ function DualRangeSlider({
             type="button"
             onClick={() => {
               setSelectedZone(i)
-              onChange([preset.securitiesRatio, preset.securitiesRatio + preset.savingsRatio])
+              onChange([preset.securitiesRatio, Math.min(100, preset.securitiesRatio + preset.savingsRatio)])
             }}
             className={
               i === selectedZone
