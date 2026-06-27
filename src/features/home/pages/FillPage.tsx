@@ -34,7 +34,7 @@ export function FillPage() {
           displayName: 'CMA 계좌',
           accountName: '신한투자증권 CMA 계좌',
           accountNumber: assets.securities.accountNumberMasked,
-          balance: assets.securities.usdBalance,
+          balance: assets.securities.usdAvailableBalance,
         }]
       : []),
     ...(assets?.accounts
@@ -44,7 +44,7 @@ export function FillPage() {
         displayName: a.accountName,
         accountName: a.accountName,
         accountNumber: a.accountNumberMasked,
-        balance: a.balance,
+        balance: a.availableBalance ?? a.balance,
       })) ?? []),
   ]
 

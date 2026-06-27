@@ -19,6 +19,8 @@ export interface Account {
   accountName: string
   accountNumberMasked: string
   balance: number
+  reservedBalance?: number
+  availableBalance?: number
   interestRate: number | null
   maturityDate: string | null
 }

@@ -9,7 +9,6 @@ export function TransferCompletePage() {
   const account = state?.account ?? { displayName: '내 CMA(RP형)' }
   const amount: string = state?.amount ?? '300.00'
   const returnTo: string | undefined = state?.returnTo
-  const depth: number = state?.depth ?? 0
 
   return (
     <div className="mobile-container flex flex-col h-screen bg-white">
@@ -33,7 +32,7 @@ export function TransferCompletePage() {
       </div>
       <div className="px-4 pb-10">
         <button
-          onClick={() => (depth > 0 ? navigate(-depth) : navigate(returnTo ?? '/home', { replace: true }))}
+          onClick={() => navigate(returnTo ?? '/home', { replace: true })}
           className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
         >
           완료

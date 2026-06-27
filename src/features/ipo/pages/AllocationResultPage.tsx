@@ -15,8 +15,6 @@ import { useSubscriptionResultDetail } from "@/features/ipo/hooks/useSubscriptio
 import { useSubscriptionList } from "@/features/ipo/hooks/useSubscriptions";
 import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
 
-const MARGIN_RATE = 1.01; // 청약대행증거금 = 청약신청금액의 101%
-
 const formatUsd = (n: number) => `USD ${n.toFixed(2)}`;
 
 const ETF_RECOMMENDATIONS = [
@@ -96,13 +94,14 @@ export function AllocationResultPage() {
   const [splits, setSplits] = useState<[number, number]>([40, 80]);
   const [showEtfSheet, setShowEtfSheet] = useState(false);
 
-  const { data: resultDetail } = useSubscriptionResultDetail(subscriptionId);
   const { data: listData } = useSubscriptionList();
   const { data: returnPlans } = useReturnPlans();
   const subscription = listData?.data.subscriptions.find(
     (s) => s.subscriptionId === subscriptionId,
   );
   const existingPlan = returnPlans?.find((p) => p.subscriptionId === subscriptionId);
+  const subscriptionResultId = subscription?.subscriptionResultId;
+  const { data: resultDetail } = useSubscriptionResultDetail(subscriptionResultId ?? NaN);
 
   const createPlan = useCreateReturnPlan();
   const updateRatios = useUpdateReturnPlanRatios();
@@ -113,13 +112,13 @@ export function AllocationResultPage() {
   const color = ticker ? generateLogoColor(ticker) : "#E5E7EB";
   const subscriptionRequestAmount = resultDetail?.subscriptionAmount ?? subscription?.subscriptionAmount ?? 0;
   const allocatedShares = resultDetail?.allocatedShares ?? 0;
-  const subscriptionMargin = subscriptionRequestAmount * MARGIN_RATE;
+  const subscriptionMargin = subscription?.subscriptionAgencyDeposit ?? 0;
   const allocatedAmount = resultDetail?.allocatedAmount ?? 0;
   const refundAmount = resultDetail?.refundAmount ?? 0;
-  const subscriptionFee = subscriptionMargin - allocatedAmount - refundAmount;
+  const subscriptionFee = Math.max(0, subscriptionMargin - allocatedAmount - refundAmount);
   const finalOfferingPrice =
     allocatedShares > 0 ? allocatedAmount / allocatedShares : subscription?.confirmedOfferPrice ?? 0;
-  const refundDate = subscription?.listingDate
+  const listingDateFormatted = subscription?.listingDate
     ? dayjs(subscription.listingDate).format("YYYY.MM.DD")
     : "-";
 
@@ -200,7 +199,7 @@ export function AllocationResultPage() {
               value={formatUsd(refundAmount)}
               valueClassName="text-sm font-bold text-primary"
             />
-            <InfoRow label="환불(예정)일" value={refundDate} />
+            <InfoRow label="상장(예정)일" value={listingDateFormatted} />
           </div>
           <p className="px-10 pt-1 text-[11px] text-text-tertiary">
             ※ 배정금액의 0.5%는 청약 수수료로 차감되어 환불돼요.

@@ -1,10 +1,11 @@
 import { ledgerApi } from '@/lib/axios'
 import type { ApiResponse } from '@/features/securities/types/securities'
 
-export type SubscriptionStatusCode = 'CONFIRMED' | 'CANCELLED'
+export type SubscriptionStatusCode = 'REQUESTED' | 'CONFIRMED' | 'CANCELLED'
 
 export interface SubscriptionRes {
   subscriptionId: number
+  subscriptionResultId?: number
   ipoId: number
   requestedShares: number
   subscriptionAmount: number

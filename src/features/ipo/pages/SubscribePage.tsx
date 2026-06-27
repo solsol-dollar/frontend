@@ -34,7 +34,7 @@ export function SubscribePage() {
 
   const { data, isLoading, isError, refetch: refetchIpoDetail } = useIpoDetail(ipoId);
   const { data: assets, isLoading: isAssetsLoading } = useHomeAssets();
-  const { mutate: createSubscription } = useCreateSubscription();
+  const { mutateAsync: createSubscription, isPending: isSubmitting } = useCreateSubscription();
   const { data: subscriptionListData, isLoading: isSubscriptionListLoading } = useSubscriptionList({ ipoId });
   const alreadySubscribed = (subscriptionListData?.data.subscriptions ?? []).some(
     (s) => s.subscriptionStatus !== 'CANCELLED',
@@ -95,6 +95,20 @@ export function SubscribePage() {
     );
   }
 
+  if (data.data.ipoStatus === 'UPCOMING') {
+    return (
+      <div className="mobile-container flex flex-col h-screen">
+        <Header showBack showNotification={false} showMypage={false} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-text-secondary">아직 청약 신청 기간이 아니에요.</p>
+          <button onClick={() => navigate(-1)} className="text-sm text-primary font-semibold">
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const ipoDetail = data.data;
   const { securities, exchangeRateInfo } = assets;
   const depositAccount = assets.accounts.find((a) => a.accountType === "DEPOSIT");
@@ -115,7 +129,7 @@ export function SubscribePage() {
         : []),
     ],
     availableAmount: securities.usdAvailableBalance,
-    foreignBalance: depositAccount?.balance ?? 0,
+    foreignBalance: depositAccount?.availableBalance ?? depositAccount?.balance ?? 0,
     cmaBalanceKrw: securities.krwBalance,
     exchangeRate: exchangeRateInfo.rate,
     // 환전 가능액 전용 API가 아직 없어 보유 원화 잔액을 환율로 환산해 클라이언트에서 계산
@@ -151,26 +165,6 @@ export function SubscribePage() {
     setPinError(null);
     try {
       await loginWithPin(pin);
-      setShowPinScreen(false);
-      const fresh = await refetchIpoDetail();
-      const freshOfferPrice = fresh.data?.data.confirmedOfferPrice ?? offerPriceForSubmit;
-      createSubscription(
-        {
-          ipoId,
-          securitiesAccountId: securities.usdAccountId,
-          subscriptionAmount: numericAmount,
-          offerPrice: freshOfferPrice,
-        },
-        {
-          onSuccess: () => {
-            navigate('/ipo', { state: { tab: '청약내역/취소' } });
-          },
-          onError: (e) => {
-            console.error('청약 신청 실패', e);
-            setErrorModalMessage('청약 신청에 실패했어요. 잠시 후 다시 시도해주세요.');
-          },
-        },
-      );
     } catch {
       setPinError('비밀번호가 올바르지 않습니다');
       if (pinErrorTimerRef.current !== null) window.clearTimeout(pinErrorTimerRef.current);
@@ -178,6 +172,22 @@ export function SubscribePage() {
         setPinError(null);
         setPinKey((k) => k + 1);
       }, 3000);
+      return;
+    }
+    setShowPinScreen(false);
+    const fresh = await refetchIpoDetail();
+    const freshOfferPrice = fresh.data?.data.confirmedOfferPrice ?? offerPriceForSubmit;
+    try {
+      await createSubscription({
+        ipoId,
+        securitiesAccountId: securities.usdAccountId,
+        subscriptionAmount: numericAmount,
+        offerPrice: freshOfferPrice,
+      });
+      navigate('/ipo', { state: { tab: '청약내역/취소' } });
+    } catch (e) {
+      console.error('청약 신청 실패', e);
+      setErrorModalMessage('청약 신청에 실패했어요. 잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -350,7 +360,7 @@ return (
                   state: {
                     fromAccountId: depositAccount.accountId,
                     sourceName: depositAccount.accountName,
-                    sourceBalance: `$${depositAccount.balance.toFixed(2)}`,
+                    sourceBalance: `$${(depositAccount.availableBalance ?? depositAccount.balance).toFixed(2)}`,
                     toAccountId: securities.usdAccountId,
                     returnTo: `/ipo/${ipoId}/subscribe`,
                     depth: 1,
@@ -401,7 +411,7 @@ return (
         </button>
         <button
           onClick={() => setShowConfirmModal(true)}
-          disabled={!isValidAmount}
+          disabled={!isValidAmount || isSubmitting}
           className="flex-1 bg-primary disabled:bg-border text-white py-4 rounded-xl font-semibold"
         >
           확인

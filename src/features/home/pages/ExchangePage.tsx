@@ -22,7 +22,7 @@ export function ExchangePage() {
 
   const { data: assets } = useHomeAssets()
   const rate = assets?.exchangeRateInfo?.rate ?? 0
-  const usdBalance = assets?.securities?.usdBalance ?? 0
+  const usdBalance = assets?.securities?.usdAvailableBalance ?? 0
   const krwBalance = assets?.securities?.krwBalance ?? 0
 
   const { chars, amount, pushChar, popChar } = useAnimatedInput()

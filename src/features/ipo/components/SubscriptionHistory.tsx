@@ -67,6 +67,7 @@ interface Subscription {
   listingDate?: string;
   currentPrice?: string;
   allocatedQty?: number;
+  allocationResultState?: "pending" | "loading" | "ready" | "error";
   returnRate?: string;
   returnPositive?: boolean;
   canCancel: boolean;
@@ -341,20 +342,23 @@ function getCalendarCells(month: Dayjs): (Dayjs | null)[] {
 }
 
 // ─── API 데이터 → 화면 모델 매핑 ───────────────────────────
-function deriveStatus(sub: SubscriptionRes, hasResult: boolean): StatusType {
+function deriveStatus(sub: SubscriptionRes, hasAllocationResult: boolean): StatusType {
   if (sub.subscriptionStatus === "CANCELLED") return "취소완료";
-  if (hasResult) return "배정완료";
+  if (sub.subscriptionStatus === "CONFIRMED") return "배정완료";
+  if (hasAllocationResult) return "배정완료";
   return "청약신청";
 }
 
 function toSubscription(
   sub: SubscriptionRes,
   result: AllocationResultDetail | undefined,
+  allocationResultState?: Subscription["allocationResultState"],
 ): Subscription {
-  const status = deriveStatus(sub, result != null);
   const today = dayjs().startOf("day");
   const listingDayReached =
     sub.listingDate != null && !dayjs(sub.listingDate).isAfter(today, "day");
+  const hasAllocationResult = sub.subscriptionResultId != null;
+  const status = deriveStatus(sub, hasAllocationResult);
   const offeringPrice =
     sub.confirmedOfferPrice ??
     sub.offerPriceMax ??
@@ -377,7 +381,7 @@ function toSubscription(
     ticker: sub.ticker,
     logoColor: generateLogoColor(sub.ticker),
     status,
-    amount: `USD ${sub.subscriptionAmount.toLocaleString("en-US")}`,
+    amount: `${sub.currency} ${sub.subscriptionAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     agencyDeposit: `USD ${sub.subscriptionAgencyDeposit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     date: dayjs(sub.subscribedAt).format("YYYY.MM.DD"),
     offeringPrice,
@@ -389,10 +393,17 @@ function toSubscription(
       result?.currentPrice != null
         ? `USD ${result.currentPrice.toFixed(2)}`
         : undefined,
-    allocatedQty: result?.allocatedShares ?? undefined,
+    allocatedQty: result ? (result.allocatedShares ?? 0) : undefined,
+    allocationResultState:
+      status === "배정완료" && allocationResultState == null
+        ? "pending"
+        : allocationResultState,
     returnRate,
     returnPositive,
-    canCancel: status === "청약신청" && !listingDayReached,
+    canCancel:
+      sub.subscriptionStatus === "REQUESTED" &&
+      !hasAllocationResult &&
+      !listingDayReached,
   };
 }
 
@@ -445,30 +456,37 @@ export function SubscriptionHistory() {
   const rawSubscriptions = listData?.data.subscriptions ?? [];
   const accountNumberMasked = assets?.securities.accountNumberMasked ?? "-";
 
-  const pendingResultIds = rawSubscriptions
-    .filter(
-      (s) =>
-        s.subscriptionStatus !== "CANCELLED" &&
-        s.listingDate &&
-        !dayjs(s.listingDate).isAfter(today, "day"),
-    )
-    .map((s) => s.subscriptionId);
+  const pendingItems = rawSubscriptions.filter(
+    (s) =>
+      s.subscriptionStatus !== "CANCELLED" &&
+      s.subscriptionResultId != null,
+  );
 
   const resultQueries = useQueries({
-    queries: pendingResultIds.map((id) => ({
-      queryKey: subscriptionResultQueryKey(id),
-      queryFn: () => fetchSubscriptionResult(id),
+    queries: pendingItems.map((s) => ({
+      queryKey: subscriptionResultQueryKey(s.subscriptionResultId!),
+      queryFn: () => fetchSubscriptionResult(s.subscriptionResultId!),
     })),
   });
 
   const resultMap = new Map<number, AllocationResultDetail>();
-  pendingResultIds.forEach((id, i) => {
-    const data = resultQueries[i]?.data;
-    if (data) resultMap.set(id, data);
+  const resultStateMap = new Map<number, Subscription["allocationResultState"]>();
+  pendingItems.forEach((s, i) => {
+    const query = resultQueries[i];
+    const data = query?.data;
+    if (data) resultMap.set(s.subscriptionId, data);
+    resultStateMap.set(
+      s.subscriptionId,
+      query?.isError ? "error" : data ? "ready" : "loading",
+    );
   });
 
   const SUBSCRIPTIONS = rawSubscriptions.map((sub) =>
-    toSubscription(sub, resultMap.get(sub.subscriptionId)),
+    toSubscription(
+      sub,
+      resultMap.get(sub.subscriptionId),
+      resultStateMap.get(sub.subscriptionId),
+    ),
   );
 
   const YEARS = Array.from(
@@ -637,6 +655,16 @@ export function SubscriptionHistory() {
         <div className="space-y-3">
           {filtered.map((sub) => {
             const isRevealed = confirmedIds.has(sub.id);
+            const allocationQtyText =
+              sub.allocationResultState === "error"
+                ? "조회 실패"
+                : sub.allocationResultState === "pending"
+                  ? "결과 준비 중..."
+                : sub.allocationResultState !== "ready"
+                  ? "불러오는 중..."
+                  : isRevealed
+                    ? `${sub.allocatedQty ?? 0}주`
+                    : "??";
             return (
               <div
                 key={sub.id}
@@ -676,12 +704,10 @@ export function SubscriptionHistory() {
                             value={`USD ${sub.offeringPrice.toFixed(2)}`}
                           />
                         )}
-                        {sub.allocatedQty != null && (
-                          <InfoRow
-                            label="배정주식 수"
-                            value={isRevealed ? `${sub.allocatedQty}주` : "??"}
-                          />
-                        )}
+                        <InfoRow
+                          label="배정주식 수"
+                          value={allocationQtyText}
+                        />
                       </>
                     ) : (
                       <>
@@ -720,9 +746,16 @@ export function SubscriptionHistory() {
                     {!isRevealed ? (
                       <button
                         onClick={() => setScratchTarget(sub.id)}
-                        className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-primary"
+                        disabled={sub.allocationResultState !== "ready"}
+                        className="flex-1 py-3 rounded-xl text-sm font-semibold text-white bg-primary disabled:opacity-50"
                       >
-                        배정결과 보기
+                        {sub.allocationResultState === "error"
+                          ? "결과 조회 실패"
+                          : sub.allocationResultState === "pending"
+                            ? "결과 준비 중..."
+                          : sub.allocationResultState === "ready"
+                            ? "배정결과 보기"
+                            : "결과 불러오는 중..."}
                       </button>
                     ) : (
                       <button

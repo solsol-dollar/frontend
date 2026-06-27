@@ -19,6 +19,7 @@ export function useCreateSubscription() {
     mutationFn: (body: CreateSubscriptionRequest) => subscriptionApi.create(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['subscriptionResult'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'assets'] })
     },
   })
@@ -30,6 +31,7 @@ export function useCancelSubscription() {
     mutationFn: (subscriptionId: number) => subscriptionApi.cancel(subscriptionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['subscriptionResult'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'assets'] })
     },
   })
