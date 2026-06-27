@@ -15,7 +15,6 @@ import {
   allocationItemsToSplits,
   splitsToAllocationItems,
 } from "../utils/allocationMapper";
-import { useSubscriptionResultDetail } from "@/features/ipo/hooks/useSubscriptionResultDetail";
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
 
 const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
@@ -58,7 +57,6 @@ export function ReturnPlanPendingPage() {
   const [splits, setSplits] = useState<[number, number]>([0, 0]);
 
   const { data: plan } = useReturnPlanDetail(returnPlanId);
-  const { data: allocationResult } = useSubscriptionResultDetail(plan?.subscriptionId ?? NaN);
   const updateRatios = useUpdateReturnPlanRatios();
 
   useEffect(() => {
@@ -132,19 +130,19 @@ export function ReturnPlanPendingPage() {
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">청약금</p>
                 <p className="text-base font-bold text-text-primary mt-1">
-                  {allocationResult ? formatUsd(allocationResult.subscriptionAmount) : "-"}
+                  {plan?.subscriptionAmount != null ? formatUsd(plan.subscriptionAmount) : "-"}
                 </p>
               </div>
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">배정률</p>
                 <p className="text-base font-bold text-text-primary mt-1">
-                  {allocationResult?.allocationRate != null ? `${allocationResult.allocationRate}%` : "-"}
+                  {plan?.allocationRate != null ? `${plan.allocationRate}%` : "-"}
                 </p>
               </div>
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">배정금</p>
                 <p className="text-base font-bold text-text-primary mt-1">
-                  {allocationResult?.allocatedAmount != null ? formatUsd(allocationResult.allocatedAmount) : "-"}
+                  {plan?.allocatedAmount != null ? formatUsd(plan.allocatedAmount) : "-"}
                 </p>
               </div>
             </div>

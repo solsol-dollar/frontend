@@ -1,17 +1,16 @@
 import { useParams } from 'react-router-dom'
 import { Header } from '@/components/common/Header'
-import solBankIcon from '@/assets/common/shinhan-bank.svg'
 import { DonutGauge } from '../components/DonutGauge'
 import { ZONE_COLORS } from '../constants'
 import { useReturnPlanDetail } from '../hooks/useReturnPlanDetail'
-import { useSubscriptionResultDetail } from '@/features/ipo/hooks/useSubscriptionResultDetail'
 import { allocationItemsToSplits } from '../utils/allocationMapper'
+import { AllocationSplitAccountList, type AllocationAccount } from '../components/AllocationSplitEditor'
 
-const ACCOUNTS = [
-  { id: 'cma', name: '신한투자증권 CMA 계좌', desc: '다음 IPO 대기금 · ETF 투자', legendLines: ['신한투자증권', 'CMA 계좌'] },
-  { id: 'valueup', name: '신한 Value-up 외화적립예금', desc: '연 3.2% · 3개월 이상', legendLines: ['신한 Value-up', '외화적립예금'] },
-  { id: 'chainup', name: '신한 외화 체인지업 예금', desc: '체크카드로 해외소비 시 간편추가', legendLines: ['신한 외화', '체인지업 예금'] },
-] as const
+const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
+  { id: 'cma', name: '신한투자증권 CMA 계좌', nameLines: ['신한투자증권', 'CMA 계좌'], desc: '다음 IPO 대기금 · ETF 투자' },
+  { id: 'valueup', name: '신한 Value-up 외화적립예금', nameLines: ['신한 Value-up', '외화적립예금'], desc: '연 3.2% · 3개월 이상' },
+  { id: 'chainup', name: '신한 외화 체인지업 예금', nameLines: ['신한 외화', '체인지업 예금'], desc: '체크카드로 해외소비 시 간편추가' },
+]
 
 const formatUsd = (n: number) => `$${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
 
@@ -19,7 +18,6 @@ export function ReturnPlanResultDetailPage() {
   const { id } = useParams()
   const returnPlanId = Number(id)
   const { data: plan } = useReturnPlanDetail(returnPlanId)
-  const { data: allocationResult } = useSubscriptionResultDetail(plan?.subscriptionId ?? NaN)
 
   const refundAmount = plan?.totalRefundAmount ?? 0
   const [a, b] = plan ? allocationItemsToSplits(plan.allocations) : [0, 0]
@@ -46,19 +44,19 @@ export function ReturnPlanResultDetailPage() {
             <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
               <p className="text-sm text-text-tertiary">청약금</p>
               <p className="text-base font-bold text-text-primary mt-1">
-                {allocationResult ? formatUsd(allocationResult.subscriptionAmount) : '-'}
+                {plan?.subscriptionAmount != null ? formatUsd(plan.subscriptionAmount) : '-'}
               </p>
             </div>
             <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
               <p className="text-sm text-text-tertiary">배정률</p>
               <p className="text-base font-bold text-text-primary mt-1">
-                {allocationResult?.allocationRate != null ? `${allocationResult.allocationRate}%` : '-'}
+                {plan?.allocationRate != null ? `${plan.allocationRate}%` : '-'}
               </p>
             </div>
             <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
               <p className="text-sm text-text-tertiary">배정금</p>
               <p className="text-base font-bold text-text-primary mt-1">
-                {allocationResult?.allocatedAmount != null ? formatUsd(allocationResult.allocatedAmount) : '-'}
+                {plan?.allocatedAmount != null ? formatUsd(plan.allocatedAmount) : '-'}
               </p>
             </div>
           </div>
@@ -81,26 +79,14 @@ export function ReturnPlanResultDetailPage() {
           </div>
         </div>
 
-        <div className="px-4 py-5 bg-surface-bg space-y-3">
-          {ACCOUNTS.map((acc, i) => (
-            <div
-              key={acc.id}
-              className="flex items-center gap-3 p-3 bg-white rounded-2xl fade-slide-up"
-              style={{ animationDelay: `${i * 100}ms` }}
-            >
-              <img src={solBankIcon} alt="" className="w-9 h-9 rounded-full flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-text-primary truncate">{acc.name}</p>
-                <p className="text-xs text-text-tertiary truncate">{acc.desc}</p>
-              </div>
-              <div className="flex flex-col items-end flex-shrink-0">
-                <span className="text-sm font-bold text-text-primary">{formatUsd(amountOf(ratios[i]))}</span>
-                <span className="text-xs font-medium" style={{ color: ZONE_COLORS[i] }}>
-                  {ratios[i]}%
-                </span>
-              </div>
-            </div>
-          ))}
+        <div className="px-4 py-5 bg-surface-bg">
+          <AllocationSplitAccountList
+            accounts={ACCOUNTS}
+            totalAmount={refundAmount}
+            splits={[a, b]}
+            onSplitsChange={() => {}}
+            bankIconSrc=""
+          />
         </div>
       </div>
     </div>
