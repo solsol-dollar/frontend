@@ -69,9 +69,8 @@ export function ReturnPlanResultDetailPage() {
                 <div key={acc.id} className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[i] }} />
                   <span className="text-xs text-text-secondary leading-tight">
-                    {acc.legendLines[0]}
-                    <br />
-                    {acc.legendLines[1]}
+                    {acc.nameLines?.[0] ?? acc.name}
+                    {acc.nameLines && <><br />{acc.nameLines[1]}</>}
                   </span>
                 </div>
               ))}
