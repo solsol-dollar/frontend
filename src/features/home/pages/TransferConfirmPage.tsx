@@ -13,6 +13,8 @@ export function TransferConfirmPage() {
   const sourceBalance: string = state?.sourceBalance ?? '$0.00'
   const destBalance: string = state?.destBalance ?? '$0.00'
   const amount: string = state?.amount ?? '0'
+  const returnTo: string | undefined = state?.returnTo
+  const depth: number = state?.depth ?? 0
 
   const amountNum = parseFloat(amount)
   const sourceFunds = parseFloat(sourceBalance.replace(/[^0-9.]/g, ''))
@@ -27,7 +29,7 @@ export function TransferConfirmPage() {
     setErrorMsg(null)
     try {
       const result = await transfer({ fromAccountId, toAccountId, amount: amountNum })
-      navigate('/home/transfer/complete', { state: { account: { displayName: destName }, amount, result } })
+      navigate('/home/transfer/complete', { state: { account: { displayName: destName }, amount, result, returnTo, depth: depth + 1 } })
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       setErrorMsg(msg ?? '송금 중 오류가 발생했습니다')

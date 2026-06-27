@@ -8,6 +8,8 @@ export interface MyPageAccount {
   accountNumberMasked: string
   currency: string
   balance: number
+  reservedBalance: number
+  availableBalance: number
   interestRate: number | null
   maturityDate: string | null
 }

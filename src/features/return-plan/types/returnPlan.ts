@@ -1,4 +1,4 @@
-export type DestinationType = 'SECURITIES' | 'FX_SAVINGS' | 'FX_ACCOUNT'
+export type DestinationType = 'SECURITIES' | 'SAVINGS' | 'DEPOSIT'
 
 export interface AllocationItem {
   destinationType: DestinationType

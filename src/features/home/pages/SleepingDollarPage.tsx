@@ -94,7 +94,7 @@ export function SleepingDollarPage() {
               state: {
                 fromAccountId: assets?.securities?.usdAccountId,
                 sourceName: 'CMA 계좌',
-                sourceBalance: `$${(assets?.securities?.usdBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+                sourceBalance: `$${(assets?.securities?.usdAvailableBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
                 toAccountId: savingsAccount.accountId,
               },
             })}

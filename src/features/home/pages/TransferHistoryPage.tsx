@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import dayjs from 'dayjs'
 import { Header } from '@/components/common/Header'
 import changeupCard from '@/assets/home/changeup-card.png'
 import { FilterSheet } from '../components/FilterSheet'
@@ -19,6 +18,7 @@ interface LocationState {
   accountNumber: string
   accountType: AccountType
   usdBalance?: number
+  usdAvailableBalance?: number
   krwBalance?: number
   totalUsdBalance?: number
   balance?: number
@@ -56,6 +56,7 @@ export function TransferHistoryPage() {
     accountNumber = '',
     accountType = 'SECURITIES',
     usdBalance,
+    usdAvailableBalance,
     krwBalance,
     totalUsdBalance,
     balance,
@@ -64,7 +65,7 @@ export function TransferHistoryPage() {
 
   const { data: assets } = useHomeAssets()
   const cmaAccountId = assets?.securities?.usdAccountId
-  const cmaBalance = assets?.securities?.usdBalance ?? 0
+  const cmaBalance = assets?.securities?.usdAvailableBalance ?? 0
 
   const [filterLabel, setFilterLabel] = useState('전체')
   const [showFilter, setShowFilter] = useState(false)
@@ -93,7 +94,7 @@ export function TransferHistoryPage() {
               <ActionButtons
                 labels={['옮기기', '환전']}
                 onPress={[
-                  () => accountIds[0] && navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(usdBalance ?? 0).toFixed(2)}` } }),
+                  () => accountIds[0] && navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(usdAvailableBalance ?? usdBalance ?? 0).toFixed(2)}` } }),
                   () => setShowExchange(true),
                 ]}
               />
