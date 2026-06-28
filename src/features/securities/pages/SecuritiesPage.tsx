@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -20,18 +20,22 @@ type Tab = 'MY홈' | '해외' | 'ETF'
 function MyHomeTab() {
   const navigate = useNavigate()
   const { data, isLoading } = useMyInvestments()
-  const [priceMode, setPriceMode] = useState<'current' | 'avg'>('current')
+  const { data: indices } = useMarketIndices()
   const [currencyMode, setCurrencyMode] = useState<'usd' | 'krw'>('usd')
+
+  const usdKrw = indices?.find((i) => i.name === 'USD/KRW')?.value ?? 0
 
   const holdings: HoldingItem[] = data?.holdings ?? []
   const stocks = holdings.filter((h) => h.productType === 'OVERSEAS')
   const etfs = holdings.filter((h) => h.productType === 'ETF')
 
-
   const HoldingRow = ({ h }: { item?: undefined; h: HoldingItem }) => {
-    const value = priceMode === 'current'
-      ? `${currencyMode === 'usd' ? '$' + h.currentValueUsd.toFixed(2) : h.currentValueUsd.toFixed(0) + '원'}`
-      : `${currencyMode === 'usd' ? '$' + h.avgPriceUsd.toFixed(2) : Math.round(h.avgPriceUsd).toLocaleString() + '원'}`
+    const costBasisUsd = h.avgPriceUsd * h.qty
+    const usdAmount = h.currentValueUsd ?? costBasisUsd
+    const value = currencyMode === 'usd'
+      ? `$${usdAmount.toFixed(2)}`
+      : usdKrw > 0 ? `${Math.round(usdAmount * usdKrw).toLocaleString()}원` : '--'
+    const isFallback = !h.hasPrice
 
     return (
       <button
@@ -41,10 +45,15 @@ function MyHomeTab() {
         <TickerLogo ticker={h.ticker} size="md" className="w-10 h-10" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-text-primary">{h.productName}</p>
-          <p className="text-xs text-text-tertiary mt-0.5">{h.ticker}</p>
+          <p className="text-xs text-text-tertiary mt-0.5">{h.qty}주 · ${h.avgPriceUsd.toFixed(2)}</p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-bold text-text-primary">{value}</p>
+          <p className={cn('text-sm font-bold', isFallback ? 'text-text-secondary' : 'text-text-primary')}>
+            {value}
+          </p>
+          {isFallback && (
+            <p className="text-[10px] text-text-tertiary mt-0.5">취득원가</p>
+          )}
         </div>
       </button>
     )
@@ -54,13 +63,19 @@ function MyHomeTab() {
     <div className="pb-20">
       {/* 내 투자 요약 */}
       <section className="bg-white px-4 pt-5 pb-5">
-        <p className="text-sm text-text-tertiary">내 투자</p>
+        <p className="text-sm text-text-tertiary">
+          {data?.hasPriceData ? '내 투자' : '투자 원금'}
+        </p>
         <p className="text-2xl font-bold text-text-primary mt-1">
-          ${data?.totalCurrentValueUsd.toLocaleString('en-US')}
+          ${(data?.hasPriceData ? data.totalCurrentValueUsd : (data?.totalCostUsd ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </p>
-        <p className={cn('text-sm mt-1', (data?.dayChangeRate ?? 0) >= 0 ? 'text-up' : 'text-down')}>
-          {(data?.dayChangeRate ?? 0) >= 0 ? '+' : ''}{(data?.dayChangeUsd ?? 0).toFixed(2)} ({(data?.dayChangeRate ?? 0) >= 0 ? '+' : ''}{(data?.dayChangeRate ?? 0).toFixed(1)}%)
-        </p>
+        {data?.hasPriceData ? (
+          <p className={cn('text-sm mt-1', (data.dayChangeRate ?? 0) >= 0 ? 'text-up' : 'text-down')}>
+            {(data.dayChangeRate ?? 0) >= 0 ? '+' : ''}{(data.dayChangeUsd ?? 0).toFixed(2)} ({(data.dayChangeRate ?? 0) >= 0 ? '+' : ''}{(data.dayChangeRate ?? 0).toFixed(1)}%)
+          </p>
+        ) : (
+          <p className="text-xs text-text-tertiary mt-1">실시간 시세 미수신 · 취득원가 기준</p>
+        )}
         <div className="flex gap-3 mt-3">
           <div className="flex-1 bg-surface-bg rounded-2xl px-3 py-4">
             <p className="text-xs text-text-tertiary">달러</p>
@@ -73,41 +88,28 @@ function MyHomeTab() {
         </div>
       </section>
 
-      {/* 현재가/평가금 · $/원 토글 */}
-      <div className="bg-white mt-2 px-4 py-2.5 flex items-center justify-end gap-1.5">
-        {(['current', 'avg'] as const).map((m) => (
-          <button
-            key={m}
-            onClick={() => setPriceMode(m)}
-            className={cn(
-              'px-3 py-1 rounded-full text-xs font-medium transition-colors',
-              priceMode === m ? 'bg-surface-bg text-text-primary' : 'text-text-tertiary',
-            )}
-          >
-            {m === 'current' ? '현재가' : '평가금'}
-          </button>
-        ))}
-        <div className="w-px h-3.5 bg-border mx-1" />
-        {(['usd', 'krw'] as const).map((m) => (
-          <button
-            key={m}
-            onClick={() => setCurrencyMode(m)}
-            className={cn(
-              'px-3 py-1 rounded-full text-xs font-medium transition-colors',
-              currencyMode === m ? 'bg-surface-bg text-text-primary' : 'text-text-tertiary',
-            )}
-          >
-            {m === 'usd' ? '$' : '원'}
-          </button>
-        ))}
-      </div>
-
       {/* 해외주식 섹션 */}
       {isLoading ? (
         <div className="bg-white mt-2 px-4"><SkeletonList count={3} /></div>
       ) : stocks.length > 0 ? (
         <section className="bg-white mt-2 px-4 py-4">
-          <p className="text-xs text-text-tertiary font-medium mb-2">해외주식</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-text-tertiary font-medium">해외주식</p>
+            <div className="flex gap-1">
+              {(['usd', 'krw'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setCurrencyMode(m)}
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors',
+                    currencyMode === m ? 'bg-surface-bg text-text-primary' : 'text-text-tertiary',
+                  )}
+                >
+                  {m === 'usd' ? '$' : '원'}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="divide-y divide-border">
             {stocks.map((h) => <HoldingRow key={h.productId} h={h} />)}
           </div>
@@ -126,12 +128,6 @@ function MyHomeTab() {
           <div className="divide-y divide-border">
             {etfs.map((h) => <HoldingRow key={h.productId} h={h} />)}
           </div>
-          <button
-            onClick={() => navigate('/securities/my')}
-            className="w-full flex items-center justify-center gap-1 mt-3 py-2 text-sm text-text-secondary"
-          >
-            자세히 보기 <ChevronRight size={14} />
-          </button>
         </section>
       )}
 
@@ -160,7 +156,31 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
   const navigate = useNavigate()
   const [sort, setSort] = useState<ProductSortType>('TRADING_VALUE')
   const { data: indices = [] } = useMarketIndices()
-  const { data: products = [], isLoading } = useSecuritiesProducts(type, sort)
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useSecuritiesProducts(type, sort)
+
+  const products = data?.pages.flat() ?? []
+
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   return (
     <div className="pb-20">
@@ -186,16 +206,20 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
         {isLoading ? (
           <SkeletonList count={6} />
         ) : products.length > 0 ? (
-          <div className="divide-y divide-border px-4">
-            {products.map((p) => (
-              <StockListItem
-                key={p.productId}
-                item={p}
-                sort={sort}
-                onClick={() => navigate(`/securities/stocks/${p.productId}`)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="divide-y divide-border px-4">
+              {products.map((p) => (
+                <StockListItem
+                  key={p.productId}
+                  item={p}
+                  sort={sort}
+                  onClick={() => navigate(`/securities/stocks/${p.productId}`)}
+                />
+              ))}
+            </div>
+            {isFetchingNextPage && <SkeletonList count={3} />}
+            <div ref={sentinelRef} className="h-1" />
+          </>
         ) : (
           <div className="flex flex-col items-center py-16 gap-1.5">
             <p className="text-sm text-text-secondary">종목 정보를 불러올 수 없습니다</p>
