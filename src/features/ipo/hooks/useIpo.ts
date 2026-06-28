@@ -58,3 +58,11 @@ export function useIpoScore(ipoId: number) {
     enabled: ipoId > 0,
   })
 }
+
+export function useIpoFinancials(ipoId: number) {
+  return useQuery({
+    queryKey: [...ipoKeys.detail(ipoId), 'financials'],
+    queryFn: () => ipoApi.getFinancials(ipoId),
+    enabled: ipoId > 0,
+  })
+}

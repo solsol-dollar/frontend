@@ -61,6 +61,7 @@ const config: Config = {
         blink: 'blink 1.2s ease-in-out infinite',
         'char-in': 'char-in 0.15s ease-out',
         'char-out': 'char-out 0.12s ease-in forwards',
+        'value-in': 'value-in 0.2s ease-out',
       },
       keyframes: {
         blink: {
@@ -74,6 +75,10 @@ const config: Config = {
         'char-out': {
           '0%': { transform: 'translateY(0)', opacity: '1' },
           '100%': { transform: 'translateY(-60%)', opacity: '0' },
+        },
+        'value-in': {
+          '0%': { opacity: '0', transform: 'translateY(5px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
     },
