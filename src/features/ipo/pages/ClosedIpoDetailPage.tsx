@@ -350,11 +350,11 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
         ) : undefined}
         rightAction={
           <button
-            onClick={() => toggleFav({ ipoId, isFavorite: ipo.isFavorite })}
+            onPointerDown={() => toggleFav({ ipoId, isFavorite: ipo.isFavorite })}
             aria-label={ipo.isFavorite ? '관심 IPO 해제' : '관심 IPO 등록'}
-            className="p-1"
+            className="p-3 -mr-2"
           >
-            <svg width="19" height="17" viewBox="-1 -0.5 19 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="22" height="20" viewBox="-1 -0.5 19 17" fill="none" xmlns="http://www.w3.org/2000/svg">
 
               <path
                 d="M16.2503 2.40774C15.4111 0.899217 14.004 0 12.4854 0C10.2345 0 9.03662 1.52736 8.49986 2.50765C7.9631 1.52736 6.76523 0 4.51431 0C2.99575 0 1.5894 0.900036 0.749377 2.40774C-0.258193 4.21846 -0.249095 6.54102 0.77288 8.62036C2.26869 11.662 5.5939 14.3342 7.44301 15.6552C7.76446 15.8845 8.1314 16 8.49986 16C8.86832 16 9.23526 15.8845 9.55671 15.6552C11.4051 14.3342 14.731 11.662 16.2268 8.62036C17.2496 6.54102 17.2579 4.21846 16.2503 2.40774Z"
@@ -607,7 +607,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
             className="fixed inset-0 bg-black/40 z-20"
             onClick={() => setShowScoreInfo(false)}
           />
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white rounded-t-[20px] z-30 px-5 pb-5">
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-[20px] z-30 px-5 pb-5">
             <div className="flex justify-center pt-3 pb-2">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>
@@ -634,7 +634,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
             </div>
             <button
               onClick={() => setShowScoreInfo(false)}
-              className="w-full bg-[#7C6FEC] text-white py-3 rounded-[14px] font-semibold text-[16px] mt-2"
+              className="w-full bg-[#7C6FEC] text-white py-4 rounded-[14px] font-semibold text-[16px] mt-2"
             >
               확인
             </button>

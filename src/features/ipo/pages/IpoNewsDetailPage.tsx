@@ -51,6 +51,8 @@ export function IpoNewsDetailPage() {
   const [lang, setLang] = useState<Lang>('한')
   const [summaryExpanded, setSummaryExpanded] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 })
 
   useEffect(() => {
     if (!news) { navigate(-1); return }
@@ -58,6 +60,12 @@ export function IpoNewsDetailPage() {
     setLang('한')
     setSummaryExpanded(false)
   }, [news?.id])
+
+  useEffect(() => {
+    const idx = lang === '한' ? 0 : 1
+    const el = tabRefs.current[idx]
+    if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth })
+  }, [lang])
 
   if (!news) return null
 
@@ -83,18 +91,21 @@ export function IpoNewsDetailPage() {
         }
       />
 
-      <div className="flex items-center justify-between px-4 py-[10px] bg-[#F6F6F9] shrink-0">
+      <div className="flex items-center justify-between px-4 py-[14px] bg-[#F6F6F9] shrink-0">
         <span className="text-[13px] text-[#535965] font-medium">{lang === 'EN' ? '기사 원문을 보고있어요' : 'SOLSOL 달러 AI가 번역했어요'}</span>
-        <div className="flex bg-[#E9E9E9] rounded-[6px] p-0.5">
-          {(['한', 'EN'] as Lang[]).map((l) => (
+        <div className="relative flex bg-[#E9E9E9] rounded-[7px] p-0.5">
+          <div
+            className="absolute top-0.5 bottom-0.5 rounded-[6px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all duration-200 ease-in-out"
+            style={{ left: indicator.left, width: indicator.width }}
+          />
+          {(['한', 'EN'] as Lang[]).map((l, i) => (
             <button
               key={l}
+              ref={el => { tabRefs.current[i] = el }}
               onClick={() => { setLang(l); navigator.vibrate?.(10) }}
               className={cn(
-                'px-[6px] py-[1px] rounded-[6px] text-[11px] transition-colors',
-                lang === l
-                  ? 'bg-white text-black font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.15)]'
-                  : 'text-[#999EA4] font-medium',
+                'relative z-10 px-[9px] py-[3px] rounded-[6px] text-[12px] transition-colors duration-200',
+                lang === l ? 'text-black font-semibold' : 'text-[#999EA4] font-medium',
               )}
             >
               {l}
@@ -103,7 +114,7 @@ export function IpoNewsDetailPage() {
         </div>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide px-5 pt-5 pb-4 bg-white">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide px-5 pt-5 pb-5 bg-white">
         <div className="flex gap-2 mb-5">
           {sourceLogo && (
             <div className="flex items-center">
