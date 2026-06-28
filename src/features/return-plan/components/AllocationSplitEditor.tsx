@@ -137,112 +137,6 @@ interface SliderProps {
   onSplitsChange: (splits: [number, number]) => void
 }
 
-function EditablePercent({
-  value,
-  className,
-  style,
-  onCommit,
-}: {
-  value: number
-  className: string
-  style?: React.CSSProperties
-  onCommit: (value: number) => void
-}) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(String(value))
-
-  const commit = () => {
-    const parsed = Math.round(Number(draft))
-    if (!Number.isNaN(parsed)) onCommit(Math.max(0, Math.min(100, parsed)))
-    setEditing(false)
-  }
-
-  if (editing) {
-    return (
-      <input
-        type="number"
-        inputMode="numeric"
-        autoFocus
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') commit()
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className={`${className} w-12 text-right bg-transparent outline-none`}
-        style={style}
-      />
-    )
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(String(value))
-        setEditing(true)
-      }}
-      className={`${className} flex items-center gap-0.5`}
-      style={style}
-    >
-      <span className="text-text-tertiary animate-blink">|</span>
-      {value}%
-    </button>
-  )
-}
-
-function EditableDollar({
-  value,
-  className,
-  onCommit,
-}: {
-  value: number
-  className: string
-  onCommit: (value: number) => void
-}) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(value.toFixed(2))
-
-  const commit = () => {
-    const parsed = Number(draft)
-    if (!Number.isNaN(parsed)) onCommit(Math.max(0, parsed))
-    setEditing(false)
-  }
-
-  if (editing) {
-    return (
-      <input
-        type="number"
-        inputMode="decimal"
-        step="0.01"
-        autoFocus
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') commit()
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className={`${className} w-20 text-right bg-transparent outline-none`}
-      />
-    )
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(value.toFixed(2))
-        setEditing(true)
-      }}
-      className={`${className} flex items-center gap-0.5`}
-    >
-      <span className="text-text-tertiary animate-blink">|</span>
-      {formatDollar(value)}
-    </button>
-  )
-}
 
 export function AllocationSplitSlider({ accounts, splits, onSplitsChange }: SliderProps) {
   return (
@@ -281,29 +175,13 @@ export function AllocationSplitAccountList({
   accounts,
   totalAmount,
   splits,
-  onSplitsChange,
   bankIconSrc,
-}: AccountListProps) {
+}: Omit<AccountListProps, 'onSplitsChange'>) {
   const [unit, setUnit] = useState<'dollar' | 'percent'>('dollar')
 
-  const ratios = [
-    Math.round(splits[0]),
-    Math.round(splits[1] - splits[0]),
-    Math.round(100 - splits[1]),
-  ]
-
-  const setRatioAt = (i: 0 | 1, newValue: number) => {
-    const clamped = Math.max(0, Math.min(100, Math.round(newValue)))
-    if (i === 0) {
-      const r0 = clamped
-      const r1 = Math.min(ratios[1], 100 - r0)
-      onSplitsChange([r0, r0 + r1])
-    } else {
-      const r0 = ratios[0]
-      const r1 = Math.min(clamped, 100 - r0)
-      onSplitsChange([r0, r0 + r1])
-    }
-  }
+  const r0 = Math.round(splits[0])
+  const r1 = Math.round(splits[1] - splits[0])
+  const ratios = [r0, r1, 100 - r0 - r1]
 
   return (
     <>
@@ -354,40 +232,12 @@ export function AllocationSplitAccountList({
                 </div>
               </div>
               <div className="flex flex-col items-end flex-shrink-0">
-                {unit === 'percent' ? (
-                  <>
-                    <span className="text-sm font-semibold" style={{ color: ZONE_COLORS[i] }}>
-                      {amount}
-                    </span>
-                    {i === 2 ? (
-                      <span className="text-lg font-bold text-text-tertiary">{ratios[i]}%</span>
-                    ) : (
-                      <EditablePercent
-                        value={ratios[i]}
-                        className="text-lg font-bold text-text-tertiary"
-                        onCommit={(v) => setRatioAt(i as 0 | 1, v)}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <span className="text-sm font-semibold" style={{ color: ZONE_COLORS[i] }}>
-                      {ratios[i]}%
-                    </span>
-                    {i === 2 ? (
-                      <span className="text-lg font-bold text-text-tertiary">{amount}</span>
-                    ) : (
-                      <EditableDollar
-                        value={amountValue}
-                        className="text-lg font-bold text-text-tertiary"
-                        onCommit={(v) => {
-                          const pct = totalAmount > 0 ? Math.round((v / totalAmount) * 100) : 0
-                          setRatioAt(i as 0 | 1, Math.max(0, Math.min(100, pct)))
-                        }}
-                      />
-                    )}
-                  </>
-                )}
+                <span className="text-sm font-semibold" style={{ color: ZONE_COLORS[i] }}>
+                  {unit === 'percent' ? amount : `${ratios[i]}%`}
+                </span>
+                <span className="text-lg font-bold" style={{ color: ZONE_COLORS[i] }}>
+                  {unit === 'percent' ? `${ratios[i]}%` : amount}
+                </span>
               </div>
             </div>
           )
@@ -428,7 +278,6 @@ export function ReturnPlanAllocationSection({
           accounts={accounts}
           totalAmount={totalAmount}
           splits={splits}
-          onSplitsChange={onSplitsChange}
           bankIconSrc={bankIconSrc}
         />
       </section>
