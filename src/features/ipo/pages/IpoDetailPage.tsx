@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts'
 import dayjs from 'dayjs'
 import { Header } from '@/components/common/Header'
 import { IpoStockHeader } from '@/features/ipo/components/IpoStockHeader'
@@ -26,67 +27,29 @@ const SOURCE_LOGO_MAP: Record<string, string> = {
   'u.today': '/icons/utoday.png',
 }
 
-const MOCK_CHART_DATA = [
-  { label: '25년 6월',  sub: null,    sales: 35, op: 12, net: 9  },
-  { label: '25년 9월',  sub: null,    sales: 48, op: 18, net: 14 },
-  { label: '25년 12월', sub: null,    sales: 62, op: 26, net: 21 },
-  { label: '26년 3월',  sub: null,    sales: 90, op: 55, net: 45, highlight: true },
-  { label: '26년 6월',  sub: '(추정)', sales: 95, op: 58, net: 47, dim: true },
+const _RAW = [
+  { year: '2024년',       sales: 80,  op: 30, net: 25 },
+  { year: '2025년',       sales: 105, op: 43, net: 35 },
+  { year: '2026년(추정)', sales: 133, op: 57, net: 47 },
 ]
+const _DOMAIN_MAX = Math.max(..._RAW.flatMap(d => [d.sales, d.op, d.net]))
+const MOCK_CHART_DATA = _RAW.map(d => ({
+  ...d,
+  _groupMax: Math.max(...[d.sales, d.op, d.net].filter(v => v > 0), 0),
+}))
 
-const MOCK_LEGEND = [
-  { label: '매출',    value: '133조원', color: '#D1D5DB' },
-  { label: '영업이익', value: '57조원',  color: '#22C55E' },
-  { label: '순이익',  value: '47조원',  color: '#6B7280' },
-]
+const CHART_COLORS = ['#C5D1F5', '#5B7BE5', '#0922AC']
+const CHART_MUTED = ['#EAECF0', '#D1D5DB', '#9AA0AB']
 
-function BarChart({ data }: { data: typeof MOCK_CHART_DATA }) {
-  const maxVal = 100
-  const barW = 12, gap = 2, groupGap = 16
-  const chartH = 90
-  const groupW = barW * 3 + gap * 2
-  const pl = 8
-  const totalW = pl + data.length * (groupW + groupGap) - groupGap + pl
-
-  return (
-    <svg viewBox={`0 0 ${totalW} ${chartH + 36}`} className="w-full">
-      {data.map((g, gi) => {
-        const gx = pl + gi * (groupW + groupGap)
-        const bars = [g.sales, g.op, g.net]
-        const colors = g.dim
-          ? ['#E5E7EB', '#86EFAC', '#9CA3AF']
-          : ['#D1D5DB', '#22C55E', '#6B7280']
-        return (
-          <g key={gi}>
-            {bars.map((v, vi) => {
-              const bh = Math.max((v / maxVal) * chartH, 2)
-              return (
-                <rect
-                  key={vi}
-                  x={gx + vi * (barW + gap)}
-                  y={chartH - bh}
-                  width={barW}
-                  height={bh}
-                  rx={3}
-                  fill={colors[vi]}
-                  opacity={g.dim ? 0.65 : 1}
-                />
-              )
-            })}
-            <text x={gx + groupW / 2} y={chartH + 13} textAnchor="middle" fill="#9AA0AB" fontSize={9}>
-              {g.label}
-            </text>
-            {g.sub && (
-              <text x={gx + groupW / 2} y={chartH + 24} textAnchor="middle" fill="#9AA0AB" fontSize={9}>
-                {g.sub}
-              </text>
-            )}
-          </g>
-        )
-      })}
-    </svg>
-  )
+function BarShape({ x = 0, y = 0, width = 0, height = 0, fill, background, _groupMax }: { x?: number; y?: number; width?: number; height?: number; fill?: string; background?: { height: number }; _groupMax?: number }) {
+  if (!height || height <= 0) {
+    const ph = _groupMax ? Math.round((_groupMax / _DOMAIN_MAX) * (background?.height ?? 100)) : 45
+    return <rect x={x + 1} y={y - ph} width={Math.max(width - 2, 0)} height={ph} rx={2} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth={1.5} strokeDasharray="3 2" />
+  }
+  const r = Math.min(3, height)
+  return <path d={`M${x},${y + height} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + width - r},${y} Q${x + width},${y} ${x + width},${y + r} L${x + width},${y + height} Z`} fill={fill} />
 }
+
 
 function NewsScoreGauge({ score }: { score: number }) {
   const size = 160
@@ -169,8 +132,8 @@ export function IpoDetailPage() {
 
   const [showScoreInfo, setShowScoreInfo] = useState(false)
   const [showNewsList, setShowNewsList] = useState(() => sessionStorage.getItem(`ipo-news-open-${ipoId}`) === 'true')
-  const [_period, setPeriod] = useState<'분기' | '반기' | '연간'>('분기')
   const [showStickyInfo, setShowStickyInfo] = useState(false)
+  const [selectedChartIdx, setSelectedChartIdx] = useState(MOCK_CHART_DATA.length - 1)
   const stockHeaderRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -304,7 +267,7 @@ export function IpoDetailPage() {
         }
       />
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide overscroll-none">
         <section ref={stockHeaderRef} className="px-5 pt-4 pb-5 bg-white">
           <IpoStockHeader
             avatarText={abbr}
@@ -445,28 +408,56 @@ export function IpoDetailPage() {
           )}
         </section>
 
-        <section className="px-5 pt-5 pb-4 bg-white mt-[13px]">
-          <div className="flex items-center justify-between mb-4">
+        <section className="px-5 pt-5 pb-7 bg-white mt-[13px]">
+          <div className="flex items-center justify-between mb-6">
             <p className="text-[15px] font-bold text-[#111827]">실적 현황</p>
-            <button
-              onClick={() => setPeriod((p) => p === '분기' ? '반기' : p === '반기' ? '연간' : '분기')}
-              className="flex items-center gap-[3px] text-[13px] text-[#9AA0AB]"
-            >
-              분기 <ChevronDown size={14} />
-            </button>
           </div>
-          <BarChart data={MOCK_CHART_DATA} />
-          <div className="flex gap-5 mt-3">
-            {MOCK_LEGEND.map((l) => (
-              <div key={l.label} className="flex flex-col gap-[4px]">
-                <div className="flex items-center gap-[5px]">
-                  <div className="w-[8px] h-[8px] rounded-full" style={{ backgroundColor: l.color }} />
-                  <span className="text-[11px] text-[#9AA0AB]">{l.label}</span>
-                </div>
-                <p className="text-[15px] font-bold text-[#111827]">{l.value}</p>
+          <div className="relative">
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={MOCK_CHART_DATA} barCategoryGap="25%" barGap={3}>
+                <YAxis domain={[0, _DOMAIN_MAX]} hide />
+                <CartesianGrid vertical={false} stroke="#F0F1F4" strokeDasharray="" />
+                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={(props: { x: string | number; y: string | number; payload: { value: string }; index: number }) => (
+                  <text x={props.x} y={Number(props.y) + 10} textAnchor="middle" fontSize={11} fontWeight={props.index === selectedChartIdx ? 700 : 400} fill={props.index === selectedChartIdx ? '#111827' : '#9AA0AB'}>
+                    {props.payload.value}
+                  </text>
+                )} />
+                <Bar dataKey="sales" shape={(p: any) => <BarShape {...p} />}>
+                  {MOCK_CHART_DATA.map((_, idx) => <Cell key={idx} fill={idx === selectedChartIdx ? CHART_COLORS[0] : CHART_MUTED[0]} />)}
+                </Bar>
+                <Bar dataKey="op" shape={(p: any) => <BarShape {...p} />}>
+                  {MOCK_CHART_DATA.map((_, idx) => <Cell key={idx} fill={idx === selectedChartIdx ? CHART_COLORS[1] : CHART_MUTED[1]} />)}
+                </Bar>
+                <Bar dataKey="net" shape={(p: any) => <BarShape {...p} />}>
+                  {MOCK_CHART_DATA.map((_, idx) => <Cell key={idx} fill={idx === selectedChartIdx ? CHART_COLORS[2] : CHART_MUTED[2]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex" style={{ paddingBottom: 22 }}>
+              {MOCK_CHART_DATA.map((_, idx) => (
+                <div key={idx} className="flex-1 h-full" onPointerDown={() => setSelectedChartIdx(idx)} />
+              ))}
+            </div>
+          </div>
+          {(() => {
+            const d = MOCK_CHART_DATA[selectedChartIdx]
+            return (
+              <div className="flex gap-14 mt-3 pl-4">
+                {([['매출', d.sales, 0], ['영업이익', d.op, 1], ['순이익', d.net, 2]] as const).map(([label, value, ci]) => (
+                  <div key={label} className="flex flex-col gap-[4px]">
+                    <div className="flex items-center gap-[5px]">
+                      <div className="w-[8px] h-[8px] rounded-full" style={{ backgroundColor: CHART_COLORS[ci] }} />
+                      <span className="text-[11px] text-[#9AA0AB]">{label}</span>
+                    </div>
+                    <p className="text-[15px] font-bold text-[#111827]">
+                      <span key={selectedChartIdx} className="animate-value-in">{value || '-'}</span>
+                      {!!value && '조원'}
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )
+          })()}
         </section>
       </div>
 
