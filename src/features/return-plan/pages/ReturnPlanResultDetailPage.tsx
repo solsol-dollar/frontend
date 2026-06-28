@@ -22,8 +22,6 @@ export function ReturnPlanResultDetailPage() {
   const refundAmount = plan?.totalRefundAmount ?? 0
   const [a, b] = plan ? allocationItemsToSplits(plan.allocations) : [0, 0]
   const ratios: [number, number, number] = [a, b - a, 100 - b]
-  const amountOf = (ratio: number) => (refundAmount * ratio) / 100
-
   return (
     <div className="mobile-container flex flex-col h-screen overflow-hidden bg-surface-bg">
       <Header showBack title="리턴 결과 상세보기" showNotification={false} showMypage={false} />
@@ -69,9 +67,8 @@ export function ReturnPlanResultDetailPage() {
                 <div key={acc.id} className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[i] }} />
                   <span className="text-xs text-text-secondary leading-tight">
-                    {acc.legendLines[0]}
-                    <br />
-                    {acc.legendLines[1]}
+                    {acc.nameLines?.[0] ?? acc.name}
+                    {acc.nameLines && <><br />{acc.nameLines[1]}</>}
                   </span>
                 </div>
               ))}
@@ -84,7 +81,6 @@ export function ReturnPlanResultDetailPage() {
             accounts={ACCOUNTS}
             totalAmount={refundAmount}
             splits={[a, b]}
-            onSplitsChange={() => {}}
             bankIconSrc=""
           />
         </div>
