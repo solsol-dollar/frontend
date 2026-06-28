@@ -47,7 +47,7 @@ export function SubscribePage() {
   const { mutateAsync: createSubscription, isPending: isSubmitting } =
     useCreateSubscription();
   const { data: subscriptionListData, isLoading: isSubscriptionListLoading } =
-    useSubscriptionList({ ipoId });
+    useSubscriptionList({ ipoId }, { enabled: ipoId > 0 });
   const alreadySubscribed = (
     subscriptionListData?.data.subscriptions ?? []
   ).some((s) => s.subscriptionStatus !== "CANCELLED");
