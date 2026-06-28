@@ -50,15 +50,18 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/service/, ''),
+        cookieDomainRewrite: '',
       },
       '/api/ledger': {
         target: 'http://localhost:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/ledger/, ''),
+        cookieDomainRewrite: '',
       },
       '/api/v1': {
         target: 'http://localhost:8081',
         changeOrigin: true,
+        cookieDomainRewrite: '',
       },
     },
   },

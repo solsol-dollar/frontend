@@ -14,6 +14,7 @@ import { FillPage } from '@/features/home/pages/FillPage'
 import { ExchangePage } from '@/features/home/pages/ExchangePage'
 import { ExchangeCompletePage } from '@/features/home/pages/ExchangeCompletePage'
 import { SleepingDollarPage } from '@/features/home/pages/SleepingDollarPage'
+import { CardHistoryPage } from '@/features/home/pages/CardHistoryPage'
 
 // IPO
 import { IpoCalendarPage } from '@/features/ipo/pages/IpoCalendarPage'
@@ -68,6 +69,7 @@ export const router = createBrowserRouter([
   { path: '/home/exchange', element: <ExchangePage /> },
   { path: '/home/exchange/complete', element: <ExchangeCompletePage /> },
   { path: '/home/sleeping-dollar', element: <SleepingDollarPage /> },
+  { path: '/home/card/history', element: <CardHistoryPage /> },
 
   // Mypage 상품 가입 플로우 — 바텀탭 없음
   { path: '/mypage/product/:productId', element: <ProductDetailPage /> },
@@ -85,7 +87,7 @@ export const router = createBrowserRouter([
   { path: '/ipo/:id', element: <IpoDetailPage /> },
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
   { path: '/ipo/:id/result', element: <AllocationResultPage /> },
-  { path: '/return-plan/history', element: <ReturnPlanHistoryPage /> },
+{ path: '/return-plan/history', element: <ReturnPlanHistoryPage /> },
   { path: '/return-plan/pending/:id', element: <ReturnPlanPendingPage /> },
   { path: '/return-plan/result/:id', element: <ReturnPlanResultDetailPage /> },
   { path: '/return-plan/allocation', element: <ReturnPlanSettingsPage /> },

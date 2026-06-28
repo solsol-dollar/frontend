@@ -133,9 +133,10 @@ export function HomePage() {
                         accountIds: [assets.securities.usdAccountId, assets.securities.krwAccountId],
                         accountName: 'CMA 계좌',
                         accountNumber: assets.securities.accountNumberMasked,
-                        usdBalance: assets.securities.usdBalance,
+                        usdBalance: assets.securities.usdAvailableBalance,
+                        usdAvailableBalance: assets.securities.usdAvailableBalance,
                         krwBalance: assets.securities.krwBalance,
-                        totalUsdBalance: assets.securities.totalUsdBalance,
+                        totalUsdBalance: assets.securities.usdAvailableBalance,
                         accountType: 'SECURITIES',
                       },
                     })}
@@ -148,13 +149,13 @@ export function HomePage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-text-secondary truncate">신한투자증권 CMA 계좌</p>
                       <p className="text-sm font-bold text-text-primary mt-0.5">
-                        ${assets.securities.totalUsdBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        ${assets.securities.usdAvailableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        navigate('/home/transfer', { state: { fromAccountId: assets.securities.usdAccountId, sourceName: 'CMA 계좌', sourceBalance: `$${assets.securities.usdBalance.toFixed(2)}` } })
+                        navigate('/home/transfer', { state: { fromAccountId: assets.securities.usdAccountId, sourceName: 'CMA 계좌', sourceBalance: `$${assets.securities.usdAvailableBalance.toFixed(2)}` } })
                       }}
                       className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
                     >
@@ -173,7 +174,7 @@ export function HomePage() {
                         accountIds: [acc.accountId],
                         accountName: acc.accountName,
                         accountNumber: acc.accountNumberMasked,
-                        balance: acc.balance,
+                        balance: acc.availableBalance ?? acc.balance,
                         accountType: acc.accountType,
                         maturityDate: acc.maturityDate,
                       },
@@ -187,14 +188,14 @@ export function HomePage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-text-secondary truncate">{acc.accountName}</p>
                       <p className="text-sm font-bold text-text-primary mt-0.5">
-                        ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        ${(acc.availableBalance ?? acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                     {acc.accountType !== 'SAVINGS' && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          navigate('/home/transfer', { state: { fromAccountId: acc.accountId, sourceName: acc.accountName, sourceBalance: `$${acc.balance.toFixed(2)}` } })
+                          navigate('/home/transfer', { state: { fromAccountId: acc.accountId, sourceName: acc.accountName, sourceBalance: `$${(acc.availableBalance ?? acc.balance).toFixed(2)}` } })
                         }}
                         className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
                       >
@@ -229,9 +230,16 @@ export function HomePage() {
                 <img src={changeupCard} className="w-8 h-15 object-cover" alt="카드 이미지" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-text-secondary truncate">{card.cardName}</p>
-                  <p className="text-sm font-bold text-text-primary mt-0.5">—</p>
+                  <p className="text-sm font-bold text-text-primary mt-0.5">
+                    {card.monthlySpend != null
+                      ? `$${card.monthlySpend.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                      : '—'}
+                  </p>
                 </div>
-                <button className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-sm font-medium text-text-secondary">
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate('/home/card/history') }}
+                  className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-sm font-medium text-text-secondary"
+                >
                   내역
                 </button>
               </div>

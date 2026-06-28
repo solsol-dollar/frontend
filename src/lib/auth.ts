@@ -1,22 +1,28 @@
-import { serviceApi } from './axios'
+import { serviceApi } from "./axios";
 
 interface LoginResponse {
-  onboardingStatus: 'REQUIRED' | 'COMPLETED'
+  onboardingStatus: "REQUIRED" | "COMPLETED";
+  userId?: number;
 }
 
-// POST /auth/simple-login — 엔드포인트는 백엔드와 맞춰 수정하세요
-export async function loginWithPin(pin: string): Promise<LoginResponse> {
-  const res = (await serviceApi.post('/api/service/auth/simple-login', {
-    simplePassword: pin,
-  })) as unknown as { code: string; data: LoginResponse }
+const DEV_USER_ID_KEY = "dev_user_id";
 
-  return res.data
+export async function loginWithPin(pin: string): Promise<LoginResponse> {
+  const res = (await serviceApi.post("/api/service/auth/simple-login", {
+    simplePassword: pin,
+  })) as unknown as { code: string; data: LoginResponse };
+
+  if (import.meta.env.DEV && res.data.userId != null) {
+    localStorage.setItem(DEV_USER_ID_KEY, String(res.data.userId));
+  }
+
+  return res.data;
 }
 
 export async function completeOnboarding(): Promise<void> {
-  await serviceApi.post('/api/v1/onboarding')
+  await serviceApi.post('/api/service/api/v1/onboarding')
 }
 
 export async function logout(): Promise<void> {
-  await serviceApi.post('/api/service/auth/logout')
+  await serviceApi.post("/api/service/auth/logout");
 }

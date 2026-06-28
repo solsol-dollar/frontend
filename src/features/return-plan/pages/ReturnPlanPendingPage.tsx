@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import dayjs from "dayjs";
 import { Info } from "lucide-react";
 import { Header } from "@/components/common/Header";
 import { DonutGauge } from "../components/DonutGauge";
@@ -14,7 +15,6 @@ import {
   allocationItemsToSplits,
   splitsToAllocationItems,
 } from "../utils/allocationMapper";
-import { useSubscriptionResultDetail } from "@/features/ipo/hooks/useSubscriptionResultDetail";
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
 
 const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
@@ -57,7 +57,6 @@ export function ReturnPlanPendingPage() {
   const [splits, setSplits] = useState<[number, number]>([0, 0]);
 
   const { data: plan } = useReturnPlanDetail(returnPlanId);
-  const { data: allocationResult } = useSubscriptionResultDetail(plan?.subscriptionId ?? NaN);
   const updateRatios = useUpdateReturnPlanRatios();
 
   useEffect(() => {
@@ -68,6 +67,9 @@ export function ReturnPlanPendingPage() {
     ? [splits[0], splits[1] - splits[0], 100 - splits[1]]
     : [0, 0, 0];
   const refundAmount = plan?.totalRefundAmount ?? 0;
+  const isPastDeadline = plan?.refundDate
+    ? dayjs().isAfter(dayjs(plan.refundDate).hour(20).minute(0).second(0))
+    : false;
 
   const handleToggleEdit = async () => {
     if (!isEditing) {
@@ -128,19 +130,19 @@ export function ReturnPlanPendingPage() {
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">청약금</p>
                 <p className="text-base font-bold text-text-primary mt-1">
-                  {allocationResult ? formatUsd(allocationResult.subscriptionAmount) : "-"}
+                  {plan?.subscriptionAmount != null ? formatUsd(plan.subscriptionAmount) : "-"}
                 </p>
               </div>
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">배정률</p>
                 <p className="text-base font-bold text-text-primary mt-1">
-                  {allocationResult?.allocationRate != null ? `${allocationResult.allocationRate}%` : "-"}
+                  {plan?.allocationRate != null ? `${plan.allocationRate}%` : "-"}
                 </p>
               </div>
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">배정금</p>
                 <p className="text-base font-bold text-text-primary mt-1">
-                  {allocationResult?.allocatedAmount != null ? formatUsd(allocationResult.allocatedAmount) : "-"}
+                  {plan?.allocatedAmount != null ? formatUsd(plan.allocatedAmount) : "-"}
                 </p>
               </div>
             </div>
@@ -234,10 +236,10 @@ export function ReturnPlanPendingPage() {
       <div className="px-4 pb-8 pt-3 bg-white border-t border-border">
         <button
           onClick={handleToggleEdit}
-          disabled={updateRatios.isPending || !plan}
+          disabled={updateRatios.isPending || !plan || isPastDeadline}
           className="w-full bg-primary text-white py-4 rounded-xl font-semibold disabled:opacity-50"
         >
-          {updateRatios.isPending ? "저장 중..." : isEditing ? "수정 완료" : "분배 수정하기"}
+          {updateRatios.isPending ? "저장 중..." : isPastDeadline ? "수정 마감" : isEditing ? "수정 완료" : "분배 수정하기"}
         </button>
       </div>
     </div>

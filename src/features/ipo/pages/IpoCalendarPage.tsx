@@ -460,7 +460,8 @@ function IpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; o
 export function IpoCalendarPage() {
   const navigate = useNavigate()
   const { state } = useLocation()
-  const [tab, setTab] = useState<Tab>('청약 일정')
+  const initialTab = (state as { tab?: Tab })?.tab
+  const [tab, setTab] = useState<Tab>(initialTab ?? '청약 일정')
   const initialFilter = (state as { bottomFilter?: string })?.bottomFilter
   const [bottomFilter, setBottomFilter] = useState<BottomFilter>(initialFilter === '관심' ? '관심' : '전체')
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())

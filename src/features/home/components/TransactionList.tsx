@@ -45,7 +45,7 @@ export function TransactionList({ groups, showFilter, filter, onFilterClick }: P
                 <div key={item.id} className="flex items-center gap-3 px-5 py-3">
                   <SolBankLogo />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary flex items-center min-w-0">
+                    <p className="text-sm font-medium text-text-primary flex items-center gap-1 min-w-0">
                       <span className="truncate">{item.name}</span>
                       {item.label && <span className="flex-shrink-0">{item.label}</span>}
                     </p>

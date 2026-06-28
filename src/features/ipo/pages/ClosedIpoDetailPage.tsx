@@ -7,14 +7,9 @@ import { curveNatural } from '@visx/curve'
 import { Header } from '@/components/common/Header'
 import { IpoStockHeader } from '@/features/ipo/components/IpoStockHeader'
 import { getSubscriptionStatusBadgeClass } from '@/features/ipo/utils/subscriptionStatus'
-import { useToggleFavorite, useIpoNews, useIpoList } from '@/features/ipo/hooks/useIpo'
+import { useToggleFavorite, useIpoNews, useIpoList, useIpoScore } from '@/features/ipo/hooks/useIpo'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 import type { IpoDetailItem } from '@/features/ipo/api/ipoApi'
-
-const MOCK_SCORE_BEFORE = 68
-const MOCK_SCORE_AFTER = 58
-const MOCK_INFO_TEXT = '시장 심리와 리스크 요인이 부정적이라는 반응이 다수 존재했어요.'
-const MOCK_NEWS_SUMMARY = 'PayPay는 SoftBank 자회사로 일본 결제 앱을 운영하며 7천만 명 이상의 사용자를 보유하고 있다. 이번 IPO에서 5,500만 주를 주당 $17~$20에 공모할 예정이며 기업 가치 최대 $134억이 예상된다. 청약 경쟁률 5배 초과에 Tencent·Alipay·Google 등 주요 투자자도 참여했다. 중동 갈등으로 시장이 불안정한 가운데, 미국 정부 폐쇄로 인해 이미 두 차례 일정이 지연된 이력이 추가 불확실성으로 작용하고 있다.'
 
 const SOURCE_LOGO_MAP: Record<string, string> = {
   'Yahoo Finance': '/icons/Yahoo Finance.png',
@@ -220,6 +215,8 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
   const { mutate: toggleFav } = useToggleFavorite()
   const { data: newsData } = useIpoNews(ipoId)
   const { data: listData } = useIpoList({ status: 'CLOSED' })
+  const { data: scoreData } = useIpoScore(ipoId)
+  const score = scoreData?.data
   const listItem = listData?.data?.ipos?.find((i) => i.id === ipoId)
   const [_period, setPeriod] = useState<'분기' | '반기' | '연간'>('분기')
   const [showStickyInfo, setShowStickyInfo] = useState(false)
@@ -327,8 +324,8 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
           </div>
 
           <NewsScoreChart
-            before={MOCK_SCORE_BEFORE}
-            after={MOCK_SCORE_AFTER}
+            before={score?.finalScore ?? 0}
+            after={score?.finalScore ?? 0}
             offerPrice={ipo.confirmedOfferPrice}
             currentPrice={currentPrice}
           />
@@ -362,7 +359,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
                     borderRight: '7px solid #F0EFFE',
                   }}
                 />
-                <p className="text-[13px] text-[#3A3D45] leading-[1.6]">{MOCK_INFO_TEXT}</p>
+                <p className="text-[13px] text-[#3A3D45] leading-[1.6]">{score?.reason ?? ''}</p>
               </div>
             </div>
           </div>
@@ -371,7 +368,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
         <section className="px-5 pt-5 pb-1 bg-white mt-[13px]">
           <p className="text-[15px] font-bold text-[#111827] mb-3">SOLSOL한 뉴스 요약</p>
           <div className="bg-[#F6F6F9] rounded-[12px] px-4 py-[14px] mb-4 flex flex-col gap-2 mt-4">
-            {MOCK_NEWS_SUMMARY.split(/(?<=\.)\s+/).filter(Boolean).map((item, i) => (
+            {(score?.summary ?? '').split(/(?<=\.)\s+/).filter(Boolean).map((item, i) => (
               <div key={i} className="flex gap-2">
                 <span className="text-[13px] text-[#7C6FEC] shrink-0">•</span>
                 <p className="text-[13px] text-[#3A3D45] leading-[1.6]">{item}</p>

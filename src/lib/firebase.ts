@@ -26,7 +26,7 @@ export async function registerPushToken(): Promise<void> {
       serviceWorkerRegistration: sw,
     })
     if (!token) return
-    await serviceApi.post('/api/v1/mypage/push-subscriptions', { fcmToken: token })
+    await serviceApi.post('/api/service/api/v1/mypage/push-subscriptions', { fcmToken: token })
   } catch (err) {
     console.warn('[FCM] 토큰 등록 실패:', err)
   }
@@ -34,7 +34,7 @@ export async function registerPushToken(): Promise<void> {
 
 export async function unregisterPushToken(): Promise<void> {
   try {
-    await serviceApi.delete('/api/v1/mypage/push-subscriptions')
+    await serviceApi.delete('/api/service/api/v1/mypage/push-subscriptions')
   } catch (err) {
     console.warn('[FCM] 토큰 해제 실패:', err)
   }

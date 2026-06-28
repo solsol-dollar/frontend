@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Heart, Minus, Plus } from "lucide-react";
+import dayjs from "dayjs";
 import { Header } from "@/components/common/Header";
 import { IpoStockHeader } from "@/features/ipo/components/IpoStockHeader";
 import { IpoOfferingInfo } from "@/features/ipo/components/IpoOfferingInfo";
@@ -11,38 +12,131 @@ import {
   getSubscriptionStatusTextClass,
 } from "@/features/ipo/utils/subscriptionStatus";
 import { cn } from "@/lib/utils";
-import shinhanBankIcon from "@/assets/common/shinhan-bank.svg";
-
-const MOCK_SUBSCRIPTION = {
-  ticker: "CRWV",
-  name: "CoreWeave",
-  color: "#FF6830",
-  // 공모가가 확정값일 수도, 범위(밴드)로 제시될 수도 있음
-  offeringPriceRange: { min: 18, max: 20 } as { min: number; max?: number },
-  milestones: [
-    { label: "청약시작일", date: "2026.06.24" },
-    { label: "청약마감일", date: "2026.09.04" },
-    { label: "환불(예정)일", date: "2026.09.05" },
-    { label: "상장(예정)일", date: "2026.09.06" },
-  ],
-  availableAmount: 1084455.32,
-  foreignBalance: 25340,
-  cmaBalanceKrw: 1548320,
-  exchangeRate: 1512.54,
-  exchangeableKrw: 102254,
-  exchangeableUsd: 66.84,
-  account: "270-91-175039[01] CMA 김희선",
-};
+import { useIpoDetail } from "@/features/ipo/hooks/useIpo";
+import { useCreateSubscription, useSubscriptionList } from "@/features/ipo/hooks/useSubscriptions";
+import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
+import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
+import { PinKeypad } from "@/features/onboarding/components/PinKeypad";
+import { loginWithPin } from "@/lib/auth";
 
 export function SubscribePage() {
   const navigate = useNavigate();
-  useParams();
+  const { id } = useParams();
+  const ipoId = Number(id);
   const [liked, setLiked] = useState(false);
   const [amount, setAmount] = useState("");
-  const [showPullModal, setShowPullModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState<string | null>(null);
+  const [showPinScreen, setShowPinScreen] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinKey, setPinKey] = useState(0);
+  const pinErrorTimerRef = useRef<number | null>(null);
 
-  const ipo = MOCK_SUBSCRIPTION;
+  const { data, isLoading, isError, refetch: refetchIpoDetail } = useIpoDetail(ipoId);
+  const { data: assets, isLoading: isAssetsLoading } = useHomeAssets();
+  const { mutateAsync: createSubscription, isPending: isSubmitting } = useCreateSubscription();
+  const { data: subscriptionListData, isLoading: isSubscriptionListLoading } = useSubscriptionList({ ipoId });
+  const alreadySubscribed = (subscriptionListData?.data.subscriptions ?? []).some(
+    (s) => s.subscriptionStatus !== 'CANCELLED',
+  );
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollKey = `subscribe-scroll-${ipoId}`;
+
+  useEffect(() => {
+    if (isLoading || isAssetsLoading) return;
+    const saved = sessionStorage.getItem(scrollKey);
+    if (saved && scrollRef.current) {
+      scrollRef.current.scrollTop = Number(saved);
+    }
+  }, [isLoading, isAssetsLoading, scrollKey]);
+
+  useEffect(() => {
+    return () => {
+      if (pinErrorTimerRef.current !== null) window.clearTimeout(pinErrorTimerRef.current);
+    };
+  }, []);
+
+  const saveScrollPosition = () => {
+    if (scrollRef.current) {
+      sessionStorage.setItem(scrollKey, String(scrollRef.current.scrollTop));
+    }
+  };
+
+  if (isLoading || isAssetsLoading || isSubscriptionListLoading) {
+    return <div className="page-content" />;
+  }
+
+  if (isNaN(ipoId) || isError || !data?.data || !assets) {
+    return (
+      <div className="mobile-container flex flex-col h-screen">
+        <Header showBack showNotification={false} showMypage={false} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-text-secondary">종목 정보를 불러올 수 없습니다.</p>
+          <button onClick={() => navigate(-1)} className="text-sm text-primary font-semibold">
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (alreadySubscribed) {
+    return (
+      <div className="mobile-container flex flex-col h-screen">
+        <Header showBack showNotification={false} showMypage={false} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-text-secondary">이미 청약 신청한 종목이에요.</p>
+          <button onClick={() => navigate(-1)} className="text-sm text-primary font-semibold">
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (data.data.ipoStatus === 'UPCOMING') {
+    return (
+      <div className="mobile-container flex flex-col h-screen">
+        <Header showBack showNotification={false} showMypage={false} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-text-secondary">아직 청약 신청 기간이 아니에요.</p>
+          <button onClick={() => navigate(-1)} className="text-sm text-primary font-semibold">
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const ipoDetail = data.data;
+  const { securities, exchangeRateInfo } = assets;
+  const depositAccount = assets.accounts.find((a) => a.accountType === "DEPOSIT");
+  const ipo = {
+    ticker: ipoDetail.ticker,
+    name: ipoDetail.companyName,
+    color: generateLogoColor(ipoDetail.ticker),
+    offeringPriceRange: {
+      min: ipoDetail.offerPriceMin ?? 0,
+      max: ipoDetail.offerPriceMax ?? undefined,
+    } as { min: number; max?: number },
+    milestones: [
+      { label: "청약시작일", date: dayjs(ipoDetail.subscriptionStartDate).format("YYYY.MM.DD") },
+      { label: "청약마감일", date: dayjs(ipoDetail.subscriptionEndDate).format("YYYY.MM.DD") },
+      { label: "상장(예정)일", date: dayjs(ipoDetail.listingDate).format("YYYY.MM.DD") },
+      ...(ipoDetail.refundDate
+        ? [{ label: "환불(예정)일", date: dayjs(ipoDetail.refundDate).format("YYYY.MM.DD") }]
+        : []),
+    ],
+    availableAmount: securities.usdAvailableBalance,
+    foreignBalance: depositAccount?.availableBalance ?? depositAccount?.balance ?? 0,
+    cmaBalanceKrw: securities.krwBalance,
+    exchangeRate: exchangeRateInfo.rate,
+    // 환전 가능액 전용 API가 아직 없어 보유 원화 잔액을 환율로 환산해 클라이언트에서 계산
+    exchangeableKrw: securities.krwBalance,
+    exchangeableUsd: securities.krwBalance / exchangeRateInfo.rate,
+    account: securities.accountNumberMasked,
+  };
   const status = getSubscriptionStatus(ipo.milestones);
   const dday = getSubscriptionDday(ipo.milestones);
 
@@ -53,6 +147,9 @@ export function SubscribePage() {
       : `USD ${minPrice.toFixed(2)}`;
   // 예상 청약 가능 수량은 상단 공모가(최대값) 기준으로 보수적으로 계산
   const pricePerShareForEstimate = maxPrice ?? minPrice;
+  // 청약 신청 시 서버가 ipos.confirmed_offer_price와 정확히 일치하는지 검증하므로
+  // 확정가가 있으면 그 값을, 없으면(미확정 IPO) 밴드 내 추정가를 그대로 보낸다
+  const offerPriceForSubmit = ipoDetail.confirmedOfferPrice ?? pricePerShareForEstimate;
 
   const numericAmount = Number(amount || 0);
   const maxSubscribable = Math.floor(ipo.availableAmount / 1.01);
@@ -62,10 +159,37 @@ export function SubscribePage() {
     Number.isInteger(numericAmount) &&
     numericAmount <= maxSubscribable;
 
-  const subscriptionFee = useMemo(() => {
-    if (!isValidAmount) return 0;
-    return numericAmount * 1.01;
-  }, [numericAmount, isValidAmount]);
+  const subscriptionFee = isValidAmount ? numericAmount * 1.01 : 0;
+
+  const handlePinEnter = async (pin: string) => {
+    setPinError(null);
+    try {
+      await loginWithPin(pin);
+    } catch {
+      setPinError('비밀번호가 올바르지 않습니다');
+      if (pinErrorTimerRef.current !== null) window.clearTimeout(pinErrorTimerRef.current);
+      pinErrorTimerRef.current = window.setTimeout(() => {
+        setPinError(null);
+        setPinKey((k) => k + 1);
+      }, 3000);
+      return;
+    }
+    setShowPinScreen(false);
+    const fresh = await refetchIpoDetail();
+    const freshOfferPrice = fresh.data?.data.confirmedOfferPrice ?? offerPriceForSubmit;
+    try {
+      await createSubscription({
+        ipoId,
+        securitiesAccountId: securities.usdAccountId,
+        subscriptionAmount: numericAmount,
+        offerPrice: freshOfferPrice,
+      });
+      navigate('/ipo', { state: { tab: '청약내역/취소' } });
+    } catch (e) {
+      console.error('청약 신청 실패', e);
+      setErrorModalMessage('청약 신청에 실패했어요. 잠시 후 다시 시도해주세요.');
+    }
+  };
 
   const adjustAmount = (delta: number) => {
     setAmount((prev) => {
@@ -96,7 +220,7 @@ return (
         }
       />
 
-      <div className="flex-1 overflow-y-auto bg-surface-bg">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-surface-bg">
         {/* 종목 정보 */}
         <section className="px-4 py-6 bg-white">
           <div className="mb-7">
@@ -131,6 +255,7 @@ return (
 
           {/* 청약 가능 금액 */}
           <div className="px-4 pt-4 pb-3">
+            <p className="text-xs text-text-tertiary mb-1">신청가능금액</p>
             <span className="text-2xl font-bold text-text-primary">
               ${ipo.availableAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
@@ -228,8 +353,22 @@ return (
           </p>
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => setShowPullModal(true)}
-              className="p-3 border border-border rounded-xl text-left"
+              onClick={() => {
+                if (!depositAccount) return;
+                saveScrollPosition();
+                navigate("/home/transfer", {
+                  state: {
+                    fromAccountId: depositAccount.accountId,
+                    sourceName: depositAccount.accountName,
+                    sourceBalance: `$${(depositAccount.availableBalance ?? depositAccount.balance).toFixed(2)}`,
+                    toAccountId: securities.usdAccountId,
+                    returnTo: `/ipo/${ipoId}/subscribe`,
+                    depth: 1,
+                  },
+                });
+              }}
+              disabled={!depositAccount}
+              className="p-3 border border-border rounded-xl text-left disabled:opacity-40"
             >
               <p className="text-xs font-semibold text-text-primary">
                 외화통장에서 끌어오기
@@ -239,7 +378,10 @@ return (
               </p>
             </button>
             <button
-              onClick={() => navigate('/home/exchange', { state: { direction: 'won-to-dollar' } })}
+              onClick={() => {
+                saveScrollPosition();
+                navigate('/home/exchange', { state: { direction: 'won-to-dollar', returnTo: `/ipo/${ipoId}/subscribe`, depth: 1 } });
+              }}
               className="p-3 border border-border rounded-xl text-left"
             >
               <div className="flex items-center gap-1">
@@ -269,7 +411,7 @@ return (
         </button>
         <button
           onClick={() => setShowConfirmModal(true)}
-          disabled={!isValidAmount}
+          disabled={!isValidAmount || isSubmitting}
           className="flex-1 bg-primary disabled:bg-border text-white py-4 rounded-xl font-semibold"
         >
           확인
@@ -323,7 +465,10 @@ return (
               취소
             </button>
             <button
-              onClick={() => navigate('/ipo', { state: { tab: '청약내역/취소' } })}
+              onClick={() => {
+                setShowConfirmModal(false);
+                setShowPinScreen(true);
+              }}
               className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold"
             >
               확인
@@ -332,59 +477,33 @@ return (
         </div>
       </div>
 
-
-
-      {/* 외화통장에서 끌어오기 안내 시트 */}
-      <div
-        className={cn(
-          'fixed inset-0 z-20 bg-black/20 transition-opacity duration-300',
-          showPullModal ? 'opacity-100' : 'opacity-0 pointer-events-none',
-        )}
-        onClick={() => setShowPullModal(false)}
-      />
-      <div
-        aria-hidden={!showPullModal}
-        {...(!showPullModal ? { inert: '' } : {})}
-        className={cn(
-          'fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-30 transition-transform duration-300 ease-out',
-          showPullModal ? 'translate-y-0' : 'translate-y-[calc(100%+1rem)]',
-        )}
-      >
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 rounded-full bg-border" />
+      {showPinScreen && (
+        <div className="fixed inset-0 z-[80]">
+          <PinKeypad
+            key={pinKey}
+            onEnter={handlePinEnter}
+            onBack={() => {
+              setShowPinScreen(false);
+              setShowConfirmModal(true);
+            }}
+            error={pinError}
+          />
         </div>
-        <div className="px-6 pt-3 pb-7">
-          <p className="text-lg font-semibold text-text-primary mb-6">외화통장에서 끌어오기</p>
+      )}
 
-          <div className="flex flex-col items-center text-center gap-4 mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center p-2">
-              <img src={shinhanBankIcon} alt="신한은행" className="w-full h-full" />
-            </div>
-            <div>
-              <p className="text-base font-bold text-text-primary mb-1">신한 슈퍼SOL로 이동합니다</p>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                외화통장 자금을 끌어오려면<br />신한 슈퍼SOL 앱에서 진행해 주세요.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
+      {errorModalMessage && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-6">
+          <div className="w-full max-w-[340px] bg-white rounded-2xl px-5 py-6 text-center">
+            <p className="text-sm font-medium text-text-primary mb-6 break-keep">{errorModalMessage}</p>
             <button
-              onClick={() => setShowPullModal(false)}
-              className="flex-1 py-4 bg-surface text-text-secondary rounded-xl font-semibold"
+              onClick={() => setErrorModalMessage(null)}
+              className="w-full py-3 bg-primary text-white rounded-xl font-semibold"
             >
-              취소
-            </button>
-            <button
-              onClick={() => setShowPullModal(false)}
-              className="flex-1 py-4 text-white rounded-xl font-semibold"
-              style={{ backgroundColor: '#0046FF' }}
-            >
-              앱 열기
+              확인
             </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
