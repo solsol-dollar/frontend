@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Heart, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import dayjs from "dayjs";
 import { Header } from "@/components/common/Header";
 import { IpoStockHeader } from "@/features/ipo/components/IpoStockHeader";

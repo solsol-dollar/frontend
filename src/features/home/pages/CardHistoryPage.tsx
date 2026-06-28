@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import cardHistoryImg from '@/assets/card/card_history.svg'
 import coinImg from '@/assets/card/coin.svg'
 import chalkLineImg from '@/assets/card/line.png'
@@ -331,7 +330,6 @@ function ProgressBar({ active }: { active: number }) {
 
 /* ── 페이지 ── */
 export function CardHistoryPage() {
-  const navigate = useNavigate()
   const now = new Date()
   const [year] = useState(now.getFullYear())
   const [month] = useState(now.getMonth() + 1)
