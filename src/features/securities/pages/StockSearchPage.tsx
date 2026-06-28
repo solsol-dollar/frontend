@@ -11,11 +11,14 @@ export function StockSearchPage() {
   const [query, setQuery] = useState('')
 
   // 인기 종목 (keyword 없이)
-  const { data: popular = [] } = useSecuritiesProducts('OVERSEAS', 'TRADING_VALUE')
+  const { data: popularData } = useSecuritiesProducts('OVERSEAS', 'TRADING_VALUE')
+  const popular = popularData?.pages.flat() ?? []
 
   // keyword 있을 때 SEC-001 서버사이드 검색
-  const { data: searchResults = [], isFetching } = useSecuritiesProducts('OVERSEAS', 'TRADING_VALUE', query.trim() || undefined)
-  const { data: etfResults = [] } = useSecuritiesProducts('ETF', 'TRADING_VALUE', query.trim() || undefined)
+  const { data: searchData, isFetching } = useSecuritiesProducts('OVERSEAS', 'TRADING_VALUE', query.trim() || undefined)
+  const { data: etfData } = useSecuritiesProducts('ETF', 'TRADING_VALUE', query.trim() || undefined)
+  const searchResults = searchData?.pages.flat() ?? []
+  const etfResults = etfData?.pages.flat() ?? []
   const filtered: ProductListItem[] = query.trim() ? [...searchResults, ...etfResults] : []
 
   return (
