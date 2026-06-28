@@ -13,7 +13,6 @@ type BottomFilter = '전체' | '관심'
 type CalendarView = 'weekly' | 'monthly'
 
 const WEEK_SLIDE_DURATION_MS = 400
-const DATE_SCROLL_TOP_PADDING = 16
 
 const EVENT_COLORS = {
   '청약시작': { bg: '#FFD6DB', bar: '#E2468B' },
@@ -39,7 +38,7 @@ interface Ipo {
   status: 'closed' | 'open' | 'upcoming'
   subscription_start: string | null
   subscription_end: string | null
-  listing_date: string
+  listing_date: string | null
   price: number
   price_confirmed: number | null
   is_favorite: boolean
@@ -340,7 +339,7 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           src={isUpcoming ? '/icons/IPO_upcoming.svg' : '/icons/IPO_ready.svg'}
           width={50} height={17}
           alt={isUpcoming ? '청약예정' : '청약가능'}
-          className="absolute top-[17.5px] right-[17px] translate-x-[3px]"
+          className="absolute top-[19.5px] right-[17px] translate-x-[3px]"
         />
         {!isUpcoming && (
           <span className="absolute top-[39px] right-[17px] text-[11px] font-bold text-[#CA3D40]">{dDayLabel}</span>
@@ -362,7 +361,7 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
         <div className="flex items-center">
           <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">상장(예정)일</span>
           <span className="ml-[11px] text-[13px] font-medium text-[#7F858F]">
-            {dayjs(ipo.listing_date).format('YYYY.MM.DD')}
+            {ipo.listing_date ? dayjs(ipo.listing_date).format('YYYY.MM.DD') : '-'}
           </span>
         </div>
       </div>
@@ -396,7 +395,7 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
       onClick={(e) => { if (dragRef.current.moved || (e.target as Element).closest('button')) return; onClick() }}
       onKeyDown={handleKey}
       className="relative w-full bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[30px] text-left transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none cursor-pointer">
-      <img src="/icons/IPO_end.svg" width={50} height={17} alt="청약종료" className="absolute top-[17.5px] right-[17px] translate-x-[3px]" />
+      <img src="/icons/IPO_end.svg" width={50} height={17} alt="청약종료" className="absolute top-[19.5px] right-[17px] translate-x-[3px]" />
       <div className="flex items-center mb-[13px]">
         <div className="flex items-center gap-[18px] min-w-0">
           <IpoLogo ipo={ipo} />
@@ -434,7 +433,7 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
         <div className="flex items-center">
           <span className="w-[64px] shrink-0 text-[12px] font-medium text-[#7F858F]">상장일</span>
           <span className="ml-[7px] text-[13px] font-medium text-[#7F858F]">
-            {dayjs(ipo.listing_date).format('YYYY.MM.DD')}
+            {ipo.listing_date ? dayjs(ipo.listing_date).format('YYYY.MM.DD') : '-'}
           </span>
         </div>
       </div>
@@ -461,7 +460,8 @@ function IpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; o
 export function IpoCalendarPage() {
   const navigate = useNavigate()
   const { state } = useLocation()
-  const [tab, setTab] = useState<Tab>('청약 일정')
+  const initialTab = (state as { tab?: Tab })?.tab
+  const [tab, setTab] = useState<Tab>(initialTab ?? '청약 일정')
   const initialFilter = (state as { bottomFilter?: string })?.bottomFilter
   const [bottomFilter, setBottomFilter] = useState<BottomFilter>(initialFilter === '관심' ? '관심' : '전체')
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
@@ -500,7 +500,7 @@ export function IpoCalendarPage() {
       if (el && container) {
         const elTop = el.getBoundingClientRect().top
         const containerTop = container.getBoundingClientRect().top
-        container.scrollTop += elTop - containerTop - DATE_SCROLL_TOP_PADDING
+        container.scrollTop += elTop - containerTop - (container.clientHeight - 300)
       }
     })
   }
@@ -643,13 +643,14 @@ export function IpoCalendarPage() {
     const section = todayMonthRef.current
     if (!container || !section) return
     const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
-    container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 15
+    container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 10
   }
 
+  const undatedIpos = filteredIpos.filter((ipo) => ipo.subscription_start === null)
   const allIpoDates = filteredIpos.map((ipo) => ipo.subscription_start).filter((d): d is string => d !== null)
-  const uniqueDates = bottomFilter === '관심'
-    ? Array.from(new Set(allIpoDates)).sort()
-    : Array.from(new Set([todayStr, ...allIpoDates])).sort()
+  const uniqueDates = Array.from(new Set(bottomFilter === '관심' ? allIpoDates : [todayStr, ...allIpoDates])).sort()
+  const uniqueDatesRef = useRef(uniqueDates)
+  uniqueDatesRef.current = uniqueDates
 
   const scrollRestored = useRef(false)
 
@@ -665,6 +666,9 @@ export function IpoCalendarPage() {
       if (savedMonthly && monthlyContainerRef.current) {
         monthlyContainerRef.current.scrollTop = Number(savedMonthly)
         sessionStorage.removeItem('ipoMonthlyScrollTop')
+        sessionStorage.removeItem('ipoListScrollTop')
+        sessionStorage.removeItem('ipoSelectedDate')
+        sessionStorage.removeItem('ipoDisplayWeekStart')
         return
       }
       const saved = sessionStorage.getItem('ipoListScrollTop')
@@ -679,7 +683,7 @@ export function IpoCalendarPage() {
       if (el) {
         const elTop = el.getBoundingClientRect().top
         const containerTop = container.getBoundingClientRect().top
-        container.scrollTop += elTop - containerTop - DATE_SCROLL_TOP_PADDING
+        container.scrollTop += elTop - containerTop - (container.clientHeight - 300)
       }
     })
   }, [filteredIpos])
@@ -691,12 +695,11 @@ export function IpoCalendarPage() {
       rafId = requestAnimationFrame(() => {
         rafId = null
         const HEADER_OFFSET = 160
-        const lastTwoDates = new Set(uniqueDates.slice(-2))
         let topDate: string | null = null
         let topPos: number | null = null
         dateSectionRefs.current.forEach((el, dateStr) => {
           const rect = el.getBoundingClientRect()
-          const effectiveBottom = lastTwoDates.has(dateStr) ? rect.bottom : rect.bottom - 80
+          const effectiveBottom = rect.bottom - 80
           if (effectiveBottom > HEADER_OFFSET && rect.top < window.innerHeight) {
             if (topPos === null || effectiveBottom < topPos) {
               topPos = effectiveBottom
@@ -729,9 +732,11 @@ export function IpoCalendarPage() {
       const section = currentMonthSectionRef.current
       if (container && section) {
         const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
-        container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 15
+        container.scrollTop += section.getBoundingClientRect().top - container.getBoundingClientRect().top - headerHeight - 10
       }
-      isMonthlyTransitioning.current = false
+      requestAnimationFrame(() => {
+        isMonthlyTransitioning.current = false
+      })
     })
   }, [calendarView])
 
@@ -744,10 +749,15 @@ export function IpoCalendarPage() {
       const headerHeight = monthlyHeaderRef.current?.offsetHeight ?? 0
       const containerTop = container.getBoundingClientRect().top + headerHeight
       let found: string | null = null
+      let maxVisible = 0
+      const containerBottom = container.getBoundingClientRect().bottom
       monthSectionRefs.current.forEach((el, monthStr) => {
-        if (found) return
         const rect = el.getBoundingClientRect()
-        if (rect.bottom > containerTop) found = monthStr
+        const visibleHeight = Math.max(0, Math.min(rect.bottom, containerBottom) - Math.max(rect.top, containerTop))
+        if (visibleHeight > maxVisible) {
+          maxVisible = visibleHeight
+          found = monthStr
+        }
       })
       if (found) setCurrentMonth(dayjs(found))
     }
@@ -936,24 +946,27 @@ export function IpoCalendarPage() {
                       <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={scrollToTodayMonth}>오늘</button>
                       <span className="w-px h-[14px] bg-[#D9DBE0]" />
                       <button className="text-[12px] font-medium text-[#1A1A1A]" onClick={() => {
-                        const today = dayjs()
-                        const targetDate = today.isSame(currentMonth, 'month') ? todayStr : currentMonth.format('YYYY-MM-DD')
-                        const target = dayjs(targetDate)
+                        const monthStart = currentMonth.format('YYYY-MM-DD')
+                        const firstTargetDate = uniqueDatesRef.current.find(d => d >= monthStart) ?? monthStart
+                        const target = dayjs(firstTargetDate)
                         const newWeekStart = target.subtract((target.day() + 6) % 7, 'day')
-                        setSelectedDate(targetDate)
+                        setSelectedDate(firstTargetDate)
                         changeWeekRef.current(newWeekStart)
                         setCalendarView('weekly')
                         requestAnimationFrame(() => {
-                          const el = dateSectionRefs.current.get(targetDate)
+                          const el = dateSectionRefs.current.get(firstTargetDate)
                           const container = scrollContainerRef.current
                           if (el && container) {
-                            container.scrollTop += el.getBoundingClientRect().top - container.getBoundingClientRect().top - DATE_SCROLL_TOP_PADDING + 15
+                            const elTop = el.getBoundingClientRect().top
+                            const containerTop = container.getBoundingClientRect().top
+                            container.scrollTop += elTop - containerTop - 8
                           }
                         })
                       }}>주별보기</button>
                     </div>
                   </div>
                 </div>
+                <div className="pt-[10px]" />
                 {Array.from({ length: 12 }, (_, i) => dayjs('2026-01-01').add(i, 'month')).map((month) => {
                   const isCurrentMonthSection = month.isSame(currentMonth, 'month')
                   const isTodayMonth = month.isSame(dayjs().startOf('month'), 'month')
@@ -968,6 +981,7 @@ export function IpoCalendarPage() {
                     </div>
                   )
                 })}
+                <div className="h-[110px]" />
               </>
             )}
           </div>
@@ -997,42 +1011,63 @@ export function IpoCalendarPage() {
                 nextDate.month() === date.month()
 
               return (
-                <div key={dateStr} className={cn(!showWeekDivider && idx > 0 && 'mt-[24px]')} ref={(el) => { if (el) dateSectionRefs.current.set(dateStr, el); else dateSectionRefs.current.delete(dateStr) }}>
-                  {showWeekDivider && (
-                    <WeekDivider
-                      label={`${date.month() + 1}월 ${getWeekOfMonth(date)}주차`}
-                    />
-                  )}
+                <div key={dateStr}>
+                  <div className={cn(!showWeekDivider && idx > 0 && 'mt-[24px]')} ref={(el) => { if (el) dateSectionRefs.current.set(dateStr, el); else dateSectionRefs.current.delete(dateStr) }}>
+                    {showWeekDivider && (
+                      <WeekDivider
+                        label={`${date.month() + 1}월 ${getWeekOfMonth(date)}주차`}
+                      />
+                    )}
 
-                  <div>
-                    <div className="flex items-center gap-2 mb-3 pl-[6px]">
-                      <span className="text-[18px] font-bold text-[#3A3D45]">{date.date()}일</span>
-                      {isToday ? (
-                        <span className="inline-flex items-center justify-center w-[44px] h-[25px] bg-[#F0F1F4] text-[#9AA0AB] text-[12px] font-semibold rounded-[8px]">
-                          오늘
-                        </span>
+                    <div>
+                      <div className="flex items-center gap-2 mb-3 pl-[6px]">
+                        <span className="text-[18px] font-bold text-[#3A3D45]">{date.date()}일</span>
+                        {isToday ? (
+                          <span className="inline-flex items-center justify-center w-[44px] h-[25px] bg-[#F0F1F4] text-[#9AA0AB] text-[12px] font-semibold rounded-[8px]">
+                            오늘
+                          </span>
+                        ) : (
+                          <span className="text-[13px] font-medium text-[#9AA0AB]">
+                            {DAY_NAMES[date.day()]}
+                          </span>
+                        )}
+                      </div>
+
+                      {dayIpos.length === 0 ? (
+                        bottomFilter === '전체' && (
+                          <div className={cn(
+                            'flex items-center gap-3 ml-[7px] mt-[16px]',
+                            hasNextDateInSameWeek ? 'mb-[28px]' : 'mb-4',
+                          )}>
+                            <div className="w-11 h-11 rounded-full bg-[#F0F1F4] flex items-center justify-center">
+                              <img src="/icons/docs.svg" width={22} height={22} alt="" />
+                            </div>
+                            <span className="text-[17px] font-bold text-[#3A3D45] ml-1">소식이 없어요</span>
+                          </div>
+                        )
                       ) : (
-                        <span className="text-[13px] font-medium text-[#9AA0AB]">
-                          {DAY_NAMES[date.day()]}
-                        </span>
+                        <div className="space-y-[18px] mb-4">
+                          {dayIpos.map((ipo) => (
+                            <IpoCard key={ipo.id} ipo={ipo} onClick={() => {
+                              if (scrollContainerRef.current) sessionStorage.setItem('ipoListScrollTop', String(scrollContainerRef.current.scrollTop))
+                              sessionStorage.setItem('ipoSelectedDate', selectedDate)
+                              sessionStorage.setItem('ipoDisplayWeekStart', displayWeekStart.format('YYYY-MM-DD'))
+                              navigate(`/ipo/${ipo.id}`)
+                            }} isWishlisted={wishlistedIds.has(ipo.id)} onWishlistToggle={() => toggleWishlist(ipo.id)} />
+                          ))}
+                        </div>
                       )}
                     </div>
+                  </div>
 
-                    {dayIpos.length === 0 ? (
-                      bottomFilter === '전체' && (
-                        <div className={cn(
-                          'flex items-center gap-3 ml-[7px] mt-[16px]',
-                          hasNextDateInSameWeek ? 'mb-[28px]' : 'mb-4',
-                        )}>
-                          <div className="w-11 h-11 rounded-full bg-[#F0F1F4] flex items-center justify-center">
-                            <img src="/icons/docs.svg" width={22} height={22} alt="" />
-                          </div>
-                          <span className="text-[17px] font-bold text-[#3A3D45] ml-1">소식이 없어요</span>
-                        </div>
-                      )
-                    ) : (
+                  {isToday && undatedIpos.length > 0 && (
+                    <div>
+                      <WeekDivider label="2026년 하반기" />
+                      <div className="flex items-center gap-2 mb-3 pl-[6px]">
+                        <span className="text-[18px] font-bold text-[#3A3D45]">7~12월</span>
+                      </div>
                       <div className="space-y-[18px] mb-4">
-                        {dayIpos.map((ipo) => (
+                        {undatedIpos.map((ipo) => (
                           <IpoCard key={ipo.id} ipo={ipo} onClick={() => {
                             if (scrollContainerRef.current) sessionStorage.setItem('ipoListScrollTop', String(scrollContainerRef.current.scrollTop))
                             sessionStorage.setItem('ipoSelectedDate', selectedDate)
@@ -1041,12 +1076,30 @@ export function IpoCalendarPage() {
                           }} isWishlisted={wishlistedIds.has(ipo.id)} onWishlistToggle={() => toggleWishlist(ipo.id)} />
                         ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
-            <div className={uniqueDates.length > 0 && uniqueDates[uniqueDates.length - 1] <= todayStr ? 'h-[225px]' : 'h-[150px]'} />
+            {bottomFilter === '전체' ? (
+              <div className="h-[450px] flex flex-col justify-end px-[6px] pb-[100px]">
+                <p className="text-[12px] font-medium text-[#9AA0AB] mb-[8px]">유의사항</p>
+                <ul className="space-y-[6px]">
+                  {[
+                    '미국 공모주 청약에 대한 배정은 국내의 균등/비례 배정 방식과 달라 미국 현지 IPO 중개회사 내부 기준에 따라 진행되며, 배정받지 못할 수도 있습니다.',
+                    '현지 사정으로 청약이 취소(중단)될 수 있습니다.',
+                    '청약 취소는 청약 기간 중에만 가능합니다.',
+                  ].map((text, i) => (
+                    <li key={i} className="flex gap-[6px] text-[11px] text-[#9AA0AB] leading-[1.5]">
+                      <span className="shrink-0">•</span>
+                      <span>{text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="h-[280px]" />
+            )}
           </div>}
 
         </>
@@ -1055,8 +1108,8 @@ export function IpoCalendarPage() {
       {tab === '청약내역/취소' && <SubscriptionHistory />}
 
       {tab === "청약 일정" && (
-        <div className="fixed bottom-[91px] right-4 z-20">
-          <div className="flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)]">
+        <div className="fixed bottom-[91px] left-1/2 -translate-x-1/2 w-full max-w-mobile px-4 flex justify-end z-20 pointer-events-none">
+          <div className="flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)] pointer-events-auto">
             {(["전체", "관심"] as BottomFilter[]).map((f) => (
               <button
                 key={f}

@@ -21,12 +21,14 @@ interface AccountRef {
 
 interface Transaction {
   id: number
-  type: 'IN' | 'OUT' | 'EXCHANGE' | 'CARD'
+  type: 'IN' | 'OUT' | 'EXCHANGE' | 'CARD' | 'IPO_SUBSCRIPTION' | 'IPO_SUBSCRIPTION_CANCEL'
   amount: number
   currency: string
   status: string
   executedAt: string
+
   description: string | null
+
   fromAccount: AccountRef | null
   toAccount: AccountRef | null
   fromCurrency: string | null
@@ -53,6 +55,8 @@ function currencyLabel(code: string | null): string {
 }
 
 function getTxDisplay(tx: Transaction): { name: string; label: string } {
+  if (tx.type === 'IPO_SUBSCRIPTION' || tx.type === 'IPO_SUBSCRIPTION_CANCEL')
+    return { name: tx.description ?? '', label: '' }
   if (tx.type === 'EXCHANGE')
     return { name: `${currencyLabel(tx.fromCurrency)} → ${currencyLabel(tx.toCurrency)}`, label: '' }
   if (tx.type === 'IN')
@@ -63,12 +67,19 @@ function getTxDisplay(tx: Transaction): { name: string; label: string } {
 }
 
 function getTxAmount(tx: Transaction): number {
-  if (tx.type === 'IN') return tx.amount
+  if (tx.type === 'IN' || tx.type === 'IPO_SUBSCRIPTION_CANCEL') return tx.amount
   if (tx.type === 'EXCHANGE') return tx.targetAmount ?? tx.amount
   return -tx.amount
 }
 
-const TYPE_LABEL = { IN: '입금', OUT: '출금', EXCHANGE: '환전', CARD: '체크카드' } as const
+const TYPE_LABEL: Record<Transaction['type'], '입금' | '출금' | '체크카드' | '환전'> = {
+  IN: '입금',
+  OUT: '출금',
+  EXCHANGE: '환전',
+  CARD: '체크카드',
+  IPO_SUBSCRIPTION: '출금',
+  IPO_SUBSCRIPTION_CANCEL: '입금',
+}
 
 function groupByDate(txList: Transaction[]): TxGroup[] {
   const map = new Map<string, TxGroup>()

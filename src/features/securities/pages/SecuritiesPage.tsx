@@ -9,6 +9,7 @@ import { RankingTabBar } from '../components/RankingTabBar'
 import { MarketStatusBadge } from '../components/MarketStatusBadge'
 import { SkeletonList } from '../components/SkeletonList'
 import { TickerLogo } from '../components/TickerLogo'
+import { RankingSection } from '../components/RankingSection'
 import { useMyInvestments } from '../hooks/useMyInvestments'
 import { useSecuritiesProducts } from '../hooks/useSecuritiesProducts'
 import { useMarketIndices } from '../hooks/useMarketIndices'
@@ -63,15 +64,15 @@ function MyHomeTab() {
   }
 
   return (
-    <div className="pb-6">
+    <div className="pb-20">
       {/* 내 투자 요약 */}
       <section className="bg-white px-4 pt-5 pb-5">
         <p className="text-sm text-text-tertiary">내 투자</p>
-        <p className="text-3xl font-bold text-text-primary mt-1">
+        <p className="text-2xl font-bold text-text-primary mt-1">
           ${data?.totalCurrentValueUsd.toLocaleString('en-US')}
         </p>
         <p className={cn('text-sm mt-1', (data?.dayChangeRate ?? 0) >= 0 ? 'text-up' : 'text-down')}>
-          {(data?.dayChangeRate ?? 0) >= 0 ? '+' : ''}{data?.dayChangeUsd.toFixed(2)} (+{data?.dayChangeRate.toFixed(1)}%)
+          {(data?.dayChangeRate ?? 0) >= 0 ? '+' : ''}{(data?.dayChangeUsd ?? 0).toFixed(2)} ({(data?.dayChangeRate ?? 0) >= 0 ? '+' : ''}{(data?.dayChangeRate ?? 0).toFixed(1)}%)
         </p>
         <div className="flex gap-3 mt-3">
           <div className="flex-1 bg-surface rounded-xl px-3 py-2.5">
@@ -175,7 +176,7 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
   const { data: products = [], isLoading } = useSecuritiesProducts(type, sort)
 
   return (
-    <div className="pb-6">
+    <div className="pb-20">
       {/* 마켓 인덱스 카드 */}
       <div className="px-4 py-4 flex gap-3 overflow-x-auto scrollbar-none">
         {indices.map((idx) => (
@@ -183,10 +184,13 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
         ))}
       </div>
 
-      {/* 실시간 차트 + 랭킹 탭 */}
+      {/* 종목 랭킹 */}
+      <RankingSection productType={type} />
+
+      {/* 전체 종목 리스트 */}
       <section className="bg-white mt-2">
         <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-          <p className="text-sm font-bold text-text-primary">실시간 차트</p>
+          <p className="text-sm font-bold text-text-primary">전체 종목</p>
           <MarketStatusBadge />
         </div>
         <RankingTabBar value={sort} onChange={setSort} />

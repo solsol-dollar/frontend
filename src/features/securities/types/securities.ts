@@ -23,8 +23,8 @@ export interface MyHoldingsSummary {
   totalCostUsd: number
   dayChangeUsd: number
   dayChangeRate: number
-  cashUsd: number   // 외화예수금
-  cashKrw: number   // 원화
+  cashUsd: number   // 외화예수금 (청약 홀드 차감 후 사용 가능 잔액)
+  cashKrw: number   // 원화 (cashUsd 기준 환산)
   holdings: HoldingItem[]
 }
 
@@ -155,4 +155,24 @@ export interface TradeOrderResponse {
   qty: number
   estimatedTotalKrw: number
   scheduledAt: string   // "오늘 오후 10시 30분 주문 예정"
+}
+
+// ─── 종목 통계 ────────────────────────────────────────────────
+// SEC-007: GET /api/v1/securities/products/{id}/stats
+export interface ProductStats {
+  ticker: string
+  week52High: number | null
+  week52Low: number | null
+  returns: Record<'1M' | '3M' | '6M' | '1Y', number>  // 수익률(%)
+}
+
+// ─── 종목 랭킹 ────────────────────────────────────────────────
+// SEC-008: GET /api/v1/securities/products/ranking?type=gainer|loser|volume&limit=10
+export interface RankingItem {
+  id: number
+  ticker: string
+  productName: string
+  close: number
+  changeRate: number
+  sign: string
 }

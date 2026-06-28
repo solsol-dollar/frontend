@@ -8,6 +8,8 @@ export function ExchangeCompletePage() {
   const navigate = useNavigate()
   const { state } = useLocation()
   const result: ExchangeResult | undefined = state?.result
+  const returnTo: string | undefined = state?.returnTo
+  const depth: number = state?.depth ?? 0
   const isDollarToWon = result?.toCurrency === 'KRW'
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function ExchangeCompletePage() {
 
       <div className="px-4 pb-10">
         <button
-          onClick={() => navigate('/home', { replace: true })}
+          onClick={() => (depth > 0 ? navigate(-depth) : navigate(returnTo ?? '/home', { replace: true }))}
           className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
         >
           완료

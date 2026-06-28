@@ -22,6 +22,8 @@ export function TransferPage() {
   const sourceName: string = state?.sourceName ?? '내 외화 통장'
   const sourceBalance: string = state?.sourceBalance ?? '$0.00'
   const fixedToAccountId: number | undefined = state?.toAccountId
+  const returnTo: string | undefined = state?.returnTo
+  const depth: number = state?.depth ?? 0
 
   const { data: assets } = useHomeAssets()
 
@@ -32,7 +34,7 @@ export function TransferPage() {
           displayName: 'CMA 계좌',
           accountName: '신한투자증권 CMA 계좌',
           accountNumber: assets.securities.accountNumberMasked,
-          balance: assets.securities.usdBalance,
+          balance: assets.securities.usdAvailableBalance,
         }]
       : []),
     ...(assets?.accounts
@@ -42,7 +44,7 @@ export function TransferPage() {
         displayName: a.accountName,
         accountName: a.accountName,
         accountNumber: a.accountNumberMasked,
-        balance: a.balance,
+        balance: a.availableBalance ?? a.balance,
       })) ?? []),
   ]
 
@@ -165,6 +167,8 @@ export function TransferPage() {
               sourceBalance,
               destBalance: `$${selected!.balance.toFixed(2)}`,
               amount,
+              returnTo,
+              depth: depth + 1,
             },
           })}
           className="w-full bg-primary text-white py-3 font-semibold"

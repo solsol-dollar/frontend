@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, X } from 'lucide-react'
+import { ArrowLeft, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSecuritiesProducts } from '../hooks/useSecuritiesProducts'
 import { TickerLogo } from '../components/TickerLogo'
@@ -22,8 +22,8 @@ export function StockSearchPage() {
     <div className="flex flex-col h-screen bg-white">
       {/* 검색 헤더 */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-        <button onClick={() => navigate(-1)} className="text-text-secondary">
-          <span className="text-xl">←</span>
+        <button onClick={() => navigate(-1)} className="p-1 text-text-secondary">
+          <ArrowLeft size={20} />
         </button>
         <div className="flex-1 flex items-center gap-2 bg-surface-bg rounded-xl px-3 py-2.5">
           <Search size={16} className="text-text-tertiary flex-shrink-0" />
