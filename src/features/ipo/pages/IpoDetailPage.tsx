@@ -132,9 +132,7 @@ function buildChartData(financials: FinancialRow[], useKrw: boolean) {
   const allBarVals = rows.flatMap(r => [r.sales, r.op, r.net])
   const domainMax = Math.max(...allBarVals.filter(v => v > 0), 0.01)
   const domainMin = Math.min(...allBarVals.filter(v => v < 0), 0)
-  const step = domainMax / 2
-  const numNeg = domainMin < 0 ? Math.min(Math.ceil(Math.abs(domainMin) / step), 2) : 0
-  const chartMin = domainMin < 0 ? -numNeg * step : 0
+  const chartMin = domainMin < 0 ? domainMin : 0
   const blank = { year: '', sales: 0, op: 0, net: 0, salesLabel: null, opLabel: null, netLabel: null, salesIsNeg: false, opIsNeg: false, netIsNeg: false, salesNullDown: false, opNullDown: false, netNullDown: false, _groupMax: 0, _domainMax: domainMax, _domainMin: chartMin, _isEmpty: true }
   const padded = rows.map(r => ({ ...r, _domainMax: domainMax, _domainMin: chartMin }))
   while (padded.length < 3) padded.unshift({ ...blank })
