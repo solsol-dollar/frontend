@@ -79,8 +79,8 @@ export function ReturnPlanResultDetailPage() {
         <div className="px-4 py-5 bg-surface-bg">
           <AllocationSplitAccountList
             accounts={ACCOUNTS}
+            ratios={ratios}
             totalAmount={refundAmount}
-            splits={[a, b]}
             bankIconSrc=""
           />
         </div>

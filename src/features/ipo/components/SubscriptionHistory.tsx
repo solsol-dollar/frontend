@@ -17,6 +17,7 @@ import {
   useSubscriptionList,
   useCancelSubscription,
 } from "@/features/ipo/hooks/useSubscriptions";
+import { useReturnPlans } from "@/features/return-plan/hooks/useReturnPlans";
 import {
   subscriptionResultQueryKey,
   fetchSubscriptionResult,
@@ -26,7 +27,7 @@ import type { AllocationResultDetail } from "@/features/ipo/types/allocation";
 import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
 import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
 
-type StatusType = "청약신청" | "취소완료" | "배정완료";
+type StatusType = "청약신청" | "취소완료" | "배정완료" | "상장완료";
 type PeriodMode = "월별" | "기간별";
 type PeriodPreset = "1주일" | "1개월" | "3개월" | "6개월" | "직접설정";
 type TypeFilter = "전체" | "청약신청/취소완료" | "배정완료";
@@ -35,6 +36,7 @@ const STATUS_BADGE: Record<StatusType, string> = {
   청약신청: "border-primary text-primary",
   취소완료: "border-border text-text-secondary",
   배정완료: "border-primary text-primary",
+  상장완료: "border-up text-up",
 };
 
 const QUICK_PRESETS = ["1주일", "1개월", "3개월", "6개월"] as const;
@@ -178,7 +180,7 @@ function ScratchCard({
     const y = (clientY - rect.top) * (SCRATCH_SIZE / rect.height);
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(x, y, 32, 0, Math.PI * 2);
+    ctx.arc(x, y, 20, 0, Math.PI * 2);
     ctx.fill();
 
     // sample every 64 bytes (every 16th pixel) for performance
@@ -187,7 +189,7 @@ function ScratchCard({
     for (let i = 3; i < data.length; i += 64) {
       if (data[i] < 128) cleared++;
     }
-    if (cleared / (data.length / 64) > 0.5) {
+    if (cleared / (data.length / 64) > 0.65) {
       done.current = true;
       ctx.clearRect(0, 0, SCRATCH_SIZE, SCRATCH_SIZE);
       cbRef.current();
@@ -342,8 +344,14 @@ function getCalendarCells(month: Dayjs): (Dayjs | null)[] {
 }
 
 // ─── API 데이터 → 화면 모델 매핑 ───────────────────────────
-function deriveStatus(sub: SubscriptionRes, hasAllocationResult: boolean): StatusType {
+function deriveStatus(
+  sub: SubscriptionRes,
+  hasAllocationResult: boolean,
+  executedSubscriptionIds: Set<number>,
+): StatusType {
   if (sub.subscriptionStatus === "CANCELLED") return "취소완료";
+  if (sub.resultStatus === "DEPOSITED" && executedSubscriptionIds.has(sub.subscriptionId)) return "상장완료";
+  if (sub.resultStatus === "COMPLETED" || sub.resultStatus === "DEPOSITED") return "배정완료";
   if (sub.subscriptionStatus === "CONFIRMED") return "배정완료";
   if (hasAllocationResult) return "배정완료";
   return "청약신청";
@@ -353,12 +361,13 @@ function toSubscription(
   sub: SubscriptionRes,
   result: AllocationResultDetail | undefined,
   allocationResultState?: Subscription["allocationResultState"],
+  executedSubscriptionIds: Set<number> = new Set(),
 ): Subscription {
   const today = dayjs().startOf("day");
   const listingDayReached =
     sub.listingDate != null && !dayjs(sub.listingDate).isAfter(today, "day");
   const hasAllocationResult = sub.subscriptionResultId != null;
-  const status = deriveStatus(sub, hasAllocationResult);
+  const status = deriveStatus(sub, hasAllocationResult, executedSubscriptionIds);
   const offeringPrice =
     sub.confirmedOfferPrice ??
     sub.offerPriceMax ??
@@ -397,7 +406,9 @@ function toSubscription(
     allocationResultState:
       status === "배정완료" && allocationResultState == null
         ? "pending"
-        : allocationResultState,
+        : status === "상장완료" && allocationResultState == null
+          ? "ready"
+          : allocationResultState,
     returnRate,
     returnPositive,
     canCancel:
@@ -452,14 +463,17 @@ export function SubscriptionHistory() {
 
   const { data: listData, isLoading: isListLoading } = useSubscriptionList();
   const { data: assets } = useHomeAssets();
+  const { data: returnPlans } = useReturnPlans();
   const cancelSubscription = useCancelSubscription();
+  const executedSubscriptionIds = new Set(
+    returnPlans?.filter((p) => p.planStatus === "EXECUTED").map((p) => p.subscriptionId) ?? []
+  );
   const rawSubscriptions = listData?.data.subscriptions ?? [];
   const accountNumberMasked = assets?.securities.accountNumberMasked ?? "-";
 
   const pendingItems = rawSubscriptions.filter(
     (s) =>
-      s.subscriptionStatus !== "CANCELLED" &&
-      s.subscriptionResultId != null,
+      s.subscriptionStatus !== "CANCELLED" && s.subscriptionResultId != null,
   );
 
   const resultQueries = useQueries({
@@ -470,7 +484,10 @@ export function SubscriptionHistory() {
   });
 
   const resultMap = new Map<number, AllocationResultDetail>();
-  const resultStateMap = new Map<number, Subscription["allocationResultState"]>();
+  const resultStateMap = new Map<
+    number,
+    Subscription["allocationResultState"]
+  >();
   pendingItems.forEach((s, i) => {
     const query = resultQueries[i];
     const data = query?.data;
@@ -486,6 +503,7 @@ export function SubscriptionHistory() {
       sub,
       resultMap.get(sub.subscriptionId),
       resultStateMap.get(sub.subscriptionId),
+      executedSubscriptionIds,
     ),
   );
 
@@ -528,7 +546,14 @@ export function SubscriptionHistory() {
 
   // 배정결과 스크래치
   const [scratchTarget, setScratchTarget] = useState<number | null>(null);
-  const [confirmedIds, setConfirmedIds] = useState<Set<number>>(new Set());
+  const [confirmedIds, setConfirmedIds] = useState<Set<number>>(() => {
+    try {
+      const saved = localStorage.getItem("scratched_subscription_ids");
+      return saved ? new Set(JSON.parse(saved) as number[]) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   const [showConfetti, setShowConfetti] = useState(false);
   const scratchItem = SUBSCRIPTIONS.find((s) => s.id === scratchTarget);
 
@@ -601,7 +626,16 @@ export function SubscriptionHistory() {
 
   function confirmScratch() {
     if (scratchTarget != null) {
-      setConfirmedIds((prev) => new Set([...prev, scratchTarget]));
+      setConfirmedIds((prev) => {
+        const next = new Set([...prev, scratchTarget]);
+        try {
+          localStorage.setItem(
+            "scratched_subscription_ids",
+            JSON.stringify([...next]),
+          );
+        } catch {}
+        return next;
+      });
     }
     setScratchTarget(null);
   }
@@ -660,11 +694,11 @@ export function SubscriptionHistory() {
                 ? "조회 실패"
                 : sub.allocationResultState === "pending"
                   ? "결과 준비 중..."
-                : sub.allocationResultState !== "ready"
-                  ? "불러오는 중..."
-                  : isRevealed
-                    ? `${sub.allocatedQty ?? 0}주`
-                    : "??";
+                  : sub.allocationResultState !== "ready"
+                    ? "불러오는 중..."
+                    : isRevealed
+                      ? `${sub.allocatedQty ?? 0}주`
+                      : "??";
             return (
               <div
                 key={sub.id}
@@ -679,50 +713,76 @@ export function SubscriptionHistory() {
                       ticker={sub.ticker}
                       status={sub.status}
                       statusClassName={STATUS_BADGE[sub.status]}
-                      secondaryText={sub.returnRate}
+                      secondaryText={sub.status !== "상장완료" ? sub.returnRate : undefined}
                       secondaryClassName={
                         sub.returnPositive ? "text-up" : "text-down"
                       }
                       align="start"
                       size="sm"
                     />
+                    {sub.status === "상장완료" && sub.returnRate && (
+                      <div className="flex justify-end mt-1">
+                        <span className={`text-sm font-bold ${sub.returnPositive ? "text-up" : "text-down"}`}>
+                          {sub.returnRate}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2 pl-[52px]">
-                    <InfoRow label="청약신청금액" value={sub.amount} />
-                    <InfoRow
-                      label="청약대행증거금"
-                      value={sub.agencyDeposit}
-                      small
-                    />
-                    {sub.status === "배정완료" ? (
+                    {sub.status === "상장완료" ? (
                       <>
-                        <InfoRow label="청약일자" value={sub.date} />
+                        <InfoRow label="청약신청금액" value={sub.amount} />
                         {sub.offeringPrice != null && (
                           <InfoRow
                             label="공모가"
                             value={`USD ${sub.offeringPrice.toFixed(2)}`}
                           />
                         )}
+                        <InfoRow label="현재가" value={sub.currentPrice ?? "-"} />
                         <InfoRow
                           label="배정주식 수"
-                          value={allocationQtyText}
+                          value={`${sub.allocatedQty ?? 0}주`}
                         />
                       </>
                     ) : (
                       <>
-                        <InfoRow label="청약일자" value={sub.date} />
-                        {sub.offeringPrice != null && (
-                          <InfoRow
-                            label="공모(예정)가"
-                            value={`USD ${sub.offeringPrice.toFixed(2)}`}
-                          />
-                        )}
-                        {sub.listingDate && (
-                          <InfoRow
-                            label="상장(예정)일"
-                            value={sub.listingDate}
-                          />
+                        <InfoRow label="청약신청금액" value={sub.amount} />
+                        <InfoRow
+                          label="청약대행증거금"
+                          value={sub.agencyDeposit}
+                          small
+                        />
+                        {sub.status === "배정완료" ? (
+                          <>
+                            <InfoRow label="청약일자" value={sub.date} />
+                            {sub.offeringPrice != null && (
+                              <InfoRow
+                                label="공모가"
+                                value={`USD ${sub.offeringPrice.toFixed(2)}`}
+                              />
+                            )}
+                            <InfoRow
+                              label="배정주식 수"
+                              value={allocationQtyText}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <InfoRow label="청약일자" value={sub.date} />
+                            {sub.offeringPrice != null && (
+                              <InfoRow
+                                label="공모(예정)가"
+                                value={`USD ${sub.offeringPrice.toFixed(2)}`}
+                              />
+                            )}
+                            {sub.listingDate && (
+                              <InfoRow
+                                label="상장(예정)일"
+                                value={sub.listingDate}
+                              />
+                            )}
+                          </>
                         )}
                       </>
                     )}
@@ -741,6 +801,7 @@ export function SubscriptionHistory() {
                   </div>
                 )}
 
+
                 {sub.status === "배정완료" && (
                   <div className="px-4 pb-4 flex gap-2">
                     {!isRevealed ? (
@@ -753,9 +814,9 @@ export function SubscriptionHistory() {
                           ? "결과 조회 실패"
                           : sub.allocationResultState === "pending"
                             ? "결과 준비 중..."
-                          : sub.allocationResultState === "ready"
-                            ? "배정결과 보기"
-                            : "결과 불러오는 중..."}
+                            : sub.allocationResultState === "ready"
+                              ? "배정결과 보기"
+                              : "결과 불러오는 중..."}
                       </button>
                     ) : (
                       <button

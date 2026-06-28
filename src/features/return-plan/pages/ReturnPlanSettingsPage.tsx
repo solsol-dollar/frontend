@@ -8,7 +8,9 @@ import {
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
 import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
 import { useExecuteImmediateAllocation } from "../hooks/useExecuteImmediateAllocation";
-import { splitsToAllocationItems } from "../utils/allocationMapper";
+import { ratiosToAllocationItems } from "../utils/allocationMapper";
+
+const DEST_TYPES = ["SECURITIES", "SAVINGS", "DEPOSIT"] as const;
 
 const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
   {
@@ -34,7 +36,7 @@ const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
 
 export function ReturnPlanSettingsPage() {
   const navigate = useNavigate();
-  const [splits, setSplits] = useState<[number, number]>([40, 80]);
+  const [ratios, setRatios] = useState<number[]>([40, 40, 20]);
   const [done, setDone] = useState(false);
 
   const { data: homeAssets } = useHomeAssets();
@@ -45,7 +47,7 @@ export function ReturnPlanSettingsPage() {
   const handleConfirm = async () => {
     if (execute.isPending) return;
 
-    const allocations = splitsToAllocationItems(splits);
+    const allocations = ratiosToAllocationItems([...DEST_TYPES], ratios);
     try {
       await execute.mutateAsync(allocations);
       setDone(true);
@@ -67,12 +69,18 @@ export function ReturnPlanSettingsPage() {
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
           <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <path d="M5 13l4 4L19 7" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M5 13l4 4L19 7"
+                stroke="#22c55e"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
           <p className="text-xl font-bold text-text-primary">분배 완료!</p>
           <p className="text-sm text-text-tertiary">
-            예수금이 설정한 비율대로 즉시 분배되었어요.
+            예수금이 설정한 비율대로 분배되었어요.
           </p>
           <button
             onClick={() => navigate("/return-plan")}
@@ -102,7 +110,8 @@ export function ReturnPlanSettingsPage() {
               <>
                 증권 예수금{" "}
                 <span className="text-primary font-semibold">
-                  ${availableBalance.toLocaleString("en-US", {
+                  $
+                  {availableBalance.toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -114,9 +123,10 @@ export function ReturnPlanSettingsPage() {
             )
           }
           accounts={ACCOUNTS}
+          lockedAccounts={[]}
           totalAmount={availableBalance}
-          splits={splits}
-          onSplitsChange={setSplits}
+          ratios={ratios}
+          onRatiosChange={setRatios}
           bankIconSrc={solBankIcon}
         />
       </div>

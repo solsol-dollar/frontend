@@ -14,6 +14,7 @@ import { useUpdateReturnPlanRatios } from "../hooks/useUpdateReturnPlanRatios";
 import {
   allocationItemsToSplits,
   splitsToAllocationItems,
+  ratiosToAllocationItems,
 } from "../utils/allocationMapper";
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
 
@@ -78,7 +79,7 @@ export function ReturnPlanPendingPage() {
       return;
     }
     try {
-      await updateRatios.mutateAsync({ returnPlanId, allocations: splitsToAllocationItems(splits) });
+      await updateRatios.mutateAsync({ returnPlanId, allocations: ratiosToAllocationItems(['SECURITIES', 'SAVINGS', 'DEPOSIT'], ratios) });
       setIsEditing(false);
     } catch (e) {
       // TODO: 에러 토스트 처리
@@ -225,9 +226,10 @@ export function ReturnPlanPendingPage() {
           <ReturnPlanAllocationSection
             description="설정하신 리턴플랜을 수정하실 수 있어요!"
             accounts={ACCOUNTS}
+            lockedAccounts={[]}
             totalAmount={refundAmount}
-            splits={splits}
-            onSplitsChange={setSplits}
+            ratios={ratios}
+            onRatiosChange={(r) => setSplits([r[0] ?? 0, (r[0] ?? 0) + (r[1] ?? 0)])}
             bankIconSrc={solBankIcon}
           />
         )}
