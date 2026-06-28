@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Layout } from '@/components/common/Layout'
 
 // Onboarding
+import { LoginPage } from '@/features/onboarding/pages/LoginPage'
 import { OnboardingPage } from '@/features/onboarding/pages/OnboardingPage'
 
 // Home
@@ -54,7 +55,11 @@ import { NotificationSettingsPage } from '@/features/mypage/pages/NotificationSe
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/onboarding" replace />,
+    element: <Navigate to="/login" replace />,
+  },
+  {
+    path: '/login',
+    element: <LoginPage />,
   },
   {
     path: '/onboarding',
