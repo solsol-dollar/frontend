@@ -34,7 +34,7 @@ export function SleepingDollarPage() {
       <div className="flex-1 overflow-y-auto flex flex-col">
         <div className="bg-white px-5 pt-8 pb-6 flex flex-col gap-5">
           <div className="flex flex-col items-center text-center gap-4">
-            <div className="w-24 h-24 rounded-full bg-surface-light flex items-center justify-center">
+            <div className="bg-blue-100 p-6 rounded-full flex items-center justify-center mb-2">
               <img src={sleepingIcon} alt="쉬는 달러" className="w-12 h-12" />
             </div>
             <div>

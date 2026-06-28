@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useCreateDepositAccount, useIssueCard } from '@/features/mypage/hooks/useMyPage'
-import shinhanLogo from '@/assets/home/shinhan-logo.svg'
+import solBankIcon from '@/assets/common/sol-bank-icon.svg'
+import changeupCard from '@/assets/home/changeup-card.png'
 import checkIcon from '@/assets/home/check.svg'
 
 interface ProductInfo {
@@ -91,9 +92,15 @@ export function ProductDetailPage() {
       </header>
 
       <div className="flex-1 px-5 pt-2 flex flex-col">
-        <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-6">
-          <img src={shinhanLogo} className="w-9 h-9 object-contain" alt="" />
-        </div>
+        {product.type === 'CARD' ? (
+          <div className="w-16 h-16 flex items-center justify-center mb-6">
+            <img src={changeupCard} className="w-10 h-14 object-contain" alt="" />
+          </div>
+        ) : (
+          <div className="w-16 h-16 flex items-center justify-center mb-6">
+            <img src={solBankIcon} className="w-16 h-16 object-contain" alt="" />
+          </div>
+        )}
 
         <h1 className="text-2xl font-bold text-text-primary leading-snug whitespace-pre-line mb-6">
           {product.name}

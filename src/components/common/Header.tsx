@@ -1,5 +1,6 @@
 import { Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import solCharacter from '@/assets/common/쏠.png'
 
 interface HeaderProps {
   title?: string
@@ -95,9 +96,9 @@ export function Header({
         {showMypage && (
           <button
             onClick={() => navigate('/mypage')}
-            className="w-8 h-8 rounded-full bg-primary flex items-center justify-center"
+            className="w-8 h-8 rounded-full bg-primary flex items-center justify-center overflow-hidden"
           >
-            <span className="text-white text-xs font-bold">MY</span>
+            <img src={solCharacter} alt="마이페이지" className="w-7 h-7 object-contain translate-y-0.5" />
           </button>
         )}
       </div>
