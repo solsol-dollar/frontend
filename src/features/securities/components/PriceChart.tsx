@@ -346,14 +346,36 @@ export function PriceChart({ productId, period, realtime = false, className }: P
   return (
     <div className={cn('flex flex-col', className)}>
 
-      {/* OHLC 행 — crosshair 움직임에 따라 DOM 직접 업데이트 */}
-      {detailed && (
-        <div className="flex gap-3 mb-1.5 text-[11px] text-text-tertiary">
-          <span>시 <span ref={ohlcOpenRef} className="text-text-secondary font-medium">—</span></span>
-          <span className="text-up">고 <span ref={ohlcHighRef} className="font-medium">—</span></span>
-          <span className="text-down">저 <span ref={ohlcLowRef} className="font-medium">—</span></span>
-        </div>
-      )}
+      {/* 상단: 자세한 차트 토글 (좌) + OHLC (우) */}
+      <div className="flex items-center justify-between mb-1.5">
+        <button
+          onClick={() => setDetailed((v) => !v)}
+          className="flex items-center gap-1.5"
+        >
+          <span className={cn(
+            'w-4 h-4 rounded-full flex items-center justify-center transition-colors',
+            detailed ? 'bg-primary' : 'border border-border bg-white',
+          )}>
+            {detailed && (
+              <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </span>
+          <span className={cn('text-xs font-medium', detailed ? 'text-primary' : 'text-text-tertiary')}>
+            자세한 차트
+          </span>
+        </button>
+
+        {/* OHLC — crosshair 움직임에 따라 DOM 직접 업데이트 */}
+        {detailed && (
+          <div className="flex gap-3 text-[11px] text-text-tertiary">
+            <span>시 <span ref={ohlcOpenRef} className="text-text-secondary font-medium">—</span></span>
+            <span className="text-up">고 <span ref={ohlcHighRef} className="font-medium">—</span></span>
+            <span className="text-down">저 <span ref={ohlcLowRef} className="font-medium">—</span></span>
+          </div>
+        )}
+      </div>
 
       {/* 차트 캔버스 */}
       <div
@@ -369,39 +391,18 @@ export function PriceChart({ productId, period, realtime = false, className }: P
       )}
       */}
 
-      {detailed ? (
-        <div className="mt-2 space-y-1.5">
-          {/* MA 범례 — 일봉 한정 */}
-          {period === '1D' && (
-            <div className="flex gap-3">
-              {MA_CONFIGS.map(([, color, label]) => (
-                <span key={label} className="flex items-center gap-1 text-[10px] text-text-tertiary">
-                  <span style={{ color, fontSize: 9 }}>■</span>{label}
-                </span>
-              ))}
-              <span className="flex items-center gap-1 text-[10px] text-text-tertiary ml-1">
-                <span style={{ fontSize: 9 }}>▐</span>거래량
-              </span>
-            </div>
-          )}
-
-          {/* 간단히 보기 */}
-          <div className="flex justify-end">
-            <button
-              onClick={() => setDetailed(false)}
-              className="text-xs text-text-tertiary underline underline-offset-2"
-            >
-              간단히 보기
-            </button>
-          </div>
+      {/* MA 범례 — 자세히 보기 + 일봉 한정 */}
+      {detailed && period === '1D' && (
+        <div className="flex gap-3 mt-1.5">
+          {MA_CONFIGS.map(([, color, label]) => (
+            <span key={label} className="flex items-center gap-1 text-[10px] text-text-tertiary">
+              <span style={{ color, fontSize: 9 }}>■</span>{label}
+            </span>
+          ))}
+          <span className="flex items-center gap-1 text-[10px] text-text-tertiary ml-1">
+            <span style={{ fontSize: 9 }}>▐</span>거래량
+          </span>
         </div>
-      ) : (
-        <button
-          onClick={() => setDetailed(true)}
-          className="mt-2 text-xs text-text-tertiary underline underline-offset-2 self-end"
-        >
-          자세히 보기
-        </button>
       )}
     </div>
   )

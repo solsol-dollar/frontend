@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 
 interface Props {
   ticker: string
@@ -17,14 +18,17 @@ export function TickerLogo({ ticker, size = 'md', className }: Props) {
       <img
         src={`https://financialmodelingprep.com/image-stock/${ticker}.png`}
         alt={ticker}
-        className={cn(dim, 'rounded-full object-cover flex-shrink-0', className)}
+        className={cn(dim, 'rounded-full object-cover flex-shrink-0 ring-1 ring-black/10', className)}
         onError={() => setFailed(true)}
       />
     )
   }
 
   return (
-    <div className={cn(dim, 'rounded-full bg-primary flex items-center justify-center flex-shrink-0', className)}>
+    <div
+      className={cn(dim, 'rounded-full flex items-center justify-center flex-shrink-0', className)}
+      style={{ backgroundColor: generateLogoColor(ticker) }}
+    >
       <span className={cn('text-white font-bold', text)}>{ticker.slice(0, 2)}</span>
     </div>
   )

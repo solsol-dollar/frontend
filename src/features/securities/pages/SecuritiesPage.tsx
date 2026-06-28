@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Header } from '@/components/common/Header'
 import { MarketIndexCard } from '../components/MarketIndexCard'
 import { StockListItem } from '../components/StockListItem'
 import { RankingTabBar } from '../components/RankingTabBar'
@@ -27,10 +26,9 @@ function MyHomeTab() {
   const holdings: HoldingItem[] = data?.holdings ?? []
   const stocks = holdings.filter((h) => h.productType === 'OVERSEAS')
   const etfs = holdings.filter((h) => h.productType === 'ETF')
-  const totalValue = data?.totalCurrentValueUsd ?? 1
+
 
   const HoldingRow = ({ h }: { item?: undefined; h: HoldingItem }) => {
-    const ratio = totalValue > 0 ? (h.currentValueUsd / totalValue) * 100 : 0
     const value = priceMode === 'current'
       ? `${currencyMode === 'usd' ? '$' + h.currentValueUsd.toFixed(2) : h.currentValueUsd.toFixed(0) + '원'}`
       : `${currencyMode === 'usd' ? '$' + h.avgPriceUsd.toFixed(2) : Math.round(h.avgPriceUsd).toLocaleString() + '원'}`
@@ -43,21 +41,10 @@ function MyHomeTab() {
         <TickerLogo ticker={h.ticker} size="md" className="w-10 h-10" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-text-primary">{h.productName}</p>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <div className="flex-1 h-1 bg-border rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full"
-                style={{ width: `${Math.min(ratio, 100).toFixed(1)}%` }}
-              />
-            </div>
-            <span className="text-[10px] text-text-tertiary flex-shrink-0">{ratio.toFixed(0)}%</span>
-          </div>
+          <p className="text-xs text-text-tertiary mt-0.5">{h.ticker}</p>
         </div>
         <div className="text-right">
           <p className="text-sm font-bold text-text-primary">{value}</p>
-          <p className={cn('text-xs', h.dayChangeRate >= 0 ? 'text-up' : 'text-down')}>
-            {h.dayChangeRate >= 0 ? '+' : ''}{h.dayChangeUsd.toFixed(2)} ({h.dayChangeRate >= 0 ? '+' : ''}{h.dayChangeRate.toFixed(1)}%)
-          </p>
         </div>
       </button>
     )
@@ -75,13 +62,13 @@ function MyHomeTab() {
           {(data?.dayChangeRate ?? 0) >= 0 ? '+' : ''}{(data?.dayChangeUsd ?? 0).toFixed(2)} ({(data?.dayChangeRate ?? 0) >= 0 ? '+' : ''}{(data?.dayChangeRate ?? 0).toFixed(1)}%)
         </p>
         <div className="flex gap-3 mt-3">
-          <div className="flex-1 bg-surface rounded-xl px-3 py-2.5">
+          <div className="flex-1 bg-surface-bg rounded-2xl px-3 py-4">
             <p className="text-xs text-text-tertiary">달러</p>
-            <p className="text-sm font-semibold text-text-primary mt-0.5">${data?.cashUsd.toLocaleString('en-US')}</p>
+            <p className="text-sm font-semibold text-text-primary mt-1">${data?.cashUsd.toLocaleString('en-US')}</p>
           </div>
-          <div className="flex-1 bg-surface rounded-xl px-3 py-2.5">
+          <div className="flex-1 bg-surface-bg rounded-2xl px-3 py-4">
             <p className="text-xs text-text-tertiary">원화</p>
-            <p className="text-sm font-semibold text-text-primary mt-0.5">{data?.cashKrw.toLocaleString()}원</p>
+            <p className="text-sm font-semibold text-text-primary mt-1">{data?.cashKrw.toLocaleString()}원</p>
           </div>
         </div>
       </section>
@@ -178,11 +165,13 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
   return (
     <div className="pb-20">
       {/* 마켓 인덱스 카드 */}
-      <div className="px-4 py-4 flex gap-3 overflow-x-auto scrollbar-none">
-        {indices.map((idx) => (
-          <MarketIndexCard key={idx.name} index={idx} />
-        ))}
-      </div>
+      {indices.length > 0 && (
+        <div className="px-4 py-4 flex gap-3 overflow-x-auto scrollbar-none">
+          {indices.map((idx) => (
+            <MarketIndexCard key={idx.name} index={idx} />
+          ))}
+        </div>
+      )}
 
       {/* 종목 랭킹 */}
       <RankingSection productType={type} />
@@ -219,35 +208,43 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
 }
 
 // ─── SecuritiesPage ───────────────────────────────────────────
+const VALID_TABS: Tab[] = ['MY홈', '해외', 'ETF']
+
 export function SecuritiesPage() {
   const navigate = useNavigate()
-  const [tab, setTab] = useState<Tab>('MY홈')
-  const tabs: Tab[] = ['MY홈', '해외', 'ETF']
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawTab = searchParams.get('tab') as Tab | null
+  const tab: Tab = rawTab && VALID_TABS.includes(rawTab) ? rawTab : 'MY홈'
+
+  const setTab = (t: Tab) => setSearchParams({ tab: t }, { replace: true })
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-surface-bg">
-      <Header
-        showNotification
-        showMypage={false}
-        showSearch
-        onSearchClick={() => navigate('/securities/search')}
-      />
-
-      {/* 탭 바 */}
-      <div className="flex bg-white border-b border-border flex-shrink-0">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              'flex-1 py-3 text-sm font-medium border-b-2 transition-colors',
-              tab === t ? 'border-primary text-text-primary' : 'border-transparent text-text-tertiary',
-            )}
-          >
-            {t}
+      {/* 헤더 + 탭 통합 */}
+      <header className="sticky top-0 z-10 bg-white border-b border-border flex items-center justify-between px-4 h-14 flex-shrink-0">
+        <div className="flex items-center gap-5">
+          {VALID_TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                'text-[17px] transition-colors',
+                tab === t ? 'font-bold text-text-primary' : 'font-medium text-text-tertiary',
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate('/notifications')}>
+            <img src="/icons/Bell.svg" width={25} height={25} alt="" />
           </button>
-        ))}
-      </div>
+          <button onClick={() => navigate('/securities/search')}>
+            <img src="/icons/search.svg" width={19} height={19} alt="" />
+          </button>
+        </div>
+      </header>
 
       <div className="flex-1 overflow-y-auto">
         {tab === 'MY홈' && <MyHomeTab />}
