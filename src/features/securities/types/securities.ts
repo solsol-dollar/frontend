@@ -12,7 +12,8 @@ export interface HoldingItem {
   productType: 'OVERSEAS' | 'ETF'
   qty: number
   avgPriceUsd: number
-  currentValueUsd: number
+  currentValueUsd: number | null  // null = 현재가 미수신
+  hasPrice: boolean
   dayChangeUsd: number
   dayChangeRate: number
 }
@@ -21,6 +22,7 @@ export interface HoldingItem {
 export interface MyHoldingsSummary {
   totalCurrentValueUsd: number
   totalCostUsd: number
+  hasPriceData: boolean
   dayChangeUsd: number
   dayChangeRate: number
   cashUsd: number   // 외화예수금 (청약 홀드 차감 후 사용 가능 잔액)

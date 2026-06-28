@@ -32,7 +32,7 @@ export function RankingSection({ productType }: Props) {
                 <button
                   key={item.id}
                   onClick={() => navigate(`/securities/stocks/${item.id}`)}
-                  className="flex-shrink-0 w-[108px] bg-surface rounded-2xl p-3 text-left active:opacity-70 transition-opacity"
+                  className="flex-shrink-0 w-[108px] bg-surface-bg rounded-2xl p-3 text-left active:opacity-70 transition-opacity"
                 >
                   <div className="flex items-center justify-between mb-2.5">
                     <span className="text-[10px] text-text-tertiary font-medium">{RANK_BADGE[i]}</span>
