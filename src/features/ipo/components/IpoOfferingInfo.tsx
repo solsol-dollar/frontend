@@ -34,11 +34,11 @@ export function IpoOfferingInfo({
     <>
       <style>{`
         @keyframes milestone-pulse {
-          0% { box-shadow: 0 0 0 0 rgba(115, 103, 219, 0.5); }
-          70% { box-shadow: 0 0 0 6px rgba(115, 103, 219, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(115, 103, 219, 0); }
+          0% { box-shadow: 0 0 0 0 rgba(9, 34, 172, 0.6); }
+          70% { box-shadow: 0 0 0 8px rgba(9, 34, 172, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(9, 34, 172, 0); }
         }
-        .milestone-pulse { animation: milestone-pulse 2s ease-out infinite; }
+        .milestone-pulse { animation: milestone-pulse 1.6s ease-out infinite; }
       `}</style>
       <div className="space-y-[14px]">
         <div className="flex items-center">
@@ -60,7 +60,7 @@ export function IpoOfferingInfo({
                 <div className="flex flex-col items-center">
                   <div
                     className={cn(
-                      'w-2 h-2 rounded-full flex-shrink-0 mt-[7px]',
+                      'w-[9px] h-[9px] rounded-full flex-shrink-0 mt-[6px]',
                       activeFlags[i] ? 'bg-primary' : 'bg-text-tertiary',
                       i === pulseIndex && 'milestone-pulse',
                     )}

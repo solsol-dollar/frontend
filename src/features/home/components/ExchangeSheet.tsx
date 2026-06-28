@@ -6,14 +6,15 @@ import wonIcon from '@/assets/home/wonIconBlue.svg';
 interface Props {
   open: boolean
   onClose: () => void
+  returnTo?: string
 }
 
-export function ExchangeSheet({ open, onClose }: Props) {
+export function ExchangeSheet({ open, onClose, returnTo }: Props) {
   const navigate = useNavigate()
 
   const handleSelect = (direction: 'dollar-to-won' | 'won-to-dollar') => {
     onClose()
-    navigate('/home/exchange', { state: { direction } })
+    navigate('/home/exchange', { state: { direction, returnTo, depth: returnTo ? 1 : 0 } })
   }
 
   return (

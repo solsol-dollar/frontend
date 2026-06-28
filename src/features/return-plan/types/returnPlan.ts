@@ -17,20 +17,15 @@ export interface ReturnPlanResponse {
   returnPlanId: number
   subscriptionId: number
   totalRefundAmount: number
-  /** 환불금의 출처 IPO (화면 표시용 보강 필드, 명세 외 추가) */
   sourceTicker: string
   sourceCompanyName: string
   refundDate: string | null
+  subscriptionAmount: number | null
+  allocationRate: number | null
+  allocatedAmount: number | null
   nextIpoInfo: NextIpoInfo | null
   savingsRate: number | null
   allocations: AllocationItem[]
-}
-
-// RP-003: PUT /api/v1/return-plans/{id}/confirm
-export interface ReturnPlanConfirmResponse {
-  returnPlanId: number
-  confirmedAt: string
-  planStatus: 'DRAFT' | 'CONFIRMED' | 'EXECUTED'
 }
 
 // RP-004: GET /api/v1/return-plans
@@ -38,10 +33,39 @@ export interface ReturnPlanListItem {
   returnPlanId: number
   subscriptionId: number
   totalRefundAmount: number
-  planStatus: 'DRAFT' | 'CONFIRMED' | 'EXECUTED'
-  confirmedAt: string | null
-  /** 화면 표시용 보강 필드 (명세 외 추가) */
+  planStatus: 'DRAFT' | 'EXECUTED'
   sourceTicker: string
   sourceCompanyName: string
   refundDate: string | null
+}
+
+// RP-007: GET /api/v1/return-plans/summary
+export interface ReturnPlanSummaryResponse {
+  totalPlanCount: number
+  executedPlanCount: number
+  totalRefundAmount: number
+  securitiesAmount: number
+  savingsAmount: number
+  accountAmount: number
+  nextIpoInfo: NextIpoInfo | null
+}
+
+// RP-005: GET /api/v1/return-plans/presets
+export interface ReturnPlanPresetResponse {
+  presetCode: string
+  presetName: string
+  securitiesRatio: number
+  savingsRatio: number
+  accountRatio: number
+  description: string
+}
+
+// RP-008: POST /api/v1/return-plans/immediate
+export interface ImmediateAllocationResponse {
+  totalAmount: number
+  allocations: {
+    destinationType: DestinationType
+    ratio: number
+    amount: number
+  }[]
 }

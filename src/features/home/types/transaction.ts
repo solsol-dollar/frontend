@@ -4,6 +4,7 @@ export interface TxItem {
   label: string
   time: string
   amount: number
+  currency: string
   balance?: number
   type: '입금' | '출금' | '체크카드' | '환전'
 }

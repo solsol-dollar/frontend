@@ -6,10 +6,11 @@ export const subscriptionKeys = {
   list: (params?: SubscriptionListParams) => [...subscriptionKeys.all, 'list', params] as const,
 }
 
-export function useSubscriptionList(params?: SubscriptionListParams) {
+export function useSubscriptionList(params?: SubscriptionListParams, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: subscriptionKeys.list(params),
     queryFn: () => subscriptionApi.getList(params),
+    enabled: options?.enabled ?? true,
   })
 }
 

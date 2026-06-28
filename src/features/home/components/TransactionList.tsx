@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react'
-import { SolBankLogo } from './SolBankLogo'
+import { cn } from '@/lib/utils'
 import type { TxItem, TxGroup } from '@/features/home/types/transaction'
 
 export type { TxItem, TxGroup }
@@ -14,55 +14,47 @@ interface Props {
 export function TransactionList({ groups, showFilter, filter, onFilterClick }: Props) {
   return (
     <>
+      {showFilter && (
+        <div className="flex items-center px-5 pt-6 pb-6">
+          <button onClick={onFilterClick} className="flex items-center gap-0.5 text-sm text-text-sub">
+            <span>{filter}</span>
+            <ChevronDown size={14} />
+          </button>
+        </div>
+      )}
       {groups.length === 0 ? (
-        <>
-          {showFilter && (
-            <div className="flex items-center justify-end px-5 py-5">
-              <button onClick={onFilterClick} className="flex items-center gap-0.5 text-sm text-text-sub">
-                <span>{filter}</span>
-                <ChevronDown size={14} />
-              </button>
-            </div>
-          )}
-          <div className={`flex flex-col items-center justify-center pb-20 ${showFilter ? 'pt-8' : 'pt-20'}`}>
-            <p className="text-sm text-text-tertiary">거래 내역이 없어요</p>
-          </div>
-        </>
+        <div className={`flex flex-col items-center justify-center pb-20 ${showFilter ? 'pt-8' : 'pt-20'}`}>
+          <p className="text-sm text-text-tertiary">거래 내역이 없어요</p>
+        </div>
       ) : (
-        <div className="pb-6">
-          {groups.map((group, gi) => (
-            <div key={group.date}>
-              <div className="flex items-center justify-between px-5 py-5">
-                <span className="text-sm font-light text-text-sub">{group.date}</span>
-                {showFilter && gi === 0 && (
-                  <button onClick={onFilterClick} className="flex items-center gap-0.5 text-sm text-text-sub">
-                    <span>{filter}</span>
-                    <ChevronDown size={14} />
-                  </button>
-                )}
-              </div>
-              {group.items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 px-5 py-3">
-                  <SolBankLogo />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary flex items-center min-w-0">
-                      <span className="truncate">{item.name}</span>
-                      {item.label && <span className="flex-shrink-0">{item.label}</span>}
+        <div className={cn('pb-6', !showFilter && 'pt-6')}>
+          {groups.flatMap((group) =>
+            group.items.map((item, idx) => (
+              <div key={item.id} className="flex items-start gap-3 px-5 py-2.5">
+                <span className="w-9 text-xs text-text-tertiary pt-0.5 flex-shrink-0">
+                  {idx === 0 ? group.date : ''}
+                </span>
+                <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-text-primary truncate">
+                      {item.name}{item.label ? ` ${item.label}` : ''}
                     </p>
                     <p className="text-xs text-text-tertiary">{item.time}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-text-primary">
-                      {item.amount > 0 ? '+' : '-'}$ {Math.abs(item.amount).toFixed(2)}
+                  <div className="text-right flex-shrink-0">
+                    <p className={cn('text-sm font-semibold', item.amount > 0 ? 'text-primary' : 'text-text-primary')}>
+                      {item.currency === 'KRW'
+                        ? `${item.amount > 0 ? '+' : ''}${item.amount.toLocaleString('ko-KR')}원`
+                        : `${item.amount > 0 ? '+' : ''}$${item.amount.toFixed(2)}`}
                     </p>
                     {item.balance !== undefined && (
                       <p className="text-xs text-text-tertiary">${item.balance.toFixed(2)}</p>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          ))}
+              </div>
+            ))
+          )}
         </div>
       )}
     </>

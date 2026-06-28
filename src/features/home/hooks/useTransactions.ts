@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { ledgerApi } from '@/lib/axios'
 import type { TxGroup } from '@/features/home/types/transaction'
 
@@ -26,7 +26,9 @@ interface Transaction {
   currency: string
   status: string
   executedAt: string
-  description?: string
+
+  description: string | null
+
   fromAccount: AccountRef | null
   toAccount: AccountRef | null
   fromCurrency: string | null
@@ -38,7 +40,7 @@ interface Transaction {
 
 function formatDate(iso: string): string {
   const d = new Date(iso)
-  return `${d.getMonth() + 1}월 ${d.getDate()}일`
+  return `${d.getMonth() + 1}.${d.getDate()}`
 }
 
 function formatTime(iso: string): string {
@@ -60,7 +62,7 @@ function getTxDisplay(tx: Transaction): { name: string; label: string } {
   if (tx.type === 'IN')
     return { name: tx.fromAccount?.accountName ?? '', label: '에서 입금' }
   if (tx.type === 'CARD')
-    return { name: tx.fromAccount?.accountName ?? '', label: ' 카드결제' }
+    return { name: tx.description ?? '', label: '결제' }
   return { name: tx.toAccount?.accountName ?? '', label: '로 출금' }
 }
 
@@ -92,25 +94,41 @@ function groupByDate(txList: Transaction[]): TxGroup[] {
       label,
       time: formatTime(tx.executedAt),
       amount: getTxAmount(tx),
+      currency: tx.type === 'EXCHANGE' ? (tx.toCurrency ?? tx.currency) : tx.currency,
       type: TYPE_LABEL[tx.type],
     })
   }
   return Array.from(map.values())
 }
 
+interface PageResponse {
+  items: Transaction[]
+  page: number
+  size: number
+  hasNext: boolean
+}
+
 export function useTransactions(accountIds: number[], filter: ApiFilter) {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: ['transactions', accountIds, filter],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams()
       accountIds.forEach((id) => params.append('accountId', String(id)))
       if (filter !== 'ALL') params.set('filter', filter)
-      const res = (await ledgerApi.get(`/api/ledger/api/v1/transactions?${params}`)) as unknown as {
-        data: Transaction[]
-      }
-      const unique = res.data.filter((tx, i, arr) => arr.findIndex((t) => t.id === tx.id) === i)
-      return groupByDate(unique)
+      params.set('page', String(pageParam))
+      const res = (await ledgerApi.get(`/api/ledger/api/v1/transactions?${params}`)) as unknown as { data: Transaction[] | PageResponse }
+      const data = res.data
+      if (Array.isArray(data)) return { items: data, page: 0, size: data.length, hasNext: false }
+      return data
     },
+    getNextPageParam: (last) => last.hasNext ? last.page + 1 : undefined,
+    initialPageParam: 0,
     enabled: accountIds.length > 0,
   })
+
+  const allTx = query.data?.pages.flatMap((p) => p?.items ?? []) ?? []
+  const unique = allTx.filter((tx, i, arr) => tx != null && arr.findIndex((t) => t?.id === tx.id) === i)
+  const groups = groupByDate(unique)
+
+  return { ...query, data: groups }
 }

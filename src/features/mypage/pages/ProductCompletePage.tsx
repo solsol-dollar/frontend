@@ -1,5 +1,6 @@
-import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import shinhanLogo from '@/assets/home/shinhan-logo.svg'
+import { useNavigate, useParams } from 'react-router-dom'
+import solBankIcon from '@/assets/common/sol-bank-icon.svg'
+import changeupCard from '@/assets/home/changeup-card.png'
 
 const PRODUCT_NAMES: Record<string, string> = {
   valueup: '신한 Value-up 외화적립예금',
@@ -10,7 +11,6 @@ const PRODUCT_NAMES: Record<string, string> = {
 export function ProductCompletePage() {
   const navigate = useNavigate()
   const { productId } = useParams<{ productId: string }>()
-  const { state } = useLocation()
   const productName = PRODUCT_NAMES[productId ?? ''] ?? '상품'
 
   return (
@@ -24,16 +24,19 @@ export function ProductCompletePage() {
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center px-5 gap-4">
-        <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-2">
-          <img src={shinhanLogo} className="w-11 h-11 object-contain" alt="" />
-        </div>
+        {productId === 'card' ? (
+          <div className="w-20 h-20 flex items-center justify-center mb-2">
+            <img src={changeupCard} className="w-12 h-[72px] object-contain" alt="" />
+          </div>
+        ) : (
+          <div className="w-20 h-20 flex items-center justify-center mb-2">
+            <img src={solBankIcon} className="w-20 h-20 object-contain" alt="" />
+          </div>
+        )}
         <div className="text-center">
           <p className="text-lg font-bold text-primary leading-snug">{productName}</p>
           <p className="text-2xl font-bold text-text-primary mt-1">가입완료</p>
         </div>
-        {state?.maturityDate && (
-          <p className="text-sm text-text-secondary mt-2">만기일 {state.maturityDate}</p>
-        )}
       </div>
 
       <button
