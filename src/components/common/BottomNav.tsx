@@ -14,7 +14,7 @@ export function BottomNav() {
   return (
     <nav
       className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white z-10 rounded-t-[20px]"
-      style={{ boxShadow: '0px -4px 15px rgba(0,0,0,0.15)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      style={{ boxShadow: '0px -2px 8px rgba(0,0,0,0.06)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="flex h-[79px]">
         {tabs.map(({ icon, activeIcon, path }) => {

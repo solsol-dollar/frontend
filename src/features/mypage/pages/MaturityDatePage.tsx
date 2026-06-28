@@ -175,7 +175,7 @@ export function MaturityDatePage() {
           <DrumColumn items={days} selected={day} onSelect={setDay} />
         </div>
 
-        <div className="flex">
+        <div className="flex" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <button
             onClick={() => setSheetOpen(false)}
             className="flex-1 py-5 text-base font-normal text-text-secondary bg-surface-bg"
@@ -190,7 +190,6 @@ export function MaturityDatePage() {
             {createSavings.isPending ? '처리 중...' : '확인'}
           </button>
         </div>
-        <div className="pb-8" />
       </div>
     </div>
   )

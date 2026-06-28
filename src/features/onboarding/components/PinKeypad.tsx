@@ -14,26 +14,42 @@ interface Props {
 export function PinKeypad({ onEnter, onBack, error }: Props) {
   const [pin, setPin] = useState<number[]>([])
   const [nums, setNums] = useState(() => shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]))
+  const [fakeActive, setFakeActive] = useState<number | null>(null)
+  const pinRef = useRef<number[]>([])
   const enterTimerRef = useRef<number | null>(null)
+  const fakeTimerRef = useRef<number | null>(null)
 
   const reshuffle = useCallback(() => setNums(shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])), [])
 
   useEffect(() => {
     return () => {
       if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current)
+      if (fakeTimerRef.current !== null) window.clearTimeout(fakeTimerRef.current)
     }
   }, [])
 
   const handleKey = (k: number | '재배열' | '←') => {
     if (k === '재배열') { reshuffle(); return }
-    if (k === '←') { setPin((p) => p.slice(0, -1)); return }
-    if (pin.length < 6) {
-      const next = [...pin, k]
-      setPin(next)
-      if (next.length === 6) {
-        if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current)
-        enterTimerRef.current = window.setTimeout(() => onEnter(next.join('')), 300)
-      }
+    if (k === '←') {
+      pinRef.current = pinRef.current.slice(0, -1)
+      setPin([...pinRef.current])
+      return
+    }
+    if (pinRef.current.length >= 6) return
+
+    // 보안: 다른 번호에 시각적 피드백
+    const others = nums.filter(n => n !== k)
+    const decoy = others[Math.floor(Math.random() * others.length)]
+    setFakeActive(decoy)
+    if (fakeTimerRef.current !== null) window.clearTimeout(fakeTimerRef.current)
+    fakeTimerRef.current = window.setTimeout(() => setFakeActive(null), 120)
+
+    pinRef.current = [...pinRef.current, k]
+    setPin([...pinRef.current])
+    if (pinRef.current.length === 6) {
+      if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current)
+      const final = pinRef.current.join('')
+      enterTimerRef.current = window.setTimeout(() => onEnter(final), 0)
     }
   }
 
@@ -69,7 +85,7 @@ export function PinKeypad({ onEnter, onBack, error }: Props) {
                 <div
                   key={i}
                   className={cn(
-                    'w-4 h-4 rounded-full border-2 transition-colors',
+                    'w-4 h-4 rounded-full border-2',
                     error ? 'bg-red-400 border-red-400' : i < pin.length ? 'bg-primary border-primary' : 'border-gray-300',
                   )}
                 />
@@ -89,9 +105,12 @@ export function PinKeypad({ onEnter, onBack, error }: Props) {
               <button
                 key={k}
                 onClick={() => handleKey(k)}
-                className="py-5 flex items-center justify-center group"
+                className="py-5 flex items-center justify-center"
               >
-                <span className="w-14 h-14 flex items-center justify-center rounded-full text-white text-2xl font-light group-active:bg-white/20 transition-colors">
+                <span className={cn(
+                  'w-14 h-14 flex items-center justify-center rounded-full text-white text-2xl font-light transition-colors',
+                  fakeActive === k && 'bg-white/20',
+                )}>
                   {k}
                 </span>
               </button>
