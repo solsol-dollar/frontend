@@ -28,6 +28,10 @@ export interface Account {
 export interface Card {
   cardName: string
   cardNumberMasked: string
+  issuerName: string
+  monthlySpend: number | null
+  currency: string
+  monthlyCount: number | null
 }
 
 export interface ExchangeRateInfo {

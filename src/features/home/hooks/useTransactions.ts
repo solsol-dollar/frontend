@@ -26,7 +26,9 @@ interface Transaction {
   currency: string
   status: string
   executedAt: string
-  description?: string
+
+  description: string | null
+
   fromAccount: AccountRef | null
   toAccount: AccountRef | null
   fromCurrency: string | null
@@ -60,7 +62,7 @@ function getTxDisplay(tx: Transaction): { name: string; label: string } {
   if (tx.type === 'IN')
     return { name: tx.fromAccount?.accountName ?? '', label: '에서 입금' }
   if (tx.type === 'CARD')
-    return { name: tx.fromAccount?.accountName ?? '', label: ' 카드결제' }
+    return { name: tx.description ?? tx.fromAccount?.accountName ?? '', label: '결제' }
   return { name: tx.toAccount?.accountName ?? '', label: '로 출금' }
 }
 
