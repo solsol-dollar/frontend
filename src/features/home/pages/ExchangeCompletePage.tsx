@@ -1,11 +1,13 @@
 import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Header } from '@/components/common/Header'
 import shinhanIcon from '@/assets/home/shinhan-logo.svg'
 import type { ExchangeResult } from '@/features/home/hooks/useExchange'
 
 export function ExchangeCompletePage() {
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const { state } = useLocation()
   const result: ExchangeResult | undefined = state?.result
   const returnTo: string | undefined = state?.returnTo
@@ -45,7 +47,10 @@ export function ExchangeCompletePage() {
 
       <div className="px-4 pb-10">
         <button
-          onClick={() => (depth > 0 ? navigate(-depth) : navigate(returnTo ?? '/home', { replace: true }))}
+          onClick={() => {
+            qc.invalidateQueries({ queryKey: ['home', 'assets'] })
+            depth > 0 ? navigate(-depth) : navigate(returnTo ?? '/home', { replace: true })
+          }}
           className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
         >
           완료

@@ -78,7 +78,9 @@ export function MyPage() {
               <p className="text-sm font-semibold text-text-primary">신한투자증권 CMA 계좌</p>
               <p className="text-xs text-text-tertiary mt-0.5">{securitiesAccounts[0].accountNumberMasked}</p>
             </div>
-            <Check size={18} className="text-primary flex-shrink-0" />
+            <div className="flex-shrink-0 px-4 py-2 flex items-center justify-center">
+              <Check size={18} className="text-primary" />
+            </div>
           </div>
         )}
 
@@ -98,11 +100,13 @@ export function MyPage() {
                 </p>
               </div>
               {connected ? (
-                <Check size={18} className="text-primary flex-shrink-0" />
+                <div className="flex-shrink-0 px-4 py-2 flex items-center justify-center">
+                  <Check size={18} className="text-primary" />
+                </div>
               ) : (
                 <button
                   onClick={() => navigate(`/mypage/product/${def.id}`)}
-                  className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
+                  className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8]"
                 >
                   추가
                 </button>
@@ -118,14 +122,16 @@ export function MyPage() {
         {cards.length > 0 ? (
           cards.map((card) => (
             <div key={card.cardId} className="flex items-center gap-3 px-4 py-4">
-              <div className="w-10 h-14 flex items-center justify-center flex-shrink-0">
-                <img src={changeupCard} className="w-8 h-12 object-contain" alt="" />
+              <div className="w-8 h-10 flex items-center justify-center flex-shrink-0">
+                <img src={changeupCard} className="w-6 h-9 object-contain" alt="" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-text-primary">{card.cardName}</p>
                 <p className="text-xs text-text-tertiary mt-0.5">{card.cardNumberMasked}</p>
               </div>
-              <Check size={18} className="text-primary flex-shrink-0" />
+              <div className="flex-shrink-0 px-4 py-2 flex items-center justify-center">
+                <Check size={18} className="text-primary" />
+              </div>
             </div>
           ))
         ) : (
@@ -139,7 +145,7 @@ export function MyPage() {
             </div>
             <button
               onClick={handleCardAdd}
-              className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary"
+              className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none"
             >
               추가
             </button>

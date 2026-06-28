@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import dayjs from 'dayjs'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Header } from '@/components/common/Header'
@@ -41,9 +41,9 @@ const FILTER_OPTIONS: Record<AccountType, string[]> = {
 function ActionButtons({ labels, onPress }: { labels: [string, string]; onPress: [() => void, () => void] }) {
   return (
     <div className="flex bg-surface-bg rounded-xl overflow-hidden">
-      <button onClick={onPress[0]} className="flex-1 py-3 text-sm text-text-sub">{labels[0]}</button>
+      <button onClick={onPress[0]} className="flex-1 py-3 text-sm text-text-sub transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8]">{labels[0]}</button>
       <div className="w-px bg-border my-2" />
-      <button onClick={onPress[1]} className="flex-1 py-2.5 text-sm text-text-sub">{labels[1]}</button>
+      <button onClick={onPress[1]} className="flex-1 py-2.5 text-sm text-text-sub transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8]">{labels[1]}</button>
     </div>
   )
 }
@@ -68,12 +68,29 @@ export function TransferHistoryPage() {
   const cmaAccountId = assets?.securities?.usdAccountId
   const cmaBalance = assets?.securities?.usdAvailableBalance ?? 0
 
+  const liveUsdBalance = accountType === 'SECURITIES' ? (assets?.securities?.usdBalance ?? usdBalance) : usdBalance
+  const liveKrwBalance = accountType === 'SECURITIES' ? (assets?.securities?.krwBalance ?? krwBalance) : krwBalance
+  const liveTotalUsdBalance = accountType === 'SECURITIES' ? (assets?.securities?.totalUsdBalance ?? totalUsdBalance) : totalUsdBalance
+  const liveUsdAvailableBalance = accountType === 'SECURITIES' ? (assets?.securities?.usdAvailableBalance ?? usdAvailableBalance) : usdAvailableBalance
+
   const [filterLabel, setFilterLabel] = useState('전체')
   const [showFilter, setShowFilter] = useState(false)
   const [showExchange, setShowExchange] = useState(false)
 
   const apiFilter: ApiFilter = FILTER_LABEL_TO_API[filterLabel] ?? 'ALL'
-  const { data: groups = [] } = useTransactions(accountIds, apiFilter)
+  const { data: groups = [], fetchNextPage, hasNextPage, isFetchingNextPage } = useTransactions(accountIds, apiFilter)
+
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) fetchNextPage() },
+      { threshold: 0.1 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
   const filterOptions = FILTER_OPTIONS[accountType]
 
   return (
@@ -90,12 +107,12 @@ export function TransferHistoryPage() {
                 <span className="text-sm text-text-tertiary">{accountNumber}</span>
               </div>
               <p className="text-3xl font-semibold text-text-primary mb-4">
-                ${(totalUsdBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${(liveTotalUsdBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
               <ActionButtons
                 labels={['옮기기', '환전']}
                 onPress={[
-                  () => accountIds[0] && navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(usdAvailableBalance ?? usdBalance ?? 0).toFixed(2)}` } }),
+                  () => accountIds[0] && navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(liveUsdAvailableBalance ?? liveUsdBalance ?? 0).toFixed(2)}` } }),
                   () => setShowExchange(true),
                 ]}
               />
@@ -107,7 +124,7 @@ export function TransferHistoryPage() {
                   <div className="flex flex-col">
                     <span className="text-sm text-text-sub">원화</span>
                     <span className="text-sm font-semibold text-text-primary">
-                      {(krwBalance ?? 0).toLocaleString('ko-KR')}원
+                      {(liveKrwBalance ?? 0).toLocaleString('ko-KR')}원
                     </span>
                   </div>
                 </div>
@@ -118,7 +135,7 @@ export function TransferHistoryPage() {
                   <div className="flex flex-col">
                     <span className="text-sm text-text-sub">달러</span>
                     <span className="text-sm font-semibold text-text-primary">
-                      ${(usdBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      ${(liveUsdBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>
@@ -160,8 +177,8 @@ export function TransferHistoryPage() {
                 ${(balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
               <button
-                onClick={() => navigate('/home/fill', { state: { toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } })}
-                className="w-full py-3 text-sm text-text-sub bg-surface-bg rounded-xl"
+                onClick={() => cmaAccountId && navigate('/home/fill', { state: { fixedFromAccountId: cmaAccountId, fixedFromName: 'CMA 계좌', fixedFromBalance: `$${cmaBalance.toFixed(2)}`, toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } })}
+                className="w-full py-3 text-sm text-text-sub bg-surface-bg rounded-xl transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none"
               >
                 채우기
               </button>
@@ -176,6 +193,12 @@ export function TransferHistoryPage() {
             filter={filterLabel}
             onFilterClick={() => setShowFilter(true)}
           />
+          <div ref={sentinelRef} className="h-4" />
+          {isFetchingNextPage && (
+            <div className="flex justify-center py-3">
+              <div className="w-5 h-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            </div>
+          )}
         </div>
       </div>
 
@@ -186,7 +209,7 @@ export function TransferHistoryPage() {
         selected={filterLabel}
         onSelect={setFilterLabel}
       />
-      <ExchangeSheet open={showExchange} onClose={() => setShowExchange(false)} />
+      <ExchangeSheet open={showExchange} onClose={() => setShowExchange(false)} returnTo="/home/transfer/history" />
     </div>
   )
 }
