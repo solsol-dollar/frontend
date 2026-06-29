@@ -39,15 +39,17 @@ const messaging = getMessaging(app)
 
 onBackgroundMessage(messaging, (payload) => {
   const { title, body } = payload.notification ?? {}
-  const url = payload.data?.url ?? '/home'
-  self.registration.showNotification(title ?? 'SOL SOL 달러', {
-    body,
-    icon: '/icons/icon-192.png',
-    data: { url },
-  })
-  self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-    clients.forEach((client) => client.postMessage({ type: 'NOTIFICATION_RECEIVED' }))
-  })
+  const url = payload.data?.url || '/home'
+  return Promise.all([
+    self.registration.showNotification(title ?? 'SOL SOL 달러', {
+      body,
+      icon: '/icons/icon-192.png',
+      data: { url },
+    }),
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      clients.forEach((client) => client.postMessage({ type: 'NOTIFICATION_RECEIVED' }))
+    }),
+  ])
 })
 
 self.addEventListener('notificationclick', (event) => {
@@ -57,8 +59,7 @@ self.addEventListener('notificationclick', (event) => {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const target = clients.find((c) => 'navigate' in c)
       if (target) {
-        target.focus()
-        return (target as WindowClient).navigate(url)
+        return (target as WindowClient).focus().then((client) => client.navigate(url))
       }
       return self.clients.openWindow(url)
     })
