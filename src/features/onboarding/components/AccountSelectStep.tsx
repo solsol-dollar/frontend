@@ -35,7 +35,11 @@ export function AccountSelectStep({ onConfirm }: Props) {
               <div className="flex-1 text-left">
                 <p className="text-xs text-text-secondary">신한투자증권 CMA 계좌</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-base font-bold text-text-primary">{securities[0].accountNumberMasked}</p>
+                  <p className="text-base font-bold text-text-primary">
+                    {securities[0].virtualAccountNumber 
+                      ? `가상계좌 ${securities[0].virtualAccountNumber}`
+                      : securities[0].accountNumberMasked}
+                  </p>
                   <span className="text-[10px] font-semibold text-amber-500 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
                     필수
                   </span>
