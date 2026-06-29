@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import shinhanIcon from '@/assets/home/shinhan-logo.svg'
+import { TransferResult } from '../hooks/useTransfer'
 
 export function TransferCompletePage() {
   const navigate = useNavigate()
@@ -9,8 +10,13 @@ export function TransferCompletePage() {
   const { state } = useLocation()
   const account = state?.account ?? null
   const amount: string = state?.amount ?? '0'
+  const result: TransferResult | undefined = state?.result
   const returnTo: string | undefined = state?.returnTo
   const depth: number = state?.depth ?? 0
+
+  const displayAccountName = result?.toAccountType === 'SECURITIES' && result?.toVirtualAccountNumber
+    ? `가상계좌 ${result.toVirtualAccountNumber}`
+    : (account?.displayName ?? '')
 
   useEffect(() => {
     if (!account) navigate('/home', { replace: true })
@@ -29,7 +35,7 @@ export function TransferCompletePage() {
             className="absolute w-[88px] h-[88px] left-1/2 -translate-x-1/2 bottom-full mb-6"
           />
           <p className="text-[20px] font-semibold leading-snug">
-            <span className="text-primary-500">{account?.displayName ?? ''}</span>
+            <span className="text-primary-500">{displayAccountName}</span>
             <span className="text-text-primary"> 계좌로</span>
           </p>
           <p className="text-[20px] font-semibold text-text-primary leading-snug">$ {amount}를 옮겼어요</p>

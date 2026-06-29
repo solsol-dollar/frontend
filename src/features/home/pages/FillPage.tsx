@@ -33,7 +33,9 @@ export function FillPage() {
           accountId: assets.securities.usdAccountId,
           displayName: 'CMA 계좌',
           accountName: '신한투자증권 CMA 계좌',
-          accountNumber: assets.securities.accountNumberMasked,
+          accountNumber: assets.securities.virtualAccountNumber 
+            ? `가상계좌 ${assets.securities.virtualAccountNumber}` 
+            : assets.securities.accountNumberMasked,
           balance: assets.securities.usdAvailableBalance,
         }]
       : []),
@@ -196,7 +198,7 @@ export function FillPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-text-secondary truncate">{acc.accountName}</p>
-                <p className="text-sm font-bold text-text-primary">{acc.accountNumber}</p>
+                <p className="text-sm font-semibold text-text-primary">{acc.accountNumber}</p>
               </div>
               {selectedId === acc.accountId && <Check size={18} className="text-primary flex-shrink-0" />}
             </button>
