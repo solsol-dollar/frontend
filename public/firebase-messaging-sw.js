@@ -17,4 +17,7 @@ messaging.onBackgroundMessage((payload) => {
     body,
     icon: '/icons/icon-192.png',
   })
+  self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+    clients.forEach((client) => client.postMessage({ type: 'NOTIFICATION_RECEIVED' }))
+  })
 })
