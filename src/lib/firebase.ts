@@ -40,8 +40,11 @@ export async function registerPushToken(): Promise<void> {
       })
     }
     if (!localStorage.getItem(FCM_SW_MIGRATION_KEY)) {
-      await deleteToken(messaging).catch(() => {})
-      localStorage.setItem(FCM_SW_MIGRATION_KEY, '1')
+      try {
+        await deleteToken(messaging)
+        localStorage.setItem(FCM_SW_MIGRATION_KEY, '1')
+      } catch {
+      }
     }
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
