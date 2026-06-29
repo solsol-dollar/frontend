@@ -13,7 +13,7 @@ const TOOLTIP_COLOR = '#6366F1'
 const formatDollar = (n: number) =>
   `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-function DualRangeSlider({
+export function DualRangeSlider({
   values,
   onChange,
 }: {
