@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+/// <reference types="vite/client" />
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { StaleWhileRevalidate, NetworkFirst } from 'workbox-strategies'
@@ -37,28 +38,33 @@ const app = initializeApp({
 
 const messaging = getMessaging(app)
 
+function toSafePath(url: unknown): string {
+  return typeof url === 'string' && /^\/(?!\/)/.test(url) ? url : '/home'
+}
+
 onBackgroundMessage(messaging, (payload) => {
   const { title, body } = payload.notification ?? {}
-  const url = payload.data?.url ?? '/home'
-  self.registration.showNotification(title ?? 'SOL SOL 달러', {
-    body,
-    icon: '/icons/icon-192.png',
-    data: { url },
-  })
-  self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-    clients.forEach((client) => client.postMessage({ type: 'NOTIFICATION_RECEIVED' }))
-  })
+  const url = toSafePath(payload.data?.url)
+  return Promise.all([
+    self.registration.showNotification(title ?? 'SOL SOL 달러', {
+      body,
+      icon: '/icons/icon-192.png',
+      data: { url },
+    }),
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      clients.forEach((client) => client.postMessage({ type: 'NOTIFICATION_RECEIVED' }))
+    }),
+  ])
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = event.notification.data?.url ?? '/home'
+  const url = toSafePath(event.notification.data?.url)
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const target = clients.find((c) => 'navigate' in c)
       if (target) {
-        target.focus()
-        return (target as WindowClient).navigate(url)
+        return (target as WindowClient).focus().then((client) => client.navigate(url))
       }
       return self.clients.openWindow(url)
     })
