@@ -5,6 +5,7 @@ export interface Securities {
   usdAccountId: number
   krwAccountId: number
   accountNumberMasked: string
+  virtualAccountNumber?: string | null
   usdBalance: number
   krwBalance: number
   totalUsdBalance: number
