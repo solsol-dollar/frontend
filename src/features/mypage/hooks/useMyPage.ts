@@ -75,8 +75,8 @@ export interface Notification {
   notificationType: string
   title: string
   message: string
-  targetType: string
-  targetId: number
+  targetType: string | null
+  targetId: number | null
   isRead: boolean
   sentAt: string
 }
@@ -95,6 +95,7 @@ export function useNotifications(params?: { isRead?: boolean; page?: number; siz
       const res = (await serviceApi.get('/api/service/api/v1/mypage/notifications', { params: { page: 0, size: 50, ...params } })) as ApiResponse<{ notifications: Notification[] }>
       return res.data.notifications
     },
+    staleTime: 30_000,
   })
 }
 
@@ -104,8 +105,14 @@ export function useMarkNotificationRead() {
     mutationFn: async (notificationId: number) => {
       await serviceApi.put(`/api/service/api/v1/mypage/notifications/${notificationId}/read`)
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['mypage', 'notifications'] })
+    onSuccess: (_, notificationId) => {
+      qc.setQueryData<Notification[]>(['mypage', 'notifications', undefined], (old) =>
+        old?.map((n) => n.notificationId === notificationId ? { ...n, isRead: true } : n)
+      )
+      qc.invalidateQueries({ queryKey: ['mypage', 'notifications'], exact: false })
+    },
+    onError: (err) => {
+      console.error('[알림 읽음 처리 실패]', err)
     },
   })
 }
@@ -126,8 +133,10 @@ export function useUpdateNotificationSettings() {
     mutationFn: async (body: Omit<NotificationSettings, 'fcmRegistered'>) => {
       await serviceApi.put('/api/service/api/v1/mypage/notification-settings', body)
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['mypage', 'notification-settings'] })
+    onSuccess: (_, variables) => {
+      qc.setQueryData(['mypage', 'notification-settings'], (old: NotificationSettings | undefined) =>
+        old ? { ...old, ...variables } : variables
+      )
     },
   })
 }

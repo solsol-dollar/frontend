@@ -338,7 +338,7 @@ export function HomePage() {
                   </div>
                 )}
                 {(favoriteIpos ?? []).map((ipo) => {
-                  const { label, dday } = getIpoDisplay(ipo)
+                  const { label, dday, isUpcoming } = getIpoDisplay(ipo)
                   return (
                     <div
                       key={ipo.id}
@@ -362,7 +362,7 @@ export function HomePage() {
                         className="absolute top-[17.5px] right-[17px] translate-x-[3px]"
                       />
                       {dday && (
-                        <span className="absolute top-[39px] right-[17px] text-[11px] font-bold text-[#CA3D40]">{dday}</span>
+                        <span className={`absolute top-[39px] right-[17px] text-[11px] font-bold ${isUpcoming ? 'text-[#3045BB]' : 'text-[#CA3D40]'}`}>{dday}</span>
                       )}
                     </div>
                   )

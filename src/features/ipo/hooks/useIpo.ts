@@ -29,6 +29,19 @@ export function useToggleFavorite() {
   return useMutation({
     mutationFn: ({ ipoId, isFavorite }: { ipoId: number; isFavorite: boolean }) =>
       isFavorite ? ipoApi.removeFavorite(ipoId) : ipoApi.addFavorite(ipoId),
+    onMutate: async ({ ipoId, isFavorite }) => {
+      await queryClient.cancelQueries({ queryKey: ipoKeys.detail(ipoId) })
+      const previous = queryClient.getQueryData(ipoKeys.detail(ipoId))
+      queryClient.setQueryData(ipoKeys.detail(ipoId), (old: any) =>
+        old ? { ...old, data: { ...old.data, isFavorite: !isFavorite } } : old
+      )
+      return { previous, ipoId }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(ipoKeys.detail(context.ipoId), context.previous)
+      }
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ipoKeys.all })
       queryClient.invalidateQueries({ queryKey: ['home', 'favorite-ipos'] })
@@ -55,6 +68,14 @@ export function useIpoScore(ipoId: number) {
   return useQuery({
     queryKey: ['ipo-score', ipoId],
     queryFn: () => ipoApi.getScore(ipoId),
+    enabled: ipoId > 0,
+  })
+}
+
+export function useIpoFinancials(ipoId: number) {
+  return useQuery({
+    queryKey: [...ipoKeys.detail(ipoId), 'financials'],
+    queryFn: () => ipoApi.getFinancials(ipoId),
     enabled: ipoId > 0,
   })
 }

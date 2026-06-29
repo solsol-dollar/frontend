@@ -4,7 +4,7 @@ import { Header } from '@/components/common/Header'
 import layCharacter from '@/assets/common/lay.png'
 import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 import { useExecuteImmediateAllocation } from '../hooks/useExecuteImmediateAllocation'
-import { splitsToAllocationItems } from '../utils/allocationMapper'
+import { ratiosToAllocationItems } from '../utils/allocationMapper'
 import { ZONE_COLORS } from '../constants'
 
 const PRESETS: { label: string; splits: [number, number] }[] = [
@@ -24,11 +24,12 @@ function detectPreset(splits: [number, number]): number | null {
 
 const CARD_BG = '#F4F5F8'
 const TRACK_COLORS = ['#C5D1F5', '#DFCDFF', '#C8F2FB']
+const DEST_TYPES = ['SECURITIES', 'SAVINGS', 'DEPOSIT'] as const
 
 const ACCOUNTS = [
-  { id: 'cma',     name: '신한투자증권 CMA 계좌',      desc: '다음 IPO 대기금 · ETF, RP 재투자', legend: 'CMA 계좌',   type: 'CMA' as const },
-  { id: 'valueup', name: '신한 Value-up 외화적립예금', desc: '다음 IPO 대기금 · ETF, RP 재투자', legend: '외화적립예금', type: 'SAVINGS' as const },
-  { id: 'chainup', name: '신한 외화 체인지업 예금',    desc: '다음 IPO 대기금 · ETF, RP 재투자', legend: '체인지업 예금', type: 'DEPOSIT' as const },
+  { id: 'cma',     name: '신한투자증권 CMA 계좌',      desc: '다음 IPO 대기금 · ETF, RP 재투자', legend: 'CMA 계좌',    type: 'CMA'     as const },
+  { id: 'valueup', name: '신한 Value-up 외화적립예금', desc: '다음 IPO 대기금 · ETF, RP 재투자', legend: '외화적립예금', type: 'SAVINGS'  as const },
+  { id: 'chainup', name: '신한 외화 체인지업 예금',    desc: '다음 IPO 대기금 · ETF, RP 재투자', legend: '체인지업 예금', type: 'DEPOSIT'  as const },
 ]
 
 function DynamicRangeSlider({
@@ -43,25 +44,18 @@ function DynamicRangeSlider({
   const trackRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<number | null>(null)
 
-  // 연동된 계좌만 추출 (순서 유지)
   const zones = ([0, 1, 2] as const).filter(i => connected[i])
 
-  // 핸들 개수 = 연동 계좌 수 - 1
-  // 핸들 위치: 연동 계좌 경계값
-  // splits[0] = CMA/SAVINGS 경계, splits[1] = SAVINGS/DEPOSIT 경계
-  // 연동 패턴에 따라 핸들 위치를 다르게 계산
   const handlePositions: number[] = (() => {
     if (zones.length <= 1) return []
     if (zones.length === 3) return [splits[0], splits[1]]
-    // 2개 연동: 어느 두 계좌인지에 따라 경계값 결정
     const [a, b] = zones
-    if (a === 0 && b === 1) return [splits[0]]         // CMA|SAVINGS
-    if (a === 0 && b === 2) return [splits[0]]         // CMA|DEPOSIT (splits[1]=splits[0])
-    if (a === 1 && b === 2) return [splits[1]]         // SAVINGS|DEPOSIT
+    if (a === 0 && b === 1) return [splits[0]]
+    if (a === 0 && b === 2) return [splits[0]]
+    if (a === 1 && b === 2) return [splits[1]]
     return []
   })()
 
-  // 그라디언트: 연동된 계좌 색상만 순서대로
   const gradientStops = zones.map((zoneIdx, i) => {
     const start = handlePositions[i - 1] ?? 0
     const end = handlePositions[i] ?? 100
@@ -109,6 +103,16 @@ function DynamicRangeSlider({
   }
   const handlePointerUp = () => { draggingRef.current = null }
 
+  if (zones.length === 0) return null
+
+  if (zones.length === 1) {
+    return (
+      <div className="py-2 text-center">
+        <p className="text-xs text-text-secondary">다른 계좌가 없어서 CMA 계좌로 100% 들어와요</p>
+      </div>
+    )
+  }
+
   return (
     <div
       ref={trackRef}
@@ -127,7 +131,7 @@ function DynamicRangeSlider({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
-            className="w-10 h-10 flex items-center justify-center touch-none -m-1.5"
+            className="w-10 h-10 flex items-center justify-center touch-none -m-[18px]"
           >
             <span
               className="w-7 h-7 rounded-full bg-white pointer-events-none"
@@ -157,10 +161,16 @@ export function ReturnPlanSettingsPage() {
     Math.round(100 - splits[1]),
   ]
 
+  const connected: [boolean, boolean, boolean] = [
+    !!homeAssets?.securities,
+    homeAssets?.accounts?.some(a => a.accountType === 'SAVINGS') ?? false,
+    homeAssets?.accounts?.some(a => a.accountType === 'DEPOSIT') ?? false,
+  ]
+
   const handleConfirm = async () => {
     if (execute.isPending) return
     try {
-      await execute.mutateAsync(splitsToAllocationItems(splits))
+      await execute.mutateAsync(ratiosToAllocationItems([...DEST_TYPES], ratios))
       setDone(true)
     } catch {
       alert('분배에 실패했어요. 잠시 후 다시 시도해주세요.')
@@ -188,44 +198,48 @@ export function ReturnPlanSettingsPage() {
 
       <div className="flex-1 overflow-y-auto">
 
-        {/* 타이틀 + 배너 */}
+        {/* 배너 */}
         <div className="px-5 pt-5 pb-5">
           <p className="text-base font-bold text-text-primary mb-4">
             리턴 플랜으로 <span style={{ color: ZONE_COLORS[0] }}>SOLSOL</span>하게 투자하기
           </p>
-          <div className="mt-2">
-            <style>{`
-              @keyframes sol-rise {
-                from { transform: translateY(100%); }
-                to   { transform: translateY(15%); }
-              }
-            `}</style>
-            <div className="flex gap-3 items-center">
-              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-end justify-center" style={{ backgroundColor: '#A6C8F6' }}>
-                <img
-                  src={layCharacter}
-                  alt=""
-                  className="w-[52px] h-[52px] object-contain"
-                  style={{ animation: 'sol-rise 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards' }}
-                />
-              </div>
-              <div className="relative rounded-[12px] px-3 py-[10px]" style={{ backgroundColor: '#EEF2FF', maxWidth: 'calc(100% - 54px)' }}>
-                <div
-                  className="absolute left-[-7px] top-1/2 -translate-y-1/2 w-0 h-0"
-                  style={{
-                    borderTop: '6px solid transparent',
-                    borderBottom: '6px solid transparent',
-                    borderRight: '7px solid #EEF2FF',
-                  }}
-                />
-                <p className="text-[13px] text-[#3A3D45] leading-[1.6]">
-                  CMA 예수금{' '}
-                  <span className="font-semibold" style={{ color: ZONE_COLORS[0] }}>
-                    ${availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </span>
-                  를 리턴플랜으로 분배해드려요 !
-                </p>
-              </div>
+          <style>{`
+            @keyframes sol-rise {
+              from { transform: translateY(100%); }
+              to   { transform: translateY(15%); }
+            }
+          `}</style>
+          <div className="flex gap-3 items-center">
+            <div
+              className="w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-end justify-center"
+              style={{ backgroundColor: '#A6C8F6' }}
+            >
+              <img
+                src={layCharacter}
+                alt=""
+                className="w-[52px] h-[52px] object-contain"
+                style={{ animation: 'sol-rise 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards' }}
+              />
+            </div>
+            <div
+              className="relative rounded-[12px] px-3 py-[10px]"
+              style={{ backgroundColor: '#EEF2FF', maxWidth: 'calc(100% - 54px)' }}
+            >
+              <div
+                className="absolute left-[-7px] top-1/2 -translate-y-1/2 w-0 h-0"
+                style={{
+                  borderTop: '6px solid transparent',
+                  borderBottom: '6px solid transparent',
+                  borderRight: '7px solid #EEF2FF',
+                }}
+              />
+              <p className="text-[13px] text-[#3A3D45] leading-[1.6]">
+                CMA 예수금{' '}
+                <span className="font-semibold" style={{ color: ZONE_COLORS[0] }}>
+                  ${availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+                를 리턴플랜으로 분배해드려요 !
+              </p>
             </div>
           </div>
         </div>
@@ -237,10 +251,7 @@ export function ReturnPlanSettingsPage() {
             {ACCOUNTS.map((acc, i) => {
               const ratio = ratios[i]
               const amount = Math.round((availableBalance * ratio) / 100)
-              const connected =
-                acc.type === 'CMA'
-                  ? !!homeAssets?.securities
-                  : homeAssets?.accounts?.some(a => a.accountType === acc.type) ?? false
+              const isConnected = connected[i]
               return (
                 <div key={acc.id} className="rounded-2xl px-4 py-3" style={{ backgroundColor: CARD_BG }}>
                   <div className="flex items-center justify-between mb-3">
@@ -249,8 +260,11 @@ export function ReturnPlanSettingsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-semibold text-text-primary">{acc.name}</p>
-                          {!connected && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
+                          {!isConnected && (
+                            <span
+                              className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}
+                            >
                               미연동
                             </span>
                           )}
@@ -258,7 +272,7 @@ export function ReturnPlanSettingsPage() {
                         <p className="text-xs text-text-tertiary mt-0.5">{acc.desc}</p>
                       </div>
                     </div>
-                    {connected && (
+                    {isConnected && (
                       <div className="text-right flex-shrink-0 ml-3">
                         <p className="text-sm font-bold" style={{ color: ZONE_COLORS[i] }}>
                           <span className="text-lg">{ratio}</span> %
@@ -268,7 +282,10 @@ export function ReturnPlanSettingsPage() {
                     )}
                   </div>
                   <div className="h-1 rounded-full" style={{ backgroundColor: `${TRACK_COLORS[i]}4D` }}>
-                    <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${connected ? ratio : 0}%`, backgroundColor: ZONE_COLORS[i] }} />
+                    <div
+                      className="h-1 rounded-full transition-all duration-300"
+                      style={{ width: `${isConnected ? ratio : 0}%`, backgroundColor: ZONE_COLORS[i] }}
+                    />
                   </div>
                 </div>
               )
@@ -285,9 +302,10 @@ export function ReturnPlanSettingsPage() {
                 key={preset.label}
                 type="button"
                 onClick={() => { setSelectedPreset(i); setSplits(preset.splits) }}
-                className={selectedPreset === i
-                  ? 'flex-1 text-center text-sm font-bold text-text-primary py-2 rounded-full bg-white shadow-sm'
-                  : 'flex-1 text-center text-sm font-medium text-text-secondary py-2'
+                className={
+                  selectedPreset === i
+                    ? 'flex-1 text-center text-sm font-bold text-text-primary py-2 rounded-full bg-white shadow-sm'
+                    : 'flex-1 text-center text-sm font-medium text-text-secondary py-2'
                 }
               >
                 {preset.label}
@@ -300,16 +318,12 @@ export function ReturnPlanSettingsPage() {
         <div className="px-5 pb-5">
           <p className="text-xs font-medium text-text-tertiary mb-3">직접 조정</p>
           <div className="rounded-2xl px-4 pt-4 pb-4" style={{ backgroundColor: CARD_BG }}>
-            <p className="text-xs text-text-tertiary text-center mb-6">좌우로 움직여 비율을 조정하세요</p>
+            <p className="text-xs text-text-tertiary text-center mb-8">좌우로 움직여 비율을 조정하세요</p>
 
             <DynamicRangeSlider
               splits={splits}
-              connected={[
-                !!homeAssets?.securities,
-                homeAssets?.accounts?.some(a => a.accountType === 'SAVINGS') ?? false,
-                homeAssets?.accounts?.some(a => a.accountType === 'DEPOSIT') ?? false,
-              ]}
-              onChange={(v: [number, number]) => { setSplits(v); setSelectedPreset(detectPreset(v)) }}
+              connected={connected}
+              onChange={(v) => { setSplits(v); setSelectedPreset(detectPreset(v)) }}
             />
 
             <div className="relative mt-2 h-4">
@@ -332,7 +346,7 @@ export function ReturnPlanSettingsPage() {
         </div>
 
         {/* 안내 */}
-        <div className="px-5 pb-4 flex items-center gap-1.5">
+        <div className="px-5 pb-6 flex items-center gap-1.5">
           <span className="w-3.5 h-3.5 rounded-full border border-text-tertiary flex items-center justify-center flex-shrink-0">
             <span className="text-[8px] text-text-tertiary font-bold leading-none">!</span>
           </span>

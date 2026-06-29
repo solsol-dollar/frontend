@@ -49,6 +49,12 @@ export interface IpoScoreItem {
   ipoId: number
   ticker: string
   finalScore: number
+  postScore?: number | null
+  postGrade?: string | null
+  postReason?: string | null
+  postSummary?: string | null
+  postTopNewsIds?: number[] | null
+  postNewsCount?: number | null
   grade: string
   reason: string | null
   summary: string | null
@@ -65,6 +71,17 @@ export interface IpoNewsItem {
   publishedAt: string
   url: string
   summary: string
+}
+
+export interface IpoFinancialItem {
+  fiscalYear: number
+  revenue: number | null
+  operatingIncome: number | null
+  netIncome: number | null
+  currency: string
+  revenueKrw: number | null
+  operatingIncomeKrw: number | null
+  netIncomeKrw: number | null
 }
 
 export interface FavoriteIpoItem {
@@ -111,4 +128,7 @@ export const ipoApi = {
 
   getScore: (ipoId: number): Promise<ApiResponse<IpoScoreItem>> =>
     serviceApi.get(`/api/service/api/v1/ipos/${ipoId}/score`),
+
+  getFinancials: (ipoId: number): Promise<ApiResponse<IpoFinancialItem[]>> =>
+    serviceApi.get(`/api/service/api/v1/ipos/${ipoId}/financials`),
 }

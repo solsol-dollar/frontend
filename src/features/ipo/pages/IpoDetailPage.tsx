@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, Cell } from 'recharts'
 import dayjs from 'dayjs'
 import { Header } from '@/components/common/Header'
 import { IpoStockHeader } from '@/features/ipo/components/IpoStockHeader'
@@ -9,7 +10,7 @@ import {
   getSubscriptionStatusBadgeClass,
   type SubscriptionStatus,
 } from '@/features/ipo/utils/subscriptionStatus'
-import { useIpoDetail, useToggleFavorite, useIpoNews, useIpoScore } from '@/features/ipo/hooks/useIpo'
+import { useIpoDetail, useToggleFavorite, useIpoNews, useIpoScore, useIpoFinancials } from '@/features/ipo/hooks/useIpo'
 import { useSubscriptionList } from '@/features/ipo/hooks/useSubscriptions'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 import { ClosedIpoDetailPage } from '@/features/ipo/pages/ClosedIpoDetailPage'
@@ -26,67 +27,118 @@ const SOURCE_LOGO_MAP: Record<string, string> = {
   'u.today': '/icons/utoday.png',
 }
 
-const MOCK_CHART_DATA = [
-  { label: '25년 6월',  sub: null,    sales: 35, op: 12, net: 9  },
-  { label: '25년 9월',  sub: null,    sales: 48, op: 18, net: 14 },
-  { label: '25년 12월', sub: null,    sales: 62, op: 26, net: 21 },
-  { label: '26년 3월',  sub: null,    sales: 90, op: 55, net: 45, highlight: true },
-  { label: '26년 6월',  sub: '(추정)', sales: 95, op: 58, net: 47, dim: true },
-]
+const CHART_COLORS = ['#C5D1F5', '#5B7BE5', '#0922AC']
+const CHART_MUTED = ['#EAECF0', '#D1D5DB', '#9AA0AB']
+const CURRENCY_SYMBOL: Record<string, string> = { USD: '$', JPY: '¥', EUR: '€', GBP: '£', BRL: 'R$', CNY: '¥', HKD: 'HK$', AUD: 'A$', CAD: 'C$' }
 
-const MOCK_LEGEND = [
-  { label: '매출',    value: '133조원', color: '#D1D5DB' },
-  { label: '영업이익', value: '57조원',  color: '#22C55E' },
-  { label: '순이익',  value: '47조원',  color: '#6B7280' },
-]
-
-function BarChart({ data }: { data: typeof MOCK_CHART_DATA }) {
-  const maxVal = 100
-  const barW = 12, gap = 2, groupGap = 16
-  const chartH = 90
-  const groupW = barW * 3 + gap * 2
-  const pl = 8
-  const totalW = pl + data.length * (groupW + groupGap) - groupGap + pl
-
-  return (
-    <svg viewBox={`0 0 ${totalW} ${chartH + 36}`} className="w-full">
-      {data.map((g, gi) => {
-        const gx = pl + gi * (groupW + groupGap)
-        const bars = [g.sales, g.op, g.net]
-        const colors = g.dim
-          ? ['#E5E7EB', '#86EFAC', '#9CA3AF']
-          : ['#D1D5DB', '#22C55E', '#6B7280']
-        return (
-          <g key={gi}>
-            {bars.map((v, vi) => {
-              const bh = Math.max((v / maxVal) * chartH, 2)
-              return (
-                <rect
-                  key={vi}
-                  x={gx + vi * (barW + gap)}
-                  y={chartH - bh}
-                  width={barW}
-                  height={bh}
-                  rx={3}
-                  fill={colors[vi]}
-                  opacity={g.dim ? 0.65 : 1}
-                />
-              )
-            })}
-            <text x={gx + groupW / 2} y={chartH + 13} textAnchor="middle" fill="#9AA0AB" fontSize={9}>
-              {g.label}
-            </text>
-            {g.sub && (
-              <text x={gx + groupW / 2} y={chartH + 24} textAnchor="middle" fill="#9AA0AB" fontSize={9}>
-                {g.sub}
-              </text>
-            )}
-          </g>
-        )
-      })}
-    </svg>
-  )
+function BarShape({ x = 0, y = 0, width = 0, height = 0, fill, background, isNeg, nullDown, _isEmpty }: { x?: number; y?: number; width?: number; height?: number; fill?: string; background?: { x?: number; y?: number; width?: number; height?: number }; isNeg?: boolean; nullDown?: boolean; _isEmpty?: boolean }) {
+  if (_isEmpty) return <g />
+  if (!isNeg && (!height || Math.abs(height) < 1)) {
+    const bh = background?.height ?? 100
+    const by = background?.y ?? 0
+    const zeroY = y
+    if (nullDown) {
+      const negH = (by + bh) - zeroY
+      const ph = Math.max(Math.min(35, Math.round(negH * 0.7)), 4)
+      return <rect x={x + 1} y={zeroY} width={Math.max(width - 2, 0)} height={ph} rx={2} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth={1.5} strokeDasharray="3 2" />
+    }
+    const positiveH = zeroY - by
+    const ph = Math.max(Math.min(35, Math.round(positiveH * 0.7)), 4)
+    return <rect x={x + 1} y={zeroY - ph} width={Math.max(width - 2, 0)} height={ph} rx={2} fill="#F3F4F6" stroke="#D1D5DB" strokeWidth={1.5} strokeDasharray="3 2" />
+  }
+  if (isNeg) {
+    // recharts가 height<0(y=하단,y+height=기준선) 또는 height>0(y=기준선,y+height=하단)으로 넘길 수 있음
+    const top = height < 0 ? y + height : y
+    const bot = height < 0 ? y : y + height
+    const h = Math.max(bot - top, 1)
+    const r = Math.min(3, h)
+    return <path d={`M${x},${top} L${x},${bot - r} Q${x},${bot} ${x + r},${bot} L${x + width - r},${bot} Q${x + width},${bot} ${x + width},${bot - r} L${x + width},${top} Z`} fill={fill} />
+  }
+  const r = Math.min(3, height)
+  return <path d={`M${x},${y + height} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + width - r},${y} Q${x + width},${y} ${x + width},${y + r} L${x + width},${y + height} Z`} fill={fill} />
 }
+
+type FinancialRow = { fiscalYear: number; revenue: number | null; operatingIncome: number | null; netIncome: number | null; currency: string; revenueKrw: number | null; operatingIncomeKrw: number | null; netIncomeKrw: number | null }
+
+function buildChartData(financials: FinancialRow[], useKrw: boolean) {
+  const k = (v: number | null) => v != null ? v * 1000 : null
+  const getVals = (d: FinancialRow) => useKrw
+    ? [k(d.revenueKrw), k(d.operatingIncomeKrw), k(d.netIncomeKrw)] as const
+    : [k(d.revenue), k(d.operatingIncome), k(d.netIncome)] as const
+
+  const currency = financials[0]?.currency ?? 'USD'
+  const sym = CURRENCY_SYMBOL[currency] ?? currency
+  const allAbs = financials.flatMap(d => getVals(d)).filter((v): v is number => v != null).map(v => Math.abs(v))
+  const maxAbs = allAbs.length ? Math.max(...allAbs) : 0
+
+  let divisor: number, unitPrefix: string, unitSuffix: string
+  if (useKrw) {
+    unitPrefix = ''
+    if (maxAbs >= 1_000_000_000_000) { divisor = 1_000_000_000_000; unitSuffix = '조원' }
+    else if (maxAbs >= 100_000_000) { divisor = 100_000_000; unitSuffix = '억원' }
+    else if (maxAbs >= 10_000) { divisor = 10_000; unitSuffix = '만원' }
+    else { divisor = 1; unitSuffix = '원' }
+  } else {
+    unitPrefix = sym
+    if (maxAbs >= 100_000_000) { divisor = 100_000_000; unitSuffix = '억' }
+    else if (maxAbs >= 10_000) { divisor = 10_000; unitSuffix = '만' }
+    else { divisor = 1; unitSuffix = '' }
+  }
+
+  // null → 0 (점선), 음수 → 실제 음수값 (0 기준 아래로)
+  const toBar = (v: number | null): number => {
+    if (v == null) return 0
+    const s = Math.round(Math.sqrt(Math.abs(v) / divisor) * 100) / 100
+    return v < 0 ? -s : s
+  }
+  const toLabel = (v: number | null): string | null => {
+    if (v == null) return null
+    const sign = v < 0 ? '-' : ''
+    const abs = Math.abs(v)
+    let n = abs / divisor
+    let pfx = unitPrefix
+    let sfx = unitSuffix
+    if (Math.floor(n * 10) / 10 === 0) {
+      if (useKrw) {
+        if (divisor >= 100_000_000) { n = abs / 10_000; sfx = '만원' }
+        else if (divisor >= 10_000) { n = abs; sfx = '원' }
+      } else {
+        if (divisor >= 100_000_000) { n = abs / 10_000; sfx = '만' }
+        else if (divisor >= 10_000) { n = abs; sfx = '' }
+      }
+    }
+    const num = n >= 10 ? Math.floor(n).toLocaleString() : Math.floor(n * 10) / 10
+    return `${sign}${pfx}${num}${sfx}`
+  }
+
+  const sorted = [...financials].sort((a, b) => a.fiscalYear - b.fiscalYear)
+  const rows = sorted.map(d => {
+    const [rv, oi, ni] = getVals(d)
+    const sales = toBar(rv), op = toBar(oi), net = toBar(ni)
+    return {
+      year: `${d.fiscalYear}년`, sales, op, net,
+      salesLabel: toLabel(rv), opLabel: toLabel(oi), netLabel: toLabel(ni),
+      salesIsNeg: rv != null && rv < 0,
+      opIsNeg: oi != null && oi < 0,
+      netIsNeg: ni != null && ni < 0,
+      salesNullDown: rv == null && oi != null && oi < 0 && ni != null && ni < 0,
+      opNullDown: oi == null && rv != null && rv < 0 && ni != null && ni < 0,
+      netNullDown: ni == null && rv != null && rv < 0 && oi != null && oi < 0,
+      _groupMax: Math.max(Math.abs(sales), Math.abs(op), Math.abs(net)),
+      _isEmpty: false,
+    }
+  })
+
+  const allBarVals = rows.flatMap(r => [r.sales, r.op, r.net])
+  const domainMax = Math.max(...allBarVals.filter(v => v > 0), 0.01)
+  const domainMin = Math.min(...allBarVals.filter(v => v < 0), 0)
+  const chartMin = domainMin < 0 ? domainMin : 0
+  const blank = { year: '', sales: 0, op: 0, net: 0, salesLabel: null, opLabel: null, netLabel: null, salesIsNeg: false, opIsNeg: false, netIsNeg: false, salesNullDown: false, opNullDown: false, netNullDown: false, _groupMax: 0, _domainMax: domainMax, _domainMin: chartMin, _isEmpty: true }
+  const padded = rows.map(r => ({ ...r, _domainMax: domainMax, _domainMin: chartMin }))
+  while (padded.length < 3) padded.unshift({ ...blank })
+  return { rows: padded, domainMax, chartMin, unitPrefix, unitSuffix, sym }
+}
+
 
 function NewsScoreGauge({ score }: { score: number }) {
   const size = 160
@@ -169,8 +221,9 @@ export function IpoDetailPage() {
 
   const [showScoreInfo, setShowScoreInfo] = useState(false)
   const [showNewsList, setShowNewsList] = useState(() => sessionStorage.getItem(`ipo-news-open-${ipoId}`) === 'true')
-  const [_period, setPeriod] = useState<'분기' | '반기' | '연간'>('분기')
   const [showStickyInfo, setShowStickyInfo] = useState(false)
+  const [selectedChartIdx, setSelectedChartIdx] = useState(0)
+  const [showKrw, setShowKrw] = useState(false)
   const stockHeaderRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -195,12 +248,28 @@ export function IpoDetailPage() {
     return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
-
   const { data, isLoading, isError } = useIpoDetail(ipoId)
   const { mutate: toggleFav } = useToggleFavorite()
   const { data: newsData } = useIpoNews(ipoId)
   const { data: scoreData } = useIpoScore(ipoId)
   const score = scoreData?.data
+  const { data: financialsData } = useIpoFinancials(ipoId)
+  const originalCurrency = financialsData?.data?.[0]?.currency ?? null
+  const { rows: chartRows, domainMax: chartDomainMax, chartMin: chartDomainMin, sym: chartSym } = useMemo(
+    () => financialsData?.data?.length ? buildChartData(financialsData.data, showKrw) : { rows: [], domainMax: 1, chartMin: 0, unitPrefix: '', unitSuffix: '억원', sym: '' },
+    [financialsData, showKrw]
+  )
+  const exchangeRate = useMemo(() => {
+    if (!showKrw || !originalCurrency || originalCurrency === 'KRW' || !financialsData?.data) return null
+    const d = financialsData.data.find(item => item.revenue != null && item.revenueKrw != null && item.revenue !== 0)
+    if (!d) return null
+    const rate = d.revenueKrw! / d.revenue!
+    return rate >= 100 ? Math.round(rate).toLocaleString() : (Math.round(rate * 10) / 10).toString()
+  }, [financialsData, showKrw, originalCurrency])
+
+  useEffect(() => {
+    if (chartRows.length > 0) setSelectedChartIdx(chartRows.length - 1)
+  }, [chartRows.length])
   const { data: subscriptionListData } = useSubscriptionList({ ipoId })
   const alreadySubscribed = (subscriptionListData?.data.subscriptions ?? []).some(
     (s) => s.subscriptionStatus !== 'CANCELLED',
@@ -289,11 +358,11 @@ export function IpoDetailPage() {
         ) : undefined}
         rightAction={
           <button
-            onClick={() => toggleFav({ ipoId, isFavorite: ipo.isFavorite })}
+            onPointerDown={() => toggleFav({ ipoId, isFavorite: ipo.isFavorite })}
             aria-label={ipo.isFavorite ? '관심 IPO 해제' : '관심 IPO 등록'}
-            className="p-1"
+            className="p-3 -mr-3"
           >
-            <svg width="19" height="17" viewBox="-1 -0.5 19 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="22" height="20" viewBox="-1 -0.5 19 17" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M16.2503 2.40774C15.4111 0.899217 14.004 0 12.4854 0C10.2345 0 9.03662 1.52736 8.49986 2.50765C7.9631 1.52736 6.76523 0 4.51431 0C2.99575 0 1.5894 0.900036 0.749377 2.40774C-0.258193 4.21846 -0.249095 6.54102 0.77288 8.62036C2.26869 11.662 5.5939 14.3342 7.44301 15.6552C7.76446 15.8845 8.1314 16 8.49986 16C8.86832 16 9.23526 15.8845 9.55671 15.6552C11.4051 14.3342 14.731 11.662 16.2268 8.62036C17.2496 6.54102 17.2579 4.21846 16.2503 2.40774Z"
                 fill={ipo.isFavorite ? '#CA3D40' : '#001936'}
@@ -304,7 +373,7 @@ export function IpoDetailPage() {
         }
       />
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-hide overscroll-none">
         <section ref={stockHeaderRef} className="px-5 pt-4 pb-5 bg-white">
           <IpoStockHeader
             avatarText={abbr}
@@ -445,29 +514,88 @@ export function IpoDetailPage() {
           )}
         </section>
 
-        <section className="px-5 pt-5 pb-4 bg-white mt-[13px]">
-          <div className="flex items-center justify-between mb-4">
+        {financialsData?.data?.length ? <section className="px-5 pt-5 pb-7 bg-white mt-[13px]">
+          <div className="flex items-start justify-between mb-8">
             <p className="text-[15px] font-bold text-[#111827]">실적 현황</p>
-            <button
-              onClick={() => setPeriod((p) => p === '분기' ? '반기' : p === '반기' ? '연간' : '분기')}
-              className="flex items-center gap-[3px] text-[13px] text-[#9AA0AB]"
-            >
-              분기 <ChevronDown size={14} />
-            </button>
-          </div>
-          <BarChart data={MOCK_CHART_DATA} />
-          <div className="flex gap-5 mt-3">
-            {MOCK_LEGEND.map((l) => (
-              <div key={l.label} className="flex flex-col gap-[4px]">
-                <div className="flex items-center gap-[5px]">
-                  <div className="w-[8px] h-[8px] rounded-full" style={{ backgroundColor: l.color }} />
-                  <span className="text-[11px] text-[#9AA0AB]">{l.label}</span>
+            {originalCurrency && originalCurrency !== 'KRW' && (
+              <div className="flex flex-col items-end gap-[5px]">
+                <div className="flex bg-[#E9E9E9] rounded-[6px] p-0.5">
+                  {([originalCurrency, 'KRW'] as const).map((cur) => (
+                    <button
+                      key={cur}
+                      onPointerDown={() => setShowKrw(cur === 'KRW')}
+                      className={`px-[6px] py-[1px] rounded-[6px] text-[11px] transition-colors ${(cur === 'KRW') === showKrw ? 'bg-white text-black font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.15)]' : 'text-[#999EA4] font-medium'}`}
+                    >
+                      {cur}
+                    </button>
+                  ))}
                 </div>
-                <p className="text-[15px] font-bold text-[#111827]">{l.value}</p>
+                <span className={`text-[10px] text-[#9AA0AB] ${showKrw && exchangeRate ? '' : 'invisible'}`}>
+                  1{chartSym} ≈ {exchangeRate ?? ''}원
+                </span>
               </div>
-            ))}
+            )}
           </div>
-        </section>
+          <div className="relative">
+            <ResponsiveContainer width="100%" height={138}>
+              <BarChart data={chartRows} barCategoryGap="25%" barGap={3} margin={{ top: 0, right: 0, bottom: 2, left: 0 }}>
+                <YAxis domain={[chartDomainMin < 0 ? Math.min(chartDomainMin, -(chartDomainMax / 2)) : 0, chartDomainMax]} hide ticks={[chartDomainMax / 2, chartDomainMax]} />
+                <XAxis hide dataKey="year" />
+                <CartesianGrid vertical={false} stroke="#F0F1F4" strokeDasharray="" />
+                <ReferenceLine y={0} stroke="#D1D5DB" strokeWidth={1} />
+                <Bar dataKey="sales" isAnimationActive={false} shape={(p: any) => <BarShape {...p} isNeg={p.salesIsNeg} nullDown={p.salesNullDown} />}>
+                  {chartRows.map((_, idx) => <Cell key={idx} fill={idx === selectedChartIdx ? CHART_COLORS[0] : CHART_MUTED[0]} />)}
+                </Bar>
+                <Bar dataKey="op" isAnimationActive={false} shape={(p: any) => <BarShape {...p} isNeg={p.opIsNeg} nullDown={p.opNullDown} />}>
+                  {chartRows.map((_, idx) => <Cell key={idx} fill={idx === selectedChartIdx ? CHART_COLORS[1] : CHART_MUTED[1]} />)}
+                </Bar>
+                <Bar dataKey="net" isAnimationActive={false} shape={(p: any) => <BarShape {...p} isNeg={p.netIsNeg} nullDown={p.netNullDown} />}>
+                  {chartRows.map((_, idx) => <Cell key={idx} fill={idx === selectedChartIdx ? CHART_COLORS[2] : CHART_MUTED[2]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex outline-none select-none" style={{ paddingBottom: 22 }}>
+              {chartRows.map((row, idx) => (
+                <div key={idx} className="flex-1 h-full outline-none" onPointerDown={row._isEmpty ? undefined : () => setSelectedChartIdx(idx)} />
+              ))}
+            </div>
+            <div className="flex pointer-events-none">
+              {chartRows.map((row, idx) => (
+                <div key={idx} className="flex-1 flex justify-center pt-2">
+                  {!row._isEmpty && (
+                    <span style={{ fontSize: 11, fontWeight: idx === selectedChartIdx ? 700 : 400, color: idx === selectedChartIdx ? '#111827' : '#9AA0AB' }}>
+                      {row.year}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          {(() => {
+            const d = chartRows[selectedChartIdx] ?? chartRows[chartRows.length - 1]
+            if (!d) return null
+            return (
+              <div className="flex mt-3 pl-4">
+                {(['매출', '영업이익', '순이익'] as const).map((label, ci) => {
+                  const displayLabel = [d.salesLabel, d.opLabel, d.netLabel][ci]
+                  return (
+                    <div key={label} className="flex flex-col gap-[4px] flex-1 min-w-0">
+                      <div className="flex items-center gap-[5px]">
+                        <div className="w-[8px] h-[8px] rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[ci] }} />
+                        <span className="text-[11px] text-[#9AA0AB]">{label}</span>
+                      </div>
+                      <p className="text-[15px] font-bold text-[#111827] whitespace-nowrap">
+                        <span key={selectedChartIdx} className="animate-value-in">
+                          {displayLabel ?? '-'}
+                        </span>
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
+        </section> : null}
       </div>
 
       <div className="px-5 py-4 bg-white border-t border-border shrink-0">
@@ -535,7 +663,7 @@ export function IpoDetailPage() {
             </div>
             <button
               onClick={() => setShowScoreInfo(false)}
-              className="w-full bg-[#7C6FEC] text-white py-3 rounded-[14px] font-semibold text-[16px]"
+              className="w-full bg-[#7C6FEC] text-white py-4 rounded-[14px] font-semibold text-[16px]"
             >
               확인
             </button>

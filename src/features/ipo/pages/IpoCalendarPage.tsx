@@ -315,7 +315,7 @@ function computeDDay(subscriptionEnd: string): { label: string; isEnded: boolean
 
 function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
   const isUpcoming = ipo.status === 'upcoming'
-  const { label: dDayLabel } = computeDDay((isUpcoming ? ipo.subscription_start : ipo.subscription_end) ?? '')
+  const { label: dDayLabel } = computeDDay((isUpcoming ? ipo.listing_date : ipo.subscription_end) ?? '')
   const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
   const dragRef = useRef({ startX: 0, startY: 0, moved: false })
 
@@ -341,8 +341,8 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           alt={isUpcoming ? '청약예정' : '청약가능'}
           className="absolute top-[19.5px] right-[17px] translate-x-[3px]"
         />
-        {!isUpcoming && (
-          <span className="absolute top-[39px] right-[17px] text-[11px] font-bold text-[#CA3D40]">{dDayLabel}</span>
+        {dDayLabel && (
+          <span className={`absolute top-[39px] right-[17px] text-[11px] font-bold ${isUpcoming ? 'text-[#3045BB]' : 'text-[#CA3D40]'}`}>{dDayLabel}</span>
         )}
       </div>
       <div className="pl-[58px] space-y-[8px]">
@@ -371,6 +371,7 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           onWishlistToggle();
         }}
         className="absolute bottom-[14px] right-[9px] p-2"
+        style={{ WebkitTapHighlightColor: 'transparent' }}
       >
         <HeartIcon isActive={isWishlisted} />
       </button>
@@ -443,6 +444,7 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           onWishlistToggle();
         }}
         className="absolute bottom-[14px] right-[9px] p-2"
+        style={{ WebkitTapHighlightColor: 'transparent' }}
       >
         <HeartIcon isActive={isWishlisted} />
       </button>
@@ -464,6 +466,8 @@ export function IpoCalendarPage() {
   const [tab, setTab] = useState<Tab>(initialTab ?? '청약 일정')
   const initialFilter = (state as { bottomFilter?: string })?.bottomFilter
   const [bottomFilter, setBottomFilter] = useState<BottomFilter>(initialFilter === '관심' ? '관심' : '전체')
+  const filterTabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const [filterIndicator, setFilterIndicator] = useState({ left: 0, width: 0 })
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
   const [calendarView, setCalendarViewRaw] = useState<CalendarView>(
     () => (sessionStorage.getItem('ipoCalendarView') as CalendarView | null) ?? 'weekly'
@@ -598,6 +602,12 @@ export function IpoCalendarPage() {
     })
     toggleFavMutation({ ipoId: id, isCurrent })
   }
+
+  useEffect(() => {
+    const idx = bottomFilter === '전체' ? 0 : 1
+    const el = filterTabRefs.current[idx]
+    if (el) setFilterIndicator({ left: el.offsetLeft, width: el.offsetWidth })
+  }, [bottomFilter])
 
   const today = dayjs();
   const todayStr = today.format("YYYY-MM-DD");
@@ -1109,16 +1119,19 @@ export function IpoCalendarPage() {
 
       {tab === "청약 일정" && (
         <div className="fixed bottom-[91px] left-1/2 -translate-x-1/2 w-full max-w-mobile px-4 flex justify-end z-20 pointer-events-none">
-          <div className="flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)] pointer-events-auto">
-            {(["전체", "관심"] as BottomFilter[]).map((f) => (
+          <div className="relative flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)] pointer-events-auto">
+            <div
+              className="absolute top-0.5 bottom-0.5 rounded-[13px] bg-white shadow-[0_2px_2px_rgba(0,0,0,0.05)] transition-all duration-200 ease-in-out"
+              style={{ left: filterIndicator.left, width: filterIndicator.width }}
+            />
+            {(["전체", "관심"] as BottomFilter[]).map((f, i) => (
               <button
                 key={f}
+                ref={el => { filterTabRefs.current[i] = el }}
                 onClick={() => setBottomFilter(f)}
                 className={cn(
-                  "px-5 py-1.5 rounded-[15px] text-[13px] transition-colors",
-                  bottomFilter === f
-                    ? "bg-white text-black font-semibold shadow-[0_2px_2px_rgba(0,0,0,0.05)]"
-                    : "text-[#999EA4] font-medium",
+                  "relative z-10 px-5 py-1.5 rounded-[15px] text-[13px] transition-colors duration-200",
+                  bottomFilter === f ? "text-black font-semibold" : "text-[#999EA4] font-medium",
                 )}
               >
                 {f}
@@ -1133,9 +1146,9 @@ export function IpoCalendarPage() {
           <div className="fixed inset-0 z-50" onClick={closeSheet} />
           <div
             ref={sheetPanelRef}
-            className="fixed left-0 right-0 bottom-0 z-50 bg-white rounded-t-2xl px-5 pt-4 pb-10 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]"
+            className="fixed left-1/2 w-full max-w-mobile bottom-0 z-50 bg-white rounded-t-2xl px-5 pt-4 pb-10 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]"
             style={{
-              transform: `translateY(${sheetVisible ? sheetDragY : window.innerHeight}px)`,
+              transform: `translateX(-50%) translateY(${sheetVisible ? sheetDragY : window.innerHeight}px)`,
               transition: sheetIsDragging.current ? 'none' : 'transform 0.26s ease',
             }}
             onClick={(e) => e.stopPropagation()}

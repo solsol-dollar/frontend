@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useCreateDepositAccount, useIssueCard } from '@/features/mypage/hooks/useMyPage'
 import solBankIcon from '@/assets/common/sol-bank-icon.svg'
 import changeupCard from '@/assets/home/changeup-card.png'
@@ -46,6 +46,8 @@ const PRODUCTS: Record<string, ProductInfo> = {
 export function ProductDetailPage() {
   const navigate = useNavigate()
   const { productId } = useParams<{ productId: string }>()
+  const { state } = useLocation()
+  const returnTo: string | undefined = state?.returnTo
   const product = PRODUCTS[productId ?? '']
 
   const createDeposit = useCreateDepositAccount()
@@ -63,17 +65,17 @@ export function ProductDetailPage() {
     setError(null)
 
     if (product.type === 'SAVINGS') {
-      navigate(`/mypage/product/${productId}/maturity`)
+      navigate(`/mypage/product/${productId}/maturity`, { state: { returnTo } })
       return
     }
 
     try {
       if (product.type === 'DEPOSIT') {
         const result = await createDeposit.mutateAsync()
-        navigate(`/mypage/product/${productId}/complete`, { state: { maturityDate: result.maturityDate } })
+        navigate(`/mypage/product/${productId}/complete`, { state: { maturityDate: result.maturityDate, returnTo } })
       } else {
         await issueCard.mutateAsync()
-        navigate(`/mypage/product/${productId}/complete`)
+        navigate(`/mypage/product/${productId}/complete`, { state: { returnTo } })
       }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message

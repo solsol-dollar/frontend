@@ -39,7 +39,7 @@ export function TransferCompletePage() {
         <button
           onClick={() => {
             qc.invalidateQueries({ queryKey: ['home', 'assets'] })
-            depth > 0 ? navigate(-(depth + 1)) : navigate(returnTo ?? '/home', { replace: true })
+            depth > 0 ? navigate(-depth) : navigate(returnTo ?? '/home', { replace: true })
           }}
           className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
         >
