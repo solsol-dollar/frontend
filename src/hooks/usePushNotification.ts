@@ -23,6 +23,16 @@ export function usePushNotification() {
       qc.invalidateQueries({ queryKey: ['mypage', 'notifications'] })
     })
 
-    return unsubscribe
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        qc.invalidateQueries({ queryKey: ['mypage', 'notifications'] })
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [qc])
 }

@@ -20,11 +20,10 @@ export async function registerPushToken(): Promise<void> {
   if (permission !== 'granted') return
 
   try {
-    await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    const sw = await navigator.serviceWorker.ready
+    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-      serviceWorkerRegistration: sw,
+      serviceWorkerRegistration: swReg,
     })
     if (!token) return
     await serviceApi.post('/api/service/api/v1/mypage/push-subscriptions', { fcmToken: token })
