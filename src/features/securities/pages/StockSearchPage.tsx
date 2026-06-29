@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSecuritiesProducts } from '../hooks/useSecuritiesProducts'
 import { TickerLogo } from '../components/TickerLogo'
@@ -10,23 +10,30 @@ export function StockSearchPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
 
-  // 인기 종목 (keyword 없이)
   const { data: popularData } = useSecuritiesProducts('OVERSEAS', 'TRADING_VALUE')
   const popular = popularData?.pages.flat() ?? []
 
-  // keyword 있을 때 SEC-001 서버사이드 검색
   const { data: searchData, isFetching } = useSecuritiesProducts('OVERSEAS', 'TRADING_VALUE', query.trim() || undefined)
   const { data: etfData } = useSecuritiesProducts('ETF', 'TRADING_VALUE', query.trim() || undefined)
   const searchResults = searchData?.pages.flat() ?? []
   const etfResults = etfData?.pages.flat() ?? []
   const filtered: ProductListItem[] = query.trim() ? [...searchResults, ...etfResults] : []
 
+  const firstItem = query.trim() === '' ? popular[0] : filtered[0]
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && firstItem) {
+      navigate(`/securities/stocks/${firstItem.productId}`)
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen bg-white">
-      {/* 검색 헤더 */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-        <button onClick={() => navigate(-1)} className="p-1 text-text-secondary">
-          <ArrowLeft size={20} />
+        <button onClick={() => navigate(-1)} className="p-1 -ml-1">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
         <div className="flex-1 flex items-center gap-2 bg-surface-bg rounded-xl px-3 py-2.5">
           <Search size={16} className="text-text-tertiary flex-shrink-0" />
@@ -35,6 +42,7 @@ export function StockSearchPage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="종목명 또는 티커 검색"
             className="flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
           />
@@ -48,11 +56,11 @@ export function StockSearchPage() {
 
       <div className="flex-1 overflow-y-auto">
         {query.trim() === '' ? (
-          <div className="px-4 pt-5">
-            <p className="text-xs font-semibold text-text-tertiary mb-3">인기 종목</p>
+          <div className="pt-5">
+            <p className="text-xs font-semibold text-text-tertiary px-4 mb-3">인기 종목</p>
             <div className="divide-y divide-border">
-              {popular.map((p) => (
-                <SearchResultItem key={p.productId} item={p} onClick={() => navigate(`/securities/stocks/${p.productId}`)} />
+              {popular.map((p, i) => (
+                <SearchResultItem key={p.productId} item={p} rank={i + 1} isFirst={i === 0} onClick={() => navigate(`/securities/stocks/${p.productId}`)} />
               ))}
             </div>
           </div>
@@ -61,9 +69,9 @@ export function StockSearchPage() {
             <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length > 0 ? (
-          <div className="px-4 pt-4 divide-y divide-border">
-            {filtered.map((p) => (
-              <SearchResultItem key={p.productId} item={p} onClick={() => navigate(`/securities/stocks/${p.productId}`)} />
+          <div className="pt-4 divide-y divide-border">
+            {filtered.map((p, i) => (
+              <SearchResultItem key={p.productId} item={p} isFirst={i === 0} onClick={() => navigate(`/securities/stocks/${p.productId}`)} />
             ))}
           </div>
         ) : (
@@ -78,9 +86,12 @@ export function StockSearchPage() {
   )
 }
 
-function SearchResultItem({ item, onClick }: { item: ProductListItem; onClick: () => void }) {
+function SearchResultItem({ item, rank, isFirst, onClick }: { item: ProductListItem; rank?: number; isFirst?: boolean; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 py-3 text-left">
+    <button onClick={onClick} className={cn('w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl', isFirst && 'bg-surface-bg')}>
+      {rank != null && (
+        <span className="w-5 text-center text-xs font-semibold text-text-tertiary flex-shrink-0 -ml-1">{rank}</span>
+      )}
       <TickerLogo ticker={item.ticker} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-primary truncate">{item.productName}</p>

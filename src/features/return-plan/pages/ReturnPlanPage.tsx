@@ -53,7 +53,7 @@ export function ReturnPlanPage() {
 
   return (
     <div className="mobile-container h-dvh flex flex-col bg-surface-bg">
-      <Header showNotification showMypage={false} showSearch />
+      <Header showNotification showMypage={false} showSearch onSearchClick={() => navigate('/return-plan/search')} />
 
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {lastExecuted ? (
