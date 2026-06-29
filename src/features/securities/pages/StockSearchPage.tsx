@@ -22,6 +22,7 @@ export function StockSearchPage() {
   const firstItem = query.trim() === '' ? popular[0] : filtered[0]
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.isComposing) return
     if (e.key === 'Enter' && firstItem) {
       navigate(`/securities/stocks/${firstItem.productId}`)
     }
@@ -30,7 +31,7 @@ export function StockSearchPage() {
   return (
     <div className="flex flex-col h-screen bg-white">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-        <button onClick={() => navigate(-1)} className="p-1 -ml-1">
+        <button onClick={() => navigate(-1)} className="p-1 -ml-1" aria-label="뒤로가기">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -47,7 +48,7 @@ export function StockSearchPage() {
             className="flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
           />
           {query && (
-            <button onClick={() => setQuery('')}>
+            <button onClick={() => setQuery('')} aria-label="검색어 지우기">
               <X size={14} className="text-text-tertiary" />
             </button>
           )}

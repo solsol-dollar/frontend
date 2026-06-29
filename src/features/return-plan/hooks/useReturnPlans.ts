@@ -13,12 +13,14 @@ interface UseReturnPlansParams {
 }
 
 // RP-004: GET /api/ledger/api/v1/return-plans
-export function useReturnPlans(params?: UseReturnPlansParams) {
+export function useReturnPlans(params?: UseReturnPlansParams, options?: { enabled?: boolean }) {
+  const resolvedParams = { page: 0, size: 20, ...params }
   return useQuery({
-    queryKey: ['returnPlans', params],
+    queryKey: ['returnPlans', resolvedParams],
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
       const res = await ledgerApi.get('/api/ledger/api/v1/return-plans', {
-        params: { page: 0, size: 20, ...params },
+        params: resolvedParams,
       })
       return (res as unknown as ApiResponse<{ returnPlans: ReturnPlanListItem[] }>).data.returnPlans
     },
