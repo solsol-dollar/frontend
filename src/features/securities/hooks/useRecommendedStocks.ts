@@ -9,7 +9,7 @@ export function useRecommendedStocks(ipoId?: number) {
     enabled: ipoId !== undefined,
     queryFn: async () => {
       const res = await serviceApi.get('/api/service/api/v1/securities/recommended', {
-        params: ipoId ? { ipoId } : {},
+        params: ipoId !== undefined ? { ipoId } : {},
       })
       const raw = (res as unknown as ApiResponse<any[]>).data
       return raw.map(item => ({
