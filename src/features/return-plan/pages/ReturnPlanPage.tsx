@@ -14,29 +14,24 @@ export function ReturnPlanPage() {
 
   const SUMMARY_LABELS = ['CMA 계좌', '외화적립예금', '체인지업 예금']
 
-  const history = returnPlans.map((plan) => ({
-    id: plan.returnPlanId,
-    name: plan.sourceCompanyName,
-    ticker: plan.sourceTicker,
-    date: plan.refundDate ? plan.refundDate.slice(0, 10).replace(/-/g, '.') : '예정',
-    amount: formatUsd(plan.totalRefundAmount),
-    distributed: plan.planStatus === 'EXECUTED',
-  }))
+  const history = [...returnPlans]
+    .sort((a, b) => {
+      if (!a.refundDate) return -1
+      if (!b.refundDate) return 1
+      return b.refundDate.localeCompare(a.refundDate)
+    })
+    .map((plan) => ({
+      id: plan.returnPlanId,
+      name: plan.sourceCompanyName,
+      ticker: plan.sourceTicker,
+      date: plan.refundDate ? plan.refundDate.slice(0, 10).replace(/-/g, '.') : '예정',
+      amount: formatUsd(plan.totalRefundAmount),
+      distributed: plan.planStatus === 'EXECUTED',
+    }))
 
-  const todayStr = new Date().toISOString().slice(0, 10)
   const nextPending = returnPlans
-    .filter((plan) => plan.planStatus !== 'EXECUTED' && (!plan.refundDate || plan.refundDate.slice(0, 10) >= todayStr))
+    .filter((plan) => plan.planStatus !== 'EXECUTED')
     .sort((a, b) => (a.refundDate ?? '').localeCompare(b.refundDate ?? ''))[0]
-
-  const nextPendingDday = nextPending?.refundDate
-    ? (() => {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const target = new Date(nextPending.refundDate as string)
-        const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-        return diff === 0 ? 'D-Day' : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
-      })()
-    : null
 
   const lastExecuted = returnPlans
     .filter((plan) => plan.planStatus === 'EXECUTED')
@@ -101,12 +96,12 @@ export function ReturnPlanPage() {
           <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(nextPending ? `/return-plan/pending/${nextPending.returnPlanId}` : '/ipo')}
-            className="flex-1 h-[120px] bg-white rounded-2xl p-4 text-left flex flex-col justify-between"
+            className="w-1/2 min-w-0 h-[120px] bg-white rounded-2xl p-4 text-left flex flex-col justify-between"
           >
-            <div>
-              <p className="text-sm text-text-tertiary mb-1">다음 IPO 환불일</p>
-              <p className="text-base font-bold text-text-primary line-clamp-1">
-                {nextPending ? `${nextPending.sourceCompanyName} · ${nextPendingDday ?? '예정'}` : '예정된 환불 없음'}
+            <div className="min-w-0">
+              <p className="text-sm text-text-tertiary mb-1">다음 IPO 리턴</p>
+              <p className="text-base font-bold text-text-primary truncate">
+                {nextPending ? nextPending.sourceCompanyName : '예정된 환불 없음'}
               </p>
             </div>
             <div className="flex items-center justify-between">
@@ -117,10 +112,10 @@ export function ReturnPlanPage() {
 
           <button
             onClick={() => navigate('/return-plan/allocation')}
-            className="flex-1 h-[120px] bg-white rounded-2xl p-4 text-left flex flex-col justify-between"
+            className="w-1/2 min-w-0 h-[120px] bg-white rounded-2xl p-4 text-left flex flex-col justify-between"
           >
             <div>
-              <p className="text-sm text-text-tertiary mb-1">놀고있는 예수금도!</p>
+              <p className="text-sm text-text-tertiary mb-1 whitespace-nowrap">놀고있는 예수금도!</p>
               <p className="text-base font-bold text-text-primary">리턴 플랜</p>
             </div>
             <div className="flex items-center justify-between">
