@@ -11,6 +11,7 @@ import { Header } from '@/components/common/Header'
 import { useRequestNotification } from '@/features/home/hooks/useRequestNotification'
 import { cn } from '@/lib/utils'
 import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
+import { useExchangeRate } from '@/features/home/hooks/useExchangeRate'
 import { useFavoriteIpos, getIpoDisplay, type FavoriteIpo } from '@/features/home/hooks/useFavoriteIpos'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 
@@ -74,9 +75,9 @@ export function HomePage() {
   const { data: assets, isLoading: assetsLoading } = useHomeAssets()
   const { data: favoriteIpos, isLoading: iposLoading } = useFavoriteIpos()
 
-  const exchangeRate = assets?.exchangeRateInfo
-  const changeSign = (exchangeRate?.changeRate ?? 0) >= 0 ? '+' : ''
-  const rateColor = (exchangeRate?.changeRate ?? 0) >= 0 ? 'text-up' : 'text-danger'
+  const liveRate = useExchangeRate()
+  const changeSign = (liveRate?.changeRate ?? 0) >= 0 ? '+' : ''
+  const rateColor = (liveRate?.changeRate ?? 0) >= 0 ? 'text-up' : 'text-danger'
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const touchStartY = useRef(0)
@@ -120,16 +121,16 @@ export function HomePage() {
         ) : (
           <div className="flex items-center justify-between mt-1">
             <p className="text-[25px] font-bold text-text-primary leading-none">
-              ${assets?.totalUsdBalance.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '—'}
+              ${assets?.totalUsdBalance?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '—'}
             </p>
             <div className="flex items-center justify-end gap-1">
               <p className="text-[14px] font-medium text-text-secondary">달러 환율</p>
               <p className={cn('text-[14px] font-medium', rateColor)}>
-                {exchangeRate?.rate.toLocaleString('ko-KR') ?? '—'}
+                {liveRate?.price?.toLocaleString('ko-KR') ?? '—'}
               </p>
-              {exchangeRate?.changeRate != null && (
+              {liveRate?.changeRate != null && (
                 <p className={cn('text-[13px] font-light', rateColor)}>
-                  {changeSign}{exchangeRate.changeRate.toFixed(2)}%
+                  {changeSign}{liveRate.changeRate.toFixed(2)}%
                 </p>
               )}
             </div>
@@ -206,7 +207,7 @@ export function HomePage() {
                         accountType: 'SECURITIES',
                       },
                     })}
-                    button={<button onClick={() => navigate('/home/transfer', { state: { fromAccountId: assets.securities.usdAccountId, sourceName: 'CMA 계좌', sourceBalance: `$${assets.securities.usdAvailableBalance.toFixed(2)}` } })} className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none">송금</button>}
+                    button={<button onClick={(e) => { e.stopPropagation(); navigate('/home/transfer', { state: { fromAccountId: assets.securities.usdAccountId, sourceName: 'CMA 계좌', sourceBalance: `$${assets.securities.usdAvailableBalance.toFixed(2)}` } }) }} className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none">송금</button>}
                   >
                     <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                       <img src={shinhanLogo} className="w-10 h-10 object-contain" alt="" />
@@ -235,7 +236,7 @@ export function HomePage() {
                     })}
                     button={acc.accountType !== 'SAVINGS' ? (
                       <button
-                        onClick={() => navigate('/home/transfer', { state: { fromAccountId: acc.accountId, sourceName: acc.accountName, sourceBalance: `$${(acc.availableBalance ?? acc.balance).toFixed(2)}` } })}
+                        onClick={(e) => { e.stopPropagation(); navigate('/home/transfer', { state: { fromAccountId: acc.accountId, sourceName: acc.accountName, sourceBalance: `$${(acc.availableBalance ?? acc.balance).toFixed(2)}` } })}}
                         className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none"
                       >
                         송금

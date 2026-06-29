@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
     plugins: [
     react(),
       VitePWA({
+        strategies: 'injectManifest',
+        srcDir: 'src',
+        filename: 'sw.ts',
         registerType: 'autoUpdate',
         includeAssets: ['icons/*.png'],
         manifest: {
@@ -32,20 +35,8 @@ export default defineConfig(({ mode }) => {
             { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           ],
         },
-        workbox: {
+        injectManifest: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-          runtimeCaching: [
-            {
-              urlPattern: /\/api\/ipos/,
-              handler: 'StaleWhileRevalidate',
-              options: { cacheName: 'ipo-cache', expiration: { maxAgeSeconds: 60 * 60 } },
-            },
-            {
-              urlPattern: /\/api\/(subscriptions|accounts)/,
-              handler: 'NetworkFirst',
-              options: { cacheName: 'ledger-cache' },
-            },
-          ],
         },
       }),
     ],
