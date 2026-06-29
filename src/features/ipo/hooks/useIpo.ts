@@ -9,7 +9,7 @@ export const ipoKeys = {
   favorites: (limit?: number) => [...ipoKeys.all, 'favorites', limit] as const,
 }
 
-export function useIpoList(params?: { status?: 'OPEN' | 'UPCOMING' | 'CLOSED'; size?: number }) {
+export function useIpoList(params?: { keyword?: string; status?: 'OPEN' | 'UPCOMING' | 'CLOSED'; size?: number }) {
   return useQuery({
     queryKey: ipoKeys.list(params),
     queryFn: () => ipoApi.getList({ size: 100, ...params }),

@@ -25,6 +25,7 @@ import { SubscribePage } from '@/features/ipo/pages/SubscribePage'
 import { InvestmentProfilePage } from '@/features/ipo/pages/InvestmentProfilePage'
 import { AllocationResultPage } from '@/features/ipo/pages/AllocationResultPage'
 import { IpoNewsDetailPage } from '@/features/ipo/pages/IpoNewsDetailPage'
+import { IpoSearchPage } from '@/features/ipo/pages/IpoSearchPage'
 
 // Return Plan
 import { ReturnPlanPage } from '@/features/return-plan/pages/ReturnPlanPage'
@@ -32,6 +33,7 @@ import { ReturnPlanSettingsPage } from '@/features/return-plan/pages/ReturnPlanS
 import { ReturnPlanHistoryPage } from '@/features/return-plan/pages/ReturnPlanHistoryPage'
 import { ReturnPlanResultDetailPage } from '@/features/return-plan/pages/ReturnPlanResultDetailPage'
 import { ReturnPlanPendingPage } from '@/features/return-plan/pages/ReturnPlanPendingPage'
+import { ReturnPlanSearchPage } from '@/features/return-plan/pages/ReturnPlanSearchPage'
 
 // Securities
 import { SecuritiesPage } from '@/features/securities/pages/SecuritiesPage'
@@ -88,11 +90,13 @@ export const router = createBrowserRouter([
   { path: '/securities/search', element: <StockSearchPage /> },
 
   // IPO 청약 플로우 — 바텀탭 없음
+  { path: '/ipo/search', element: <IpoSearchPage /> },
   { path: '/ipo/:ipoId/news/:newsId', element: <IpoNewsDetailPage /> },
   { path: '/ipo/:id', element: <IpoDetailPage /> },
   { path: '/ipo/:id/subscribe', element: <SubscribePage /> },
   { path: '/ipo/:id/result', element: <AllocationResultPage /> },
-{ path: '/return-plan/history', element: <ReturnPlanHistoryPage /> },
+  { path: '/return-plan/search', element: <ReturnPlanSearchPage /> },
+  { path: '/return-plan/history', element: <ReturnPlanHistoryPage /> },
   { path: '/return-plan/pending/:id', element: <ReturnPlanPendingPage /> },
   { path: '/return-plan/result/:id', element: <ReturnPlanResultDetailPage /> },
   { path: '/return-plan/allocation', element: <ReturnPlanSettingsPage /> },
