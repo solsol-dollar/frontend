@@ -21,6 +21,18 @@ export async function registerPushToken(): Promise<void> {
 
   try {
     const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    if (!swReg.active) {
+      await new Promise<void>((resolve) => {
+        const worker = swReg.installing ?? swReg.waiting
+        if (!worker) { resolve(); return }
+        worker.addEventListener('statechange', function listener() {
+          if (worker.state === 'activated') {
+            worker.removeEventListener('statechange', listener)
+            resolve()
+          }
+        })
+      })
+    }
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
       serviceWorkerRegistration: swReg,
