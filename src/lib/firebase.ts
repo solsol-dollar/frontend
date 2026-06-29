@@ -22,13 +22,17 @@ export async function registerPushToken(): Promise<void> {
   try {
     const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
     if (!swReg.active) {
-      await new Promise<void>((resolve) => {
+      await new Promise<void>((resolve, reject) => {
         const worker = swReg.installing ?? swReg.waiting
         if (!worker) { resolve(); return }
+        if (worker.state === 'activated') { resolve(); return }
         worker.addEventListener('statechange', function listener() {
           if (worker.state === 'activated') {
             worker.removeEventListener('statechange', listener)
             resolve()
+          } else if (worker.state === 'redundant') {
+            worker.removeEventListener('statechange', listener)
+            reject(new Error('Service Worker 설치 실패'))
           }
         })
       })
