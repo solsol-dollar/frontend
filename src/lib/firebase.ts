@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app'
 import { getMessaging, getToken, deleteToken, onMessage } from 'firebase/messaging'
 import { serviceApi } from './axios'
 
-const FCM_SW_MIGRATION_KEY = 'fcm_sw_v2'
+const FCM_SW_MIGRATION_KEY = 'fcm_sw_v3'
 
 const app = initializeApp({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -22,23 +22,7 @@ export async function registerPushToken(): Promise<void> {
   if (permission !== 'granted') return
 
   try {
-    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    if (!swReg.active) {
-      await new Promise<void>((resolve, reject) => {
-        const worker = swReg.installing ?? swReg.waiting
-        if (!worker) { resolve(); return }
-        if (worker.state === 'activated') { resolve(); return }
-        worker.addEventListener('statechange', function listener() {
-          if (worker.state === 'activated') {
-            worker.removeEventListener('statechange', listener)
-            resolve()
-          } else if (worker.state === 'redundant') {
-            worker.removeEventListener('statechange', listener)
-            reject(new Error('Service Worker 설치 실패'))
-          }
-        })
-      })
-    }
+    const swReg = await navigator.serviceWorker.ready
     if (!localStorage.getItem(FCM_SW_MIGRATION_KEY)) {
       try {
         await deleteToken(messaging)
