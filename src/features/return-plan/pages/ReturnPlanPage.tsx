@@ -33,8 +33,9 @@ export function ReturnPlanPage() {
     distributed: plan.planStatus === 'EXECUTED',
   }))
 
+  const todayStr = new Date().toISOString().slice(0, 10)
   const nextPending = returnPlans
-    .filter((plan) => plan.planStatus !== 'EXECUTED')
+    .filter((plan) => plan.planStatus !== 'EXECUTED' && (!plan.refundDate || plan.refundDate.slice(0, 10) >= todayStr))
     .sort((a, b) => (a.refundDate ?? '').localeCompare(b.refundDate ?? ''))[0]
 
   const nextPendingDday = nextPending?.refundDate
