@@ -49,6 +49,12 @@ export interface IpoScoreItem {
   ipoId: number
   ticker: string
   finalScore: number
+  postScore?: number | null
+  postGrade?: string | null
+  postReason?: string | null
+  postSummary?: string | null
+  postTopNewsIds?: number[] | null
+  postNewsCount?: number | null
   grade: string
   reason: string | null
   summary: string | null
