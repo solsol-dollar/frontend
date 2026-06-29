@@ -30,9 +30,21 @@ export function usePushNotification() {
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
+    const handleSwMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'NOTIFICATION_RECEIVED') {
+        qc.invalidateQueries({ queryKey: ['mypage', 'notifications'] })
+      }
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSwMessage)
+    }
+
     return () => {
       unsubscribe()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSwMessage)
+      }
     }
   }, [qc])
 }

@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app'
-import { getMessaging, getToken, onMessage } from 'firebase/messaging'
+import { getMessaging, getToken, deleteToken, onMessage } from 'firebase/messaging'
 import { serviceApi } from './axios'
+
+const FCM_SW_MIGRATION_KEY = 'fcm_sw_v2'
 
 const app = initializeApp({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -36,6 +38,13 @@ export async function registerPushToken(): Promise<void> {
           }
         })
       })
+    }
+    if (!localStorage.getItem(FCM_SW_MIGRATION_KEY)) {
+      try {
+        await deleteToken(messaging)
+        localStorage.setItem(FCM_SW_MIGRATION_KEY, '1')
+      } catch {
+      }
     }
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
