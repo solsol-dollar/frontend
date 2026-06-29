@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, 
 import { Header } from '@/components/common/Header'
 import { IpoStockHeader } from '@/features/ipo/components/IpoStockHeader'
 import { getSubscriptionStatusBadgeClass } from '@/features/ipo/utils/subscriptionStatus'
-import { useToggleFavorite, useIpoNews, useIpoList, useIpoScore, useIpoFinancials } from '@/features/ipo/hooks/useIpo'
+import { useToggleFavorite, useIpoTopNews, useIpoList, useIpoScore, useIpoFinancials } from '@/features/ipo/hooks/useIpo'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 import type { IpoDetailItem } from '@/features/ipo/api/ipoApi'
 
@@ -198,6 +198,13 @@ function NewsScoreChart({ before, after, offerPrice, currentPrice }: { before: n
 
   return (
     <svg viewBox={`0 -16 ${W} ${H + 55}`} className="w-full">
+      <defs>
+        <linearGradient id="moliPliGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#7C6FEC" />
+          <stop offset="100%" stopColor="#92D6EE" />
+        </linearGradient>
+      </defs>
+
       <text x={x1} y={y1 - 18} textAnchor="middle" fill="#3A3D45" fontSize={13} fontWeight={600}>
         {before}점
       </text>
@@ -212,7 +219,7 @@ function NewsScoreChart({ before, after, offerPrice, currentPrice }: { before: n
         x={(d) => d.x}
         y={(d) => d.y}
         curve={curveNatural}
-        stroke="#7C6FEC"
+        stroke="url(#moliPliGrad)"
         strokeWidth={4}
         fill="none"
         strokeLinecap="round"
@@ -223,18 +230,18 @@ function NewsScoreChart({ before, after, offerPrice, currentPrice }: { before: n
       <circle cx={x1} cy={y1} r={5.5} fill="white" stroke="#7C6FEC" strokeWidth={4} />
 
       <g ref={dotGroupRef}>
-        <circle cx={x2} cy={y2} r={5.5} fill="white" stroke="#7C6FEC" strokeWidth={4} />
+        <circle cx={x2} cy={y2} r={5.5} fill="white" stroke="#92D6EE" strokeWidth={4} />
         <rect
           x={x2 - 22}
           y={y2 - 36}
           width={44}
           height={21}
           rx={3}
-          fill="#7C6FEC"
-          fillOpacity={0.22}
+          fill="#92D6EE"
+          fillOpacity={0.30}
           transform={`translate(${x2}, ${y2 - 25}) skewX(-10) translate(-${x2}, -${y2 - 25})`}
         />
-        <text x={x2} y={y2 - 25} textAnchor="middle" dominantBaseline="middle" fill="#5344A8" fontSize={13} fontWeight={700}>
+        <text x={x2} y={y2 - 25} textAnchor="middle" dominantBaseline="middle" fill="#0E7490" fontSize={13} fontWeight={700}>
           {after}점
         </text>
       </g>
@@ -265,7 +272,7 @@ interface Props {
 export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
   const navigate = useNavigate()
   const { mutate: toggleFav } = useToggleFavorite()
-  const { data: newsData } = useIpoNews(ipoId)
+  const { data: newsData } = useIpoTopNews(ipoId)
   const { data: listData } = useIpoList({ status: 'CLOSED' })
   const { data: scoreData } = useIpoScore(ipoId)
   const score = scoreData?.data
@@ -274,6 +281,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
   const [showStickyInfo, setShowStickyInfo] = useState(false)
   const [showScoreInfo, setShowScoreInfo] = useState(false)
   const [showNewsList, setShowNewsList] = useState(() => sessionStorage.getItem(`ipo-news-open-${ipoId}`) === 'true')
+  const [summaryTab, setSummaryTab] = useState<'before' | 'after'>('before')
   const [selectedChartIdx, setSelectedChartIdx] = useState(0)
   const [showKrw, setShowKrw] = useState(false)
   const originalCurrency = financialsData?.data?.[0]?.currency ?? null
@@ -410,6 +418,14 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
                 0%, 100% { transform: translateY(15%); }
                 50%       { transform: translateY(8%); }
               }
+              @keyframes pli-rise {
+                from { transform: translateY(100%); }
+                to   { transform: translateY(10%); }
+              }
+              @keyframes pli-float {
+                0%, 100% { transform: translateY(10%); }
+                50%       { transform: translateY(3%); }
+              }
             `}</style>
             <div className="flex gap-3 items-center">
               <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-[#7C6FEC] flex items-end justify-center">
@@ -432,13 +448,54 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
                 <p className="text-[13px] text-[#3A3D45] leading-[1.6]">{score?.reason ?? ''}</p>
               </div>
             </div>
+            {score?.postReason && (
+              <div className="flex gap-3 items-center justify-end mt-3">
+                <div className="relative bg-[#E8F7FD] rounded-[12px] px-3 py-[10px]" style={{ maxWidth: 'calc(100% - 54px)' }}>
+                  <div
+                    className="absolute right-[-7px] top-1/2 -translate-y-1/2 w-0 h-0"
+                    style={{
+                      borderTop: '6px solid transparent',
+                      borderBottom: '6px solid transparent',
+                      borderLeft: '7px solid #E8F7FD',
+                    }}
+                  />
+                  <p className="text-[13px] text-[#3A3D45] leading-[1.6]">{score.postReason}</p>
+                </div>
+                <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-[#92D6EE] flex items-end justify-center">
+                  <img
+                    src="/icons/lululala.png"
+                    alt=""
+                    className="w-10 h-10 object-contain"
+                    style={{ animation: 'pli-rise 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards, pli-float 2.5s ease-in-out 0.9s infinite' }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
         <section className="px-5 pt-5 pb-1 bg-white mt-[13px]">
-          <p className="text-[15px] font-bold text-[#111827] mb-3">SOLSOL한 뉴스 요약</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[15px] font-bold text-[#111827]">SOLSOL한 뉴스 요약</p>
+            {score?.postSummary && (
+              <div className="flex bg-[#F6F6F9] rounded-full p-[3px] gap-[2px]">
+                <button
+                  onClick={() => setSummaryTab('before')}
+                  className={`px-3 py-[5px] text-[12px] font-medium rounded-full transition-all ${summaryTab === 'before' ? 'bg-[#7C6FEC] text-white' : 'text-[#9AA0AB]'}`}
+                >
+                  상장 전
+                </button>
+                <button
+                  onClick={() => setSummaryTab('after')}
+                  className={`px-3 py-[5px] text-[12px] font-medium rounded-full transition-all ${summaryTab === 'after' ? 'bg-[#92D6EE] text-white' : 'text-[#9AA0AB]'}`}
+                >
+                  상장 후
+                </button>
+              </div>
+            )}
+          </div>
           <div className="bg-[#F6F6F9] rounded-[12px] px-4 py-[14px] mb-4 flex flex-col gap-2 mt-4">
-            {(score?.summary ?? '').split(/(?<=\.)\s+/).filter(Boolean).map((item, i) => (
+            {((summaryTab === 'after' ? score?.postSummary : score?.summary) ?? '').split(/(?<=\.)\s+/).filter(Boolean).map((item, i) => (
               <div key={i} className="flex gap-2">
                 <span className="text-[13px] text-[#7C6FEC] shrink-0">•</span>
                 <p className="text-[13px] text-[#3A3D45] leading-[1.6]">{item}</p>
@@ -446,7 +503,8 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
             ))}
           </div>
           {(() => {
-            const sources = [...new Set((newsData?.data ?? []).map((n) => n.source))].slice(0, 4)
+            const currentNews = (summaryTab === 'after' ? newsData?.data?.post : newsData?.data?.pre) ?? []
+            const sources = [...new Set(currentNews.map((n) => n.source))].slice(0, 4)
             if (sources.length === 0) return null
             return (
               <button
@@ -486,7 +544,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
 
           {showNewsList && (
             <div className="overflow-visible">
-              {(newsData?.data ?? []).map((n) => (
+              {((summaryTab === 'after' ? newsData?.data?.post : newsData?.data?.pre) ?? []).map((n) => (
                 <button
                   key={n.id}
                   onClick={() => navigate(`/ipo/${ipoId}/news/${n.id}`, { state: { news: n } })}
@@ -525,29 +583,12 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
             )}
           </div>
           <div className="relative">
-            <ResponsiveContainer width="100%" height={140}>
-              <BarChart data={chartRows} barCategoryGap="25%" barGap={3}>
-                {chartDomainMin < 0 ? (() => {
-                  const step = chartDomainMax / 2
-                  const numNeg = Math.round(Math.abs(chartDomainMin) / step)
-                  const negTicks = Array.from({ length: numNeg }, (_, i) => -(numNeg - i) * step)
-                  return (
-                    <YAxis
-                      domain={[chartDomainMin, chartDomainMax]}
-                      hide
-                      ticks={[...negTicks, 0, step, step * 2]}
-                    />
-                  )
-                })() : (
-                  <YAxis domain={[0, chartDomainMax]} hide />
-                )}
+            <ResponsiveContainer width="100%" height={138}>
+              <BarChart data={chartRows} barCategoryGap="25%" barGap={3} margin={{ top: 0, right: 0, bottom: 2, left: 0 }}>
+                <YAxis domain={[chartDomainMin < 0 ? Math.min(chartDomainMin, -(chartDomainMax / 2)) : 0, chartDomainMax]} hide ticks={[chartDomainMax / 2, chartDomainMax]} />
+                <XAxis hide dataKey="year" />
                 <CartesianGrid vertical={false} stroke="#F0F1F4" strokeDasharray="" />
-                {chartDomainMin < 0 && <ReferenceLine y={0} stroke="#D1D5DB" strokeWidth={1} />}
-                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={(props: { x: string | number; y: string | number; payload: { value: string }; index: number }) => (
-                  <text x={props.x} y={Number(props.y) + 10} textAnchor="middle" fontSize={11} fontWeight={props.index === selectedChartIdx ? 700 : 400} fill={props.index === selectedChartIdx ? '#111827' : '#9AA0AB'}>
-                    {props.payload.value}
-                  </text>
-                )} />
+                <ReferenceLine y={0} stroke="#D1D5DB" strokeWidth={1} />
                 <Bar dataKey="sales" isAnimationActive={false} shape={(p: any) => <BarShape {...p} isNeg={p.salesIsNeg} nullDown={p.salesNullDown} />}>
                   {chartRows.map((_, idx) => <Cell key={idx} fill={idx === selectedChartIdx ? CHART_COLORS[0] : CHART_MUTED[0]} />)}
                 </Bar>
@@ -559,9 +600,20 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-            <div className="absolute inset-0 flex" style={{ paddingBottom: 22 }}>
+            <div className="absolute inset-0 flex outline-none select-none" style={{ paddingBottom: 22 }}>
               {chartRows.map((row, idx) => (
-                <div key={idx} className="flex-1 h-full" onPointerDown={row._isEmpty ? undefined : () => setSelectedChartIdx(idx)} />
+                <div key={idx} className="flex-1 h-full outline-none" onPointerDown={row._isEmpty ? undefined : () => setSelectedChartIdx(idx)} />
+              ))}
+            </div>
+            <div className="flex pointer-events-none">
+              {chartRows.map((row, idx) => (
+                <div key={idx} className="flex-1 flex justify-center pt-2">
+                  {!row._isEmpty && (
+                    <span style={{ fontSize: 11, fontWeight: idx === selectedChartIdx ? 700 : 400, color: idx === selectedChartIdx ? '#111827' : '#9AA0AB' }}>
+                      {row.year}
+                    </span>
+                  )}
+                </div>
               ))}
             </div>
           </div>
