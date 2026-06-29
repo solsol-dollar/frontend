@@ -145,6 +145,7 @@ export function FillPage() {
       {canProceed && (
         <button
           onClick={() => navigate('/home/transfer/confirm', {
+            replace: true,
             state: {
               fromAccountId: selected!.accountId,
               toAccountId,

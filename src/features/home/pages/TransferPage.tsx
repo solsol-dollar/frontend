@@ -159,6 +159,7 @@ export function TransferPage() {
       {canProceed && (
         <button
           onClick={() => navigate('/home/transfer/confirm', {
+            replace: true,
             state: {
               fromAccountId,
               toAccountId: selected!.accountId,
@@ -168,7 +169,7 @@ export function TransferPage() {
               destBalance: `$${selected!.balance.toFixed(2)}`,
               amount,
               returnTo,
-              depth: depth + 1,
+              depth,
             },
           })}
           className="w-full bg-primary text-white py-3 font-semibold"

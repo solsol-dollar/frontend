@@ -1,1 +1,1 @@
-export const ZONE_COLORS = ['#4F46E5', '#7C3AED', '#0D9488']
+export const ZONE_COLORS = ['#4D7EFF', '#A473FA', '#41B9D5']

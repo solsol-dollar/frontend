@@ -14,6 +14,9 @@ import { useMyInvestments } from '../hooks/useMyInvestments'
 import { useSecuritiesProducts } from '../hooks/useSecuritiesProducts'
 import { useMarketIndices } from '../hooks/useMarketIndices'
 import type { ProductSortType, HoldingItem } from '../types/securities'
+import { serviceApi } from '@/lib/axios'
+import { getInvestmentStatus, markInvestmentCompleted } from '@/lib/auth'
+import { InvestmentProfileSheet } from '@/features/mypage/components/InvestmentProfileSheet'
 
 type Tab = 'MY홈' | '해외' | 'ETF'
 
@@ -243,6 +246,17 @@ export function SecuritiesPage() {
 
   const setTab = (t: Tab) => setSearchParams({ tab: t }, { replace: true })
 
+  const [showDiagnosis, setShowDiagnosis] = useState(() => getInvestmentStatus() === 'REQUIRED')
+  const submitDiagnosis = async (data: { hope: string; provide: string }) => {
+    try {
+      await serviceApi.post('/api/service/api/v1/mypage/investment-profile', data)
+      markInvestmentCompleted()
+      setShowDiagnosis(false)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-surface-bg">
       {/* 헤더 + 탭 통합 */}
@@ -276,6 +290,13 @@ export function SecuritiesPage() {
         {tab === '해외' && <StockMarketTab type="OVERSEAS" />}
         {tab === 'ETF' && <StockMarketTab type="ETF" />}
       </div>
+
+      {showDiagnosis && (
+        <InvestmentProfileSheet
+          onConfirm={submitDiagnosis}
+          onClose={() => setShowDiagnosis(false)}
+        />
+      )}
     </div>
   )
 }
