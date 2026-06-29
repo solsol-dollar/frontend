@@ -56,24 +56,33 @@ function ExistingPlanView({ plan, refundAmount }: { plan: ReturnPlanResponse; re
         </div>
       </section>
 
-      <section className="px-4 py-5 bg-surface-bg space-y-1.5">
-        {ACCOUNTS.map((acc, i) => (
-          <div key={acc.id} className="flex items-center gap-3 p-3 bg-white rounded-2xl">
-            <img src={solBankIcon} alt="" className="w-8 h-8 rounded-full flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-text-primary truncate">{acc.name}</p>
-              <p className="text-xs text-text-tertiary truncate">{acc.desc}</p>
+      <section className="px-4 py-5 bg-surface-bg space-y-3">
+        {ACCOUNTS.map((acc, i) => {
+          const ratio = ratios[i]
+          const amount = ((refundAmount * ratio) / 100).toFixed(2)
+          return (
+            <div key={acc.id} className="rounded-2xl px-4 py-3" style={{ backgroundColor: '#F4F5F8' }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[i] }} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-text-primary">{acc.name}</p>
+                    <p className="text-xs text-text-tertiary mt-0.5">{acc.desc}</p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0 ml-3">
+                  <p className="text-sm font-bold" style={{ color: ZONE_COLORS[i] }}>
+                    <span className="text-lg">{ratio}</span> %
+                  </p>
+                  <p className="text-xs text-text-tertiary">${amount}</p>
+                </div>
+              </div>
+              <div className="h-1 rounded-full" style={{ backgroundColor: `${ZONE_COLORS[i]}33` }}>
+                <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${ratio}%`, backgroundColor: ZONE_COLORS[i] }} />
+              </div>
             </div>
-            <div className="flex flex-col items-end flex-shrink-0">
-              <span className="text-sm font-semibold" style={{ color: ZONE_COLORS[i] }}>
-                {ratios[i]}%
-              </span>
-              <span className="text-lg font-bold" style={{ color: ZONE_COLORS[i] }}>
-                ${((refundAmount * ratios[i]) / 100).toFixed(2)}
-              </span>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </section>
 
     </>
@@ -222,7 +231,7 @@ export function AllocationResultPage() {
   };
 
   return (
-    <div className="mobile-container flex flex-col h-screen bg-surface-bg">
+    <div className="mobile-container flex flex-col h-screen bg-white">
       <Header
         title="배정 결과"
         showBack
@@ -292,7 +301,7 @@ export function AllocationResultPage() {
       </div>
 
       {!existingPlan && (
-        <div className="px-4 pb-8 pt-3 bg-white border-t border-border">
+        <div className="px-4 pb-8 pt-3 bg-white">
           <button
             onClick={handleReserve}
             disabled={isReserving}

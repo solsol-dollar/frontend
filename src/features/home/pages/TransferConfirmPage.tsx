@@ -48,7 +48,7 @@ function WaveLoading({ destName, amount, isDone }: { destName: string; amount: s
       <div className="h-14 flex-shrink-0" />
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-40">
         <div className="relative text-center">
-          <svg viewBox="0 0 150 150" className="absolute w-[88px] h-[88px] left-1/2 -translate-x-1/2 bottom-full mb-6">
+          <svg viewBox="-4.20 -3.63 158.67 158.07" className="absolute w-[88px] h-[88px] left-1/2 -translate-x-1/2 bottom-full mb-6">
             <defs>
               <clipPath id="wave-clip">
                 <path d={LOGO_PATH} />
@@ -104,7 +104,7 @@ export function TransferConfirmPage() {
       ])
       setIsDone(true)
       await new Promise(r => setTimeout(r, 500))
-      navigate('/home/transfer/complete', { state: { account: { displayName: destName }, amount, result, returnTo, depth: depth + 1 } })
+      navigate('/home/transfer/complete', { replace: true, state: { account: { displayName: destName }, amount, result, returnTo, depth } })
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       setErrorMsg(msg ?? '송금 중 오류가 발생했습니다')

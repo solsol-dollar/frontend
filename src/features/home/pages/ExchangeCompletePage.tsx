@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Header } from '@/components/common/Header'
+
 import shinhanIcon from '@/assets/home/shinhan-logo.svg'
 import type { ExchangeResult } from '@/features/home/hooks/useExchange'
 
@@ -27,7 +27,6 @@ export function ExchangeCompletePage() {
 
   return (
     <div className="mobile-container flex flex-col h-screen bg-white">
-      <Header showBack title="환전" showNotification={false} showMypage={false} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-36">
         <div className="relative text-center">
