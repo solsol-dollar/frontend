@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 
 function shuffle(arr: number[]) {
@@ -14,42 +14,20 @@ interface Props {
 export function PinKeypad({ onEnter, onBack, error }: Props) {
   const [pin, setPin] = useState<number[]>([])
   const [nums, setNums] = useState(() => shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]))
-  const [fakeActive, setFakeActive] = useState<number | null>(null)
-  const pinRef = useRef<number[]>([])
-  const enterTimerRef = useRef<number | null>(null)
-  const fakeTimerRef = useRef<number | null>(null)
 
   const reshuffle = useCallback(() => setNums(shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])), [])
-
-  useEffect(() => {
-    return () => {
-      if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current)
-      if (fakeTimerRef.current !== null) window.clearTimeout(fakeTimerRef.current)
-    }
-  }, [])
 
   const handleKey = (k: number | '재배열' | '←') => {
     if (k === '재배열') { reshuffle(); return }
     if (k === '←') {
-      pinRef.current = pinRef.current.slice(0, -1)
-      setPin([...pinRef.current])
+      setPin(prev => prev.slice(0, -1))
       return
     }
-    if (pinRef.current.length >= 6) return
-
-    // 보안: 다른 번호에 시각적 피드백
-    const others = nums.filter(n => n !== k)
-    const decoy = others[Math.floor(Math.random() * others.length)]
-    setFakeActive(decoy)
-    if (fakeTimerRef.current !== null) window.clearTimeout(fakeTimerRef.current)
-    fakeTimerRef.current = window.setTimeout(() => setFakeActive(null), 120)
-
-    pinRef.current = [...pinRef.current, k]
-    setPin([...pinRef.current])
-    if (pinRef.current.length === 6) {
-      if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current)
-      const final = pinRef.current.join('')
-      enterTimerRef.current = window.setTimeout(() => onEnter(final), 0)
+    if (pin.length >= 6) return
+    const next = [...pin, k]
+    setPin(next)
+    if (next.length === 6) {
+      onEnter(next.join(''))
     }
   }
 
@@ -60,13 +38,7 @@ export function PinKeypad({ onEnter, onBack, error }: Props) {
     <div className="mobile-container flex flex-col h-screen">
       <div className="flex-1 flex flex-col bg-white">
         <div className="px-4 pt-4">
-          <button
-            onClick={() => {
-              if (enterTimerRef.current !== null) window.clearTimeout(enterTimerRef.current)
-              onBack()
-            }}
-            className="p-1 -ml-1"
-          >
+          <button onClick={onBack} className="p-1 -ml-1">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -107,10 +79,7 @@ export function PinKeypad({ onEnter, onBack, error }: Props) {
                 onClick={() => handleKey(k)}
                 className="py-5 flex items-center justify-center"
               >
-                <span className={cn(
-                  'w-14 h-14 flex items-center justify-center rounded-full text-white text-2xl font-light transition-colors',
-                  fakeActive === k && 'bg-white/20',
-                )}>
+                <span className="w-14 h-14 flex items-center justify-center rounded-full text-white text-2xl font-light">
                   {k}
                 </span>
               </button>

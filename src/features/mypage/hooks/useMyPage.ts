@@ -6,6 +6,7 @@ export interface MyPageAccount {
   accountType: 'SECURITIES' | 'DEPOSIT' | 'SAVINGS'
   accountName: string
   accountNumberMasked: string
+  virtualAccountNumber?: string | null
   currency: string
   balance: number
   reservedBalance: number

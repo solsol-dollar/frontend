@@ -12,12 +12,12 @@ export interface TransferResult {
   fromAccountId: number
   toAccountId: number
   toAccountType: string
+  toVirtualAccountNumber: string | null
   amount: number
   currency: string
   status: string
   completedAt: string
   executedAt: string
-
 }
 
 export function useTransfer() {
