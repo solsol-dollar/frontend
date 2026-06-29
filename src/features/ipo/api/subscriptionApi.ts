@@ -20,6 +20,7 @@ export interface SubscriptionRes {
   offerPriceMax: number
   confirmedOfferPrice: number | null
   listingDate: string | null
+  resultStatus: string | null
 }
 
 export interface SubscriptionCancelRes {

@@ -21,9 +21,11 @@ export function MyInvestmentsPage() {
   const totalValue = data?.totalCurrentValueUsd ?? 1
 
   const HoldingRow = ({ h }: { h: HoldingItem }) => {
-    const ratio = totalValue > 0 ? (h.currentValueUsd / totalValue) * 100 : 0
+    const costBasisUsd = h.avgPriceUsd * h.qty
+    const effectiveValueUsd = h.currentValueUsd ?? costBasisUsd
+    const ratio = totalValue > 0 ? (effectiveValueUsd / totalValue) * 100 : 0
     const value = priceMode === 'current'
-      ? currencyMode === 'usd' ? `$${h.currentValueUsd.toFixed(2)}` : `${Math.round(h.currentValueUsd).toLocaleString()}원`
+      ? currencyMode === 'usd' ? `$${effectiveValueUsd.toFixed(2)}` : `${Math.round(effectiveValueUsd).toLocaleString()}원`
       : currencyMode === 'usd' ? `$${h.avgPriceUsd.toFixed(2)}` : `${Math.round(h.avgPriceUsd).toLocaleString()}원`
 
     return (

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Calendar } from 'lucide-react'
 import { useCreateSavingsAccount } from '@/features/mypage/hooks/useMyPage'
 
@@ -86,6 +86,8 @@ function DrumColumn({ items, selected, onSelect }: {
 export function MaturityDatePage() {
   const navigate = useNavigate()
   const { productId } = useParams<{ productId: string }>()
+  const { state } = useLocation()
+  const returnTo: string | undefined = state?.returnTo
 
   const now = new Date()
   const defaultYear = `${now.getFullYear() + 1}년`
@@ -124,7 +126,7 @@ export function MaturityDatePage() {
     try {
       const result = await createSavings.mutateAsync(maturityDate)
       navigate(`/mypage/product/${productId}/complete`, {
-        state: { maturityDate: result.maturityDate ?? maturityDate },
+        state: { maturityDate: result.maturityDate ?? maturityDate, returnTo },
       })
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
