@@ -17,7 +17,8 @@ export function ReturnPlanSearchPage() {
 
   const { data: defaultPlans = [], isLoading: defaultLoading } = useReturnPlans({ size: 100 })
   const { data: searchPlans = [], isFetching } = useReturnPlans(
-    q ? { keyword: q, size: 100 } : undefined,
+    { keyword: q, size: 100 },
+    { enabled: !!q },
   )
 
   const items = q ? searchPlans : defaultPlans
@@ -29,6 +30,7 @@ export function ReturnPlanSearchPage() {
       : `/return-plan/pending/${plan.returnPlanId}`
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.nativeEvent.isComposing) return
     if (e.key === 'Enter' && items[0]) {
       navigate(getPlanPath(items[0]))
     }
@@ -75,7 +77,7 @@ export function ReturnPlanSearchPage() {
   return (
     <div className="flex flex-col h-screen bg-white">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-        <button onClick={() => navigate(-1)} className="p-1 -ml-1">
+        <button onClick={() => navigate(-1)} className="p-1 -ml-1" aria-label="뒤로가기">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -92,7 +94,7 @@ export function ReturnPlanSearchPage() {
             className="flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
           />
           {query && (
-            <button onClick={() => setQuery('')}>
+            <button onClick={() => setQuery('')} aria-label="검색어 지우기">
               <X size={14} className="text-text-tertiary" />
             </button>
           )}
