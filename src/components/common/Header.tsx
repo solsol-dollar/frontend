@@ -15,7 +15,7 @@ interface HeaderProps {
   onSearchClick?: () => void
 }
 
-function BellIcon() {
+export function BellIcon() {
   const hasUnread = useUnreadNotifications()
   return <img src={hasUnread ? '/icons/Bell.svg' : '/icons/Bell_not.svg'} width={25} height={25} alt="" />
 }
@@ -53,7 +53,7 @@ export function Header({
           </span>
         )}
 
-        <div className="flex items-center gap-4 z-10">
+        <div className="flex items-center gap-3 z-10">
           {rightAction}
           {showSettings && (
             <button onClick={() => navigate('/notifications/settings')} className="p-1">
@@ -95,7 +95,7 @@ export function Header({
           </button>
         )}
         {showSearch && (
-          <button>
+          <button onClick={onSearchClick} className={!showMypage ? 'ml-[9px] mr-[4px]' : undefined}>
             <img src="/icons/search.svg" width={19} height={19} alt="" />
           </button>
         )}

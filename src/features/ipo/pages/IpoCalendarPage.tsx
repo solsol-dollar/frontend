@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { BellIcon } from '@/components/common/Header'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { cn } from '@/lib/utils'
@@ -840,7 +841,7 @@ export function IpoCalendarPage() {
 
   return (
     <div className="h-dvh flex flex-col bg-[#F6F6F9]">
-      <header className="bg-white flex items-center justify-between px-4 h-[56px] shrink-0">
+      <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-[56px] shrink-0">
         <div className="flex items-center gap-1.5">
           <span className="text-[18px] font-bold text-[#111111]">
             IPO 캘린더
@@ -849,11 +850,11 @@ export function IpoCalendarPage() {
             <img src="/icons/question.svg" width={22} height={22} alt="" />
           </button>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button onClick={() => navigate("/notifications")}>
-            <img src="/icons/Bell.svg" width={25} height={25} alt="" />
+            <BellIcon />
           </button>
-          <button>
+          <button className="ml-[9px] mr-[4px]">
             <img src="/icons/search.svg" width={19} height={19} alt="" />
           </button>
         </div>
