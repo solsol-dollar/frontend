@@ -1,18 +1,23 @@
+import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Header } from '@/components/common/Header'
+import { useQueryClient } from '@tanstack/react-query'
 import shinhanIcon from '@/assets/home/shinhan-logo.svg'
 
 export function TransferCompletePage() {
-  
-  const navigate = useNavigate() 
+  const navigate = useNavigate()
+  const qc = useQueryClient()
   const { state } = useLocation()
-  const account = state?.account ?? { displayName: '내 CMA(RP형)' }
-  const amount: string = state?.amount ?? '300.00'
+  const account = state?.account ?? null
+  const amount: string = state?.amount ?? '0'
   const returnTo: string | undefined = state?.returnTo
+  const depth: number = state?.depth ?? 0
+
+  useEffect(() => {
+    if (!account) navigate('/home', { replace: true })
+  }, [account, navigate])
 
   return (
     <div className="mobile-container flex flex-col h-screen bg-white">
-      <Header showBack title="송금" showNotification={false} showMypage={false} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
         {/* 완료 문구 — ConfirmPage와 동일한 위치 */}
@@ -24,7 +29,7 @@ export function TransferCompletePage() {
             className="absolute w-24 h-24 left-1/2 -translate-x-1/2 translate-y-[8px] bottom-full mb-6"
           />
           <p className="text-[20px] font-semibold leading-snug">
-            <span className="text-primary-500">{account.displayName}</span>
+            <span className="text-primary-500">{account?.displayName ?? ''}</span>
             <span className="text-text-primary"> 계좌로</span>
           </p>
           <p className="text-[20px] font-semibold text-text-primary leading-snug">$ {amount}를 옮겼어요</p>
@@ -32,7 +37,10 @@ export function TransferCompletePage() {
       </div>
       <div className="px-4 pb-10">
         <button
-          onClick={() => navigate(returnTo ?? '/home', { replace: true })}
+          onClick={() => {
+            qc.invalidateQueries({ queryKey: ['home', 'assets'] })
+            depth > 0 ? navigate(-(depth + 1)) : navigate(returnTo ?? '/home', { replace: true })
+          }}
           className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
         >
           완료
