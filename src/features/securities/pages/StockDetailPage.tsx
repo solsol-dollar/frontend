@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Header } from '@/components/common/Header'
 import { PriceChart } from '../components/PriceChart'
 import { ProductStats } from '../components/ProductStats'
 import { useStockDetail, useOrderBook } from '../hooks/useStockDetail'
-import { useWatchlist } from '../hooks/useWatchlist'
 import { type UiPeriod, PERIOD_MAP } from '../types/chart'
 import type { OrderBookEntry } from '../types/securities'
 import { useMarketStatus } from '../utils/marketHours'
@@ -19,8 +17,6 @@ export function StockDetailPage() {
   const location = useLocation()
   const { data: stock } = useStockDetail(id)
   const { data: orderBook } = useOrderBook(id)
-  const { toggle, isWatchlisted } = useWatchlist()
-
   const marketStatus = useMarketStatus()
   const canTrade = marketStatus === 'open'
 
@@ -32,22 +28,12 @@ export function StockDetailPage() {
   const periods: UiPeriod[] = ['5분', '일', '주', '월']
   // 실시간 탭 — 고도화 시 복원: canTrade ? ['실시간', ...periods] : periods
 
-  const watchlisted = isWatchlisted(Number(id))
-
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-surface-bg">
       <Header
         showBack
         showNotification={false}
         showMypage={false}
-        rightAction={
-          <button onClick={() => toggle(Number(id))} className="p-1">
-            <Heart
-              size={22}
-              className={cn(watchlisted ? 'text-heart fill-heart' : 'text-text-tertiary')}
-            />
-          </button>
-        }
       />
 
       <div className="flex-1 overflow-y-auto pb-24">

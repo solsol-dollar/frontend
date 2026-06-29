@@ -64,6 +64,22 @@ export function useIpoNews(ipoId: number, size = 3) {
   })
 }
 
+export function useIpoTopNews(ipoId: number) {
+  return useQuery({
+    queryKey: [...ipoKeys.detail(ipoId), 'news', 'top'],
+    queryFn: () => ipoApi.getTopNews(ipoId),
+    enabled: ipoId > 0,
+  })
+}
+
+export function useIpoNewsDetail(ipoId: number, newsId: number) {
+  return useQuery({
+    queryKey: [...ipoKeys.detail(ipoId), 'news', newsId],
+    queryFn: () => ipoApi.getNewsDetail(ipoId, newsId),
+    enabled: ipoId > 0 && newsId > 0,
+  })
+}
+
 export function useIpoScore(ipoId: number) {
   return useQuery({
     queryKey: ['ipo-score', ipoId],
