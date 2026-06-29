@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { BellIcon } from '@/components/common/Header'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { MarketIndexCard } from '../components/MarketIndexCard'
@@ -245,7 +246,7 @@ export function SecuritiesPage() {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-surface-bg">
       {/* 헤더 + 탭 통합 */}
-      <header className="sticky top-0 z-10 bg-white border-b border-border flex items-center justify-between px-4 h-14 flex-shrink-0">
+      <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-14 flex-shrink-0">
         <div className="flex items-center gap-5">
           {VALID_TABS.map((t) => (
             <button
@@ -253,7 +254,7 @@ export function SecuritiesPage() {
               onClick={() => setTab(t)}
               className={cn(
                 'text-[17px] transition-colors',
-                tab === t ? 'font-bold text-text-primary' : 'font-medium text-text-tertiary',
+                tab === t ? 'font-bold text-text-primary' : 'font-bold text-text-tertiary',
               )}
             >
               {t}
@@ -262,9 +263,9 @@ export function SecuritiesPage() {
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/notifications')}>
-            <img src="/icons/Bell.svg" width={25} height={25} alt="" />
+            <BellIcon />
           </button>
-          <button onClick={() => navigate('/securities/search')}>
+          <button onClick={() => navigate('/securities/search')} className="ml-[9px] mr-[4px]">
             <img src="/icons/search.svg" width={19} height={19} alt="" />
           </button>
         </div>
