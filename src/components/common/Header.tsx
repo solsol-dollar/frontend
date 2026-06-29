@@ -1,7 +1,7 @@
 import { Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import solCharacter from '@/assets/common/쏠.png'
-import { useNotifications } from '@/features/mypage/hooks/useMyPage'
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications'
 
 interface HeaderProps {
   title?: string
@@ -16,8 +16,7 @@ interface HeaderProps {
 }
 
 function BellIcon() {
-  const { data: notifications } = useNotifications()
-  const hasUnread = notifications?.some((n) => !n.isRead) ?? false
+  const hasUnread = useUnreadNotifications()
   return <img src={hasUnread ? '/icons/Bell.svg' : '/icons/Bell_not.svg'} width={25} height={25} alt="" />
 }
 

@@ -65,6 +65,9 @@ export function NotificationSettingsPage() {
               <p className="text-xs text-text-secondary mt-0.5">{s.desc}</p>
             </div>
             <button
+              role="switch"
+              aria-checked={s.checked}
+              aria-label={s.label}
               onClick={() => toggle(s.id as SettingKey | 'all')}
               className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 overflow-hidden ${s.checked ? 'bg-primary' : 'bg-border'}`}
             >

@@ -10,9 +10,9 @@ const TYPE_ICON: Record<string, string> = {
   IDLE_DOLLAR: '/icons/notification_dollar.svg',
 }
 
-const TARGET_PATH: Record<string, (id: number | null, notificationType: string) => string> = {
-  IPO: (id, type) => type === 'IPO_ALLOCATION' ? `/ipo/${id}/result` : `/ipo/${id}`,
-  RETURN_PLAN: (id) => `/return-plan/result/${id}`,
+const TARGET_PATH: Record<string, (id: number | null, notificationType: string) => string | undefined> = {
+  IPO: (id, type) => id == null ? undefined : type === 'IPO_ALLOCATION' ? `/ipo/${id}/result` : `/ipo/${id}`,
+  RETURN_PLAN: (id) => id == null ? undefined : `/return-plan/result/${id}`,
   ACCOUNT: () => '/home/sleeping-dollar',
   CARD: () => '/home/card/history',
 }

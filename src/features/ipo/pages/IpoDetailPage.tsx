@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer, Cell } from 'recharts'
 import dayjs from 'dayjs'
 import { Header } from '@/components/common/Header'
 import { IpoStockHeader } from '@/features/ipo/components/IpoStockHeader'
@@ -537,29 +537,12 @@ export function IpoDetailPage() {
             )}
           </div>
           <div className="relative">
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={chartRows} barCategoryGap="25%" barGap={3}>
-                {chartDomainMin < 0 ? (() => {
-                  const step = chartDomainMax / 2
-                  const numNeg = Math.round(Math.abs(chartDomainMin) / step)
-                  const negTicks = Array.from({ length: numNeg }, (_, i) => -(numNeg - i) * step)
-                  return (
-                    <YAxis
-                      domain={[chartDomainMin, chartDomainMax]}
-                      hide
-                      ticks={[...negTicks, 0, step, step * 2]}
-                    />
-                  )
-                })() : (
-                  <YAxis domain={[0, chartDomainMax]} hide />
-                )}
+            <ResponsiveContainer width="100%" height={138}>
+              <BarChart data={chartRows} barCategoryGap="25%" barGap={3} margin={{ top: 0, right: 0, bottom: 2, left: 0 }}>
+                <YAxis domain={[chartDomainMin < 0 ? Math.min(chartDomainMin, -(chartDomainMax / 2)) : 0, chartDomainMax]} hide ticks={[chartDomainMax / 2, chartDomainMax]} />
+                <XAxis hide dataKey="year" />
                 <CartesianGrid vertical={false} stroke="#F0F1F4" strokeDasharray="" />
-                {chartDomainMin < 0 && <ReferenceLine y={0} stroke="#D1D5DB" strokeWidth={1} />}
-                <XAxis dataKey="year" axisLine={false} tickLine={false} tick={(props: { x: string | number; y: string | number; payload: { value: string }; index: number }) => (
-                  <text x={props.x} y={Number(props.y) + 10} textAnchor="middle" fontSize={11} fontWeight={props.index === selectedChartIdx ? 700 : 400} fill={props.index === selectedChartIdx ? '#111827' : '#9AA0AB'}>
-                    {props.payload.value}
-                  </text>
-                )} />
+                <ReferenceLine y={0} stroke="#D1D5DB" strokeWidth={1} />
                 <Bar dataKey="sales" isAnimationActive={false} shape={(p: any) => <BarShape {...p} isNeg={p.salesIsNeg} nullDown={p.salesNullDown} />}>
                   {chartRows.map((_, idx) => <Cell key={idx} fill={idx === selectedChartIdx ? CHART_COLORS[0] : CHART_MUTED[0]} />)}
                 </Bar>
@@ -571,9 +554,20 @@ export function IpoDetailPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-            <div className="absolute inset-0 flex" style={{ paddingBottom: 22 }}>
+            <div className="absolute inset-0 flex outline-none select-none" style={{ paddingBottom: 22 }}>
               {chartRows.map((row, idx) => (
-                <div key={idx} className="flex-1 h-full" onPointerDown={row._isEmpty ? undefined : () => setSelectedChartIdx(idx)} />
+                <div key={idx} className="flex-1 h-full outline-none" onPointerDown={row._isEmpty ? undefined : () => setSelectedChartIdx(idx)} />
+              ))}
+            </div>
+            <div className="flex pointer-events-none">
+              {chartRows.map((row, idx) => (
+                <div key={idx} className="flex-1 flex justify-center pt-2">
+                  {!row._isEmpty && (
+                    <span style={{ fontSize: 11, fontWeight: idx === selectedChartIdx ? 700 : 400, color: idx === selectedChartIdx ? '#111827' : '#9AA0AB' }}>
+                      {row.year}
+                    </span>
+                  )}
+                </div>
               ))}
             </div>
           </div>

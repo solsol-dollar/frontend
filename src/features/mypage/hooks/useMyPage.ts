@@ -106,9 +106,10 @@ export function useMarkNotificationRead() {
       await serviceApi.put(`/api/service/api/v1/mypage/notifications/${notificationId}/read`)
     },
     onSuccess: (_, notificationId) => {
-      qc.setQueriesData<Notification[]>({ queryKey: ['mypage', 'notifications'] }, (old) =>
+      qc.setQueryData<Notification[]>(['mypage', 'notifications', undefined], (old) =>
         old?.map((n) => n.notificationId === notificationId ? { ...n, isRead: true } : n)
       )
+      qc.invalidateQueries({ queryKey: ['mypage', 'notifications'], exact: false })
     },
     onError: (err) => {
       console.error('[알림 읽음 처리 실패]', err)
