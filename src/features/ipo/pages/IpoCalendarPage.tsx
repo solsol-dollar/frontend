@@ -8,6 +8,9 @@ import { ipoApi, type IpoListItem } from '@/features/ipo/api/ipoApi'
 import { ipoKeys, useIpoList } from '@/features/ipo/hooks/useIpo'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 import { SubscriptionHistory } from '@/features/ipo/components/SubscriptionHistory'
+import { serviceApi } from '@/lib/axios'
+import { getInvestmentStatus, markInvestmentCompleted } from '@/lib/auth'
+import { InvestmentProfileSheet } from '@/features/mypage/components/InvestmentProfileSheet'
 
 type Tab = '청약 일정' | '청약내역/취소'
 type BottomFilter = '전체' | '관심'
@@ -484,6 +487,17 @@ export function IpoCalendarPage() {
   const sheetTouchStartY = useRef(0)
   const sheetIsDragging = useRef(false)
   const sheetPanelRef = useRef<HTMLDivElement>(null)
+
+  const [showDiagnosis, setShowDiagnosis] = useState(() => getInvestmentStatus() === 'REQUIRED')
+  const submitDiagnosis = async (data: { hope: string; provide: string }) => {
+    try {
+      await serviceApi.post('/api/service/api/v1/mypage/investment-profile', data)
+      markInvestmentCompleted()
+      setShowDiagnosis(false)
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const dateSectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -1183,6 +1197,13 @@ export function IpoCalendarPage() {
             </div>
           </div>
         </>
+      )}
+
+      {showDiagnosis && (
+        <InvestmentProfileSheet
+          onConfirm={submitDiagnosis}
+          onClose={() => setShowDiagnosis(false)}
+        />
       )}
     </div>
   );

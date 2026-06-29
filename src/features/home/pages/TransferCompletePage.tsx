@@ -26,7 +26,7 @@ export function TransferCompletePage() {
           <img
             src={shinhanIcon}
             alt="신한 로고"
-            className="absolute w-24 h-24 left-1/2 -translate-x-1/2 translate-y-[8px] bottom-full mb-6"
+            className="absolute w-[88px] h-[88px] left-1/2 -translate-x-1/2 bottom-full mb-6"
           />
           <p className="text-[20px] font-semibold leading-snug">
             <span className="text-primary-500">{account?.displayName ?? ''}</span>
