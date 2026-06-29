@@ -7,19 +7,48 @@ import { useExecuteImmediateAllocation } from '../hooks/useExecuteImmediateAlloc
 import { ratiosToAllocationItems } from '../utils/allocationMapper'
 import { ZONE_COLORS } from '../constants'
 
-const PRESETS: { label: string; splits: [number, number] }[] = [
-  { label: '투자 집중', splits: [70, 90] },
-  { label: '안정 저축', splits: [10, 80] },
-  { label: '균형 분배', splits: [33, 66] },
-]
+function getPresets(connected: boolean[]) {
+  const activeCount = connected.filter(Boolean).length;
+  if (activeCount === 2) {
+    if (!connected[1]) {
+      // CMA(0) and ChangeUp(2) are active
+      return [
+        { label: '투자 집중', splits: [70, 70] as [number, number] }, // 70, 0, 30
+        { label: '안정 저축', splits: [30, 30] as [number, number] }, // 30, 0, 70
+        { label: '균형 분배', splits: [50, 50] as [number, number] }, // 50, 0, 50
+      ]
+    }
+    if (!connected[2]) {
+      // CMA(0) and ValueUp(1) are active
+      return [
+        { label: '투자 집중', splits: [70, 100] as [number, number] }, // 70, 30, 0
+        { label: '안정 저축', splits: [30, 100] as [number, number] }, // 30, 70, 0
+        { label: '균형 분배', splits: [50, 100] as [number, number] }, // 50, 50, 0
+      ]
+    }
+  }
+  // Default 3 accounts
+  return [
+    { label: '투자 집중', splits: [70, 90] as [number, number] },
+    { label: '안정 저축', splits: [10, 80] as [number, number] },
+    { label: '균형 분배', splits: [34, 67] as [number, number] },
+  ]
+}
 
-function detectPreset(splits: [number, number]): number | null {
-  const cma = Math.round(splits[0])
-  const savings = Math.round(splits[1] - splits[0])
-  if (cma > 50) return 0
-  if (savings > 50) return 1
-  if (cma >= 25 && cma <= 42 && savings >= 25 && savings <= 42) return 2
-  return null
+function detectPreset(splits: [number, number], connected: boolean[]): number | null {
+  const cma = Math.round(splits[0]);
+  if (cma >= 70) return 0; // 투자 집중
+
+  const savings = Math.round(splits[1] - splits[0]);
+  if (connected[1] && savings >= 70) return 1; // 안정 저축
+
+  const presets = getPresets(connected);
+  if (Math.round(splits[0]) === Math.round(presets[2].splits[0]) && 
+      Math.round(splits[1]) === Math.round(presets[2].splits[1])) {
+    return 2; // 균형 분배
+  }
+  
+  return null;
 }
 
 const CARD_BG = '#F4F5F8'
@@ -146,11 +175,18 @@ function DynamicRangeSlider({
 
 export function ReturnPlanSettingsPage() {
   const navigate = useNavigate()
-  const [splits, setSplits] = useState<[number, number]>(PRESETS[0].splits)
-  const [selectedPreset, setSelectedPreset] = useState<number | null>(0)
+  const [splits, setSplits] = useState<[number, number]>([70, 90])
   const [done, setDone] = useState(false)
 
   const { data: homeAssets } = useHomeAssets()
+
+  const connected: [boolean, boolean, boolean] = [
+    !!homeAssets?.securities,
+    homeAssets?.accounts?.some(a => a.accountType === 'SAVINGS') ?? false,
+    homeAssets?.accounts?.some(a => a.accountType === 'DEPOSIT') ?? false,
+  ]
+  const presets = getPresets(connected)
+  const selectedPreset = detectPreset(splits, connected)
   const execute = useExecuteImmediateAllocation()
 
   const availableBalance = homeAssets?.securities?.usdAvailableBalance ?? 0
@@ -159,12 +195,6 @@ export function ReturnPlanSettingsPage() {
     Math.round(splits[0]),
     Math.round(splits[1] - splits[0]),
     Math.round(100 - splits[1]),
-  ]
-
-  const connected: [boolean, boolean, boolean] = [
-    !!homeAssets?.securities,
-    homeAssets?.accounts?.some(a => a.accountType === 'SAVINGS') ?? false,
-    homeAssets?.accounts?.some(a => a.accountType === 'DEPOSIT') ?? false,
   ]
 
   const handleConfirm = async () => {
@@ -262,7 +292,7 @@ export function ReturnPlanSettingsPage() {
                           <p className="text-sm font-semibold text-text-primary">{acc.name}</p>
                           {!isConnected && (
                             <span
-                              className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+                              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
                               style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}
                             >
                               미연동
@@ -297,11 +327,11 @@ export function ReturnPlanSettingsPage() {
         <div className="px-5 pb-4">
           <p className="text-xs font-medium text-text-tertiary mb-3">추천 플랜</p>
           <div className="flex px-1 py-1.5 rounded-full" style={{ backgroundColor: CARD_BG }}>
-            {PRESETS.map((preset, i) => (
+            {presets.map((preset, i) => (
               <button
                 key={preset.label}
                 type="button"
-                onClick={() => { setSelectedPreset(i); setSplits(preset.splits) }}
+                onClick={() => { setSplits(preset.splits) }}
                 className={
                   selectedPreset === i
                     ? 'flex-1 text-center text-sm font-bold text-text-primary py-2 rounded-full bg-white shadow-sm'
@@ -323,8 +353,9 @@ export function ReturnPlanSettingsPage() {
             <DynamicRangeSlider
               splits={splits}
               connected={connected}
-              onChange={(v) => { setSplits(v); setSelectedPreset(detectPreset(v)) }}
-            />
+              onChange={(newSplits) => {
+                setSplits(newSplits)
+              }}/>
 
             <div className="relative mt-2 h-4">
               <span className="absolute left-0 text-xs text-text-tertiary">0%</span>

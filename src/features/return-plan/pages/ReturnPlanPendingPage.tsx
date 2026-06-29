@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { Info } from "lucide-react";
 import { Header } from "@/components/common/Header";
 import { DonutGauge } from "../components/DonutGauge";
 import { ZONE_COLORS } from "../constants";
@@ -13,9 +12,10 @@ import { useReturnPlanDetail } from "../hooks/useReturnPlanDetail";
 import { useUpdateReturnPlanRatios } from "../hooks/useUpdateReturnPlanRatios";
 import {
   allocationItemsToSplits,
-  splitsToAllocationItems,
+  ratiosToAllocationItems,
 } from "../utils/allocationMapper";
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
+import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
 
 const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
   {
@@ -29,7 +29,6 @@ const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
     name: "신한 Value-up 외화적립예금",
     nameLines: ["신한 Value-up", "외화적립예금"],
     desc: "연 3.2% · 3개월 이상",
-    badge: "미연동",
   },
   {
     id: "chainup",
@@ -59,6 +58,13 @@ export function ReturnPlanPendingPage() {
   const { data: plan } = useReturnPlanDetail(returnPlanId);
   const updateRatios = useUpdateReturnPlanRatios();
 
+  const { data: homeAssets } = useHomeAssets();
+  const connected: [boolean, boolean, boolean] = [
+    !!homeAssets?.securities,
+    homeAssets?.accounts?.some((a) => a.accountType === "SAVINGS") ?? false,
+    homeAssets?.accounts?.some((a) => a.accountType === "DEPOSIT") ?? false,
+  ];
+
   useEffect(() => {
     if (plan) setSplits(allocationItemsToSplits(plan.allocations));
   }, [plan]);
@@ -78,7 +84,7 @@ export function ReturnPlanPendingPage() {
       return;
     }
     try {
-      await updateRatios.mutateAsync({ returnPlanId, allocations: splitsToAllocationItems(splits) });
+      await updateRatios.mutateAsync({ returnPlanId, allocations: ratiosToAllocationItems(['SECURITIES', 'SAVINGS', 'DEPOSIT'], ratios) });
       setIsEditing(false);
     } catch (e) {
       // TODO: 에러 토스트 처리
@@ -98,7 +104,7 @@ export function ReturnPlanPendingPage() {
 
       <div className="flex-1 overflow-y-auto scrollbar-hide bg-white">
         <section className="bg-white">
-          <div className="px-4 pt-4 pb-6">
+          <div className="px-4 pt-6 pb-8">
             <p className="text-sm text-text-tertiary">
               다음 IPO 환불일 | {plan?.refundDate ?? "-"}
             </p>
@@ -123,10 +129,10 @@ export function ReturnPlanPendingPage() {
             </p>
           </div>
 
-          {!isEditing && <div className="h-2 bg-surface-bg" />}
+          <div className="h-2 bg-surface-bg" />
 
           {!isEditing && (
-            <div className="flex items-center gap-2 mt-4 px-4">
+            <div className="flex items-center gap-2 mt-6 px-4">
               <div className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-sm text-text-tertiary">청약금</p>
                 <p className="text-base font-bold text-text-primary mt-1">
@@ -149,8 +155,8 @@ export function ReturnPlanPendingPage() {
           )}
 
           {!isEditing && (
-            <div className="px-4 pb-6">
-              <div className="mt-6">
+            <div className="px-4 pb-8">
+              <div className="mt-8">
                 <DonutGauge ratios={ratios} amount={refundAmount} message="분배될 예정입니다" />
 
                 <div className="flex items-center justify-center gap-4 mt-4">
@@ -161,8 +167,6 @@ export function ReturnPlanPendingPage() {
                         style={{ backgroundColor: ZONE_COLORS[i] }}
                       />
                       <span className="text-xs text-text-secondary leading-tight">
-                        {acc.nameLines?.[0]}
-                        <br />
                         {acc.nameLines?.[1]}
                       </span>
                     </div>
@@ -174,48 +178,49 @@ export function ReturnPlanPendingPage() {
         </section>
 
         {!isEditing && (
-          <div className="px-4 py-5 bg-surface-bg space-y-3">
-            {ACCOUNTS.map((acc, i) => (
-              <div
-                key={acc.id}
-                className="flex items-center gap-3 p-3 bg-white rounded-2xl fade-slide-up"
-                style={{ animationDelay: `${i * 100}ms` }}
-              >
-                <img
-                  src={solBankIcon}
-                  alt=""
-                  className="w-9 h-9 rounded-full flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-text-primary truncate">
-                    {acc.name}
-                  </p>
-                  <p className="text-xs text-text-tertiary truncate">
-                    {acc.desc}
-                  </p>
+          <div className="px-4 py-8 bg-surface-bg space-y-3">
+            {ACCOUNTS.map((acc, i) => {
+              const ratio = ratios[i]
+              const amount = ((refundAmount * ratio) / 100).toFixed(2)
+              return (
+                <div key={acc.id} className="rounded-2xl px-5 py-4 bg-white">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[i] }} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-text-primary">{acc.name}</p>
+                          {!connected[i] && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
+                              미연동
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-text-tertiary mt-0.5">{acc.desc}</p>
+                      </div>
+                    </div>
+                    {connected[i] && (
+                      <div className="text-right flex-shrink-0 ml-3">
+                        <p className="text-sm font-bold" style={{ color: ZONE_COLORS[i] }}>
+                          <span className="text-lg">{ratio}</span> %
+                        </p>
+                        <p className="text-xs text-text-tertiary">${amount}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="h-1 rounded-full" style={{ backgroundColor: `${ZONE_COLORS[i]}33` }}>
+                    <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${connected[i] ? ratio : 0}%`, backgroundColor: ZONE_COLORS[i] }} />
+                  </div>
                 </div>
-                <div className="flex flex-col items-end flex-shrink-0">
-                  <span className="text-sm font-bold text-text-primary">
-                    ${((refundAmount * ratios[i]) / 100).toFixed(2)}
-                  </span>
-                  <span
-                    className="text-xs font-medium"
-                    style={{ color: ZONE_COLORS[i] }}
-                  >
-                    {ratios[i]}%
-                  </span>
-                </div>
-              </div>
-            ))}
+              )
+            })}
 
-            <div className="flex items-start gap-2 mt-3 p-3 bg-white rounded-xl">
-              <Info
-                size={15}
-                className="text-text-tertiary mt-0.5 flex-shrink-0"
-              />
-              <p className="text-xs text-text-secondary">
-                환불금 확정 후 영업일 기준 1일 이내에 자동 분배가 실행돼요.
-                비율을 바꾸려면, 분배 전까지 수정해주세요.
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-full border border-text-tertiary flex items-center justify-center flex-shrink-0">
+                <span className="text-[8px] text-text-tertiary font-bold leading-none">!</span>
+              </span>
+              <p className="text-xs text-text-tertiary">
+                환불금 확정 후 영업일 기준 1일 이내에 자동 분배가 실행돼요. 비율을 바꾸려면, 분배 전까지 수정해주세요.
               </p>
             </div>
           </div>
@@ -226,14 +231,15 @@ export function ReturnPlanPendingPage() {
             description="설정하신 리턴플랜을 수정하실 수 있어요!"
             accounts={ACCOUNTS}
             totalAmount={refundAmount}
-            splits={splits}
-            onSplitsChange={setSplits}
+            lockedAccounts={[]}
+            ratios={[...ratios]}
+            onRatiosChange={(r) => setSplits([r[0] ?? 0, (r[0] ?? 0) + (r[1] ?? 0)])}
             bankIconSrc={solBankIcon}
           />
         )}
       </div>
 
-      <div className="px-4 pb-8 pt-3 bg-white border-t border-border">
+      <div className="px-4 pb-8 pt-3 bg-white">
         <button
           onClick={handleToggleEdit}
           disabled={updateRatios.isPending || !plan || isPastDeadline}
