@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import solBankIcon from '@/assets/common/sol-bank-icon.svg'
 import changeupCard from '@/assets/home/changeup-card.png'
 
@@ -10,6 +10,7 @@ const PRODUCT_NAMES: Record<string, string> = {
 
 export function ProductCompletePage() {
   const navigate = useNavigate()
+  const { state } = useLocation()
   const { productId } = useParams<{ productId: string }>()
   const productName = PRODUCT_NAMES[productId ?? ''] ?? '상품'
 

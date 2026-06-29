@@ -13,7 +13,6 @@ import { useReturnPlanDetail } from "../hooks/useReturnPlanDetail";
 import { useUpdateReturnPlanRatios } from "../hooks/useUpdateReturnPlanRatios";
 import {
   allocationItemsToSplits,
-  splitsToAllocationItems,
   ratiosToAllocationItems,
 } from "../utils/allocationMapper";
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
