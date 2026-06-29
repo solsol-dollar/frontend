@@ -1,6 +1,7 @@
 import { Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import solCharacter from '@/assets/common/쏠.png'
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications'
 
 interface HeaderProps {
   title?: string
@@ -12,6 +13,11 @@ interface HeaderProps {
   showSettings?: boolean
   rightAction?: React.ReactNode
   onSearchClick?: () => void
+}
+
+function BellIcon() {
+  const hasUnread = useUnreadNotifications()
+  return <img src={hasUnread ? '/icons/Bell.svg' : '/icons/Bell_not.svg'} width={25} height={25} alt="" />
 }
 
 export function Header({
@@ -56,7 +62,7 @@ export function Header({
           )}
           {showNotification && (
             <button onClick={() => navigate('/notifications')}>
-              <img src="/icons/Bell.svg" width={25} height={25} alt="" />
+              <BellIcon />
             </button>
           )}
           {showSearch && (
@@ -85,7 +91,7 @@ export function Header({
       <div className="flex items-center gap-3">
         {showNotification && (
           <button onClick={() => navigate('/notifications')}>
-            <img src="/icons/Bell.svg" width={25} height={25} alt="" />
+            <BellIcon />
           </button>
         )}
         {showSearch && (
