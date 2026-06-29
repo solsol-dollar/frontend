@@ -19,6 +19,8 @@ import { useSubscriptionResultDetail } from "@/features/ipo/hooks/useSubscriptio
 import { useSubscriptionList } from "@/features/ipo/hooks/useSubscriptions";
 import { useMyPageAccounts } from "@/features/mypage/hooks/useMyPage";
 import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
+import { TickerLogo } from "@/features/securities/components/TickerLogo";
+import { useRecommendedStocks } from "@/features/securities/hooks/useRecommendedStocks";
 import type { DestinationType, ReturnPlanResponse } from "@/features/return-plan/types/returnPlan";
 
 function ExistingPlanView({ plan, refundAmount }: { plan: ReturnPlanResponse; refundAmount: number }) {
@@ -181,6 +183,9 @@ export function AllocationResultPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountsData]);
   const [showEtfSheet, setShowEtfSheet] = useState(false);
+  const { data: recommendedEtfs, isLoading: isEtfLoading } = useRecommendedStocks(
+    showEtfSheet ? subscription?.ipoId : undefined,
+  );
 
   const createPlan = useCreateReturnPlan();
   const updateRatios = useUpdateReturnPlanRatios();
@@ -315,8 +320,48 @@ export function AllocationResultPage() {
         <div className="px-5 pt-2 flex-1 overflow-y-auto">
           <p className="text-lg font-bold text-text-primary mb-1">이런 ETF는 어때요?</p>
           <p className="text-sm text-text-secondary mb-5">
-            해당 IPO가 포함될 가능성이 있는 ETF 내역이에요
+            {name}과 같은 섹터에 투자하는 ETF예요
           </p>
+          {isEtfLoading ? (
+            <p className="py-6 text-center text-sm text-text-tertiary">불러오는 중...</p>
+          ) : !recommendedEtfs || recommendedEtfs.length === 0 ? (
+            <p className="py-6 text-center text-sm text-text-tertiary">추천할 ETF가 없어요</p>
+          ) : (
+            <div className="space-y-2 pb-2">
+              {recommendedEtfs.map((etf) => (
+                <div
+                  key={etf.productId}
+                  onClick={() => {
+                    setShowEtfSheet(false);
+                    navigate("/securities?tab=ETF", { replace: true });
+                    navigate(`/securities/stocks/${etf.productId}`);
+                  }}
+                  className="flex items-center gap-3 p-3 bg-surface-bg rounded-2xl cursor-pointer active:opacity-70"
+                >
+                  <TickerLogo ticker={etf.ticker} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-text-primary truncate">
+                      {etf.productName}
+                    </p>
+                    <p className="text-xs text-text-tertiary truncate">{etf.ticker}</p>
+                  </div>
+                  {etf.currentPriceUsd > 0 && (
+                    <div className="flex flex-col items-end flex-shrink-0">
+                      <span className="text-sm font-semibold text-text-primary">
+                        {formatUsd(etf.currentPriceUsd)}
+                      </span>
+                      <span
+                        className={`text-xs font-medium ${etf.isUp ? "text-primary" : "text-blue-500"}`}
+                      >
+                        {etf.isUp ? "+" : ""}
+                        {etf.changeRateDay.toFixed(2)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="px-5 pb-4 pt-2 shrink-0">
           <button
