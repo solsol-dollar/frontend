@@ -395,7 +395,7 @@ export function ClosedIpoDetailPage({ ipoId, ipo }: Props) {
 
           <NewsScoreChart
             before={score?.finalScore ?? 0}
-            after={score?.finalScore ?? 0}
+            after={score?.postScore ?? score?.finalScore ?? 0}
             offerPrice={ipo.confirmedOfferPrice}
             currentPrice={currentPrice}
           />
