@@ -20,11 +20,26 @@ export async function registerPushToken(): Promise<void> {
   if (permission !== 'granted') return
 
   try {
-    await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    const sw = await navigator.serviceWorker.ready
+    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    if (!swReg.active) {
+      await new Promise<void>((resolve, reject) => {
+        const worker = swReg.installing ?? swReg.waiting
+        if (!worker) { resolve(); return }
+        if (worker.state === 'activated') { resolve(); return }
+        worker.addEventListener('statechange', function listener() {
+          if (worker.state === 'activated') {
+            worker.removeEventListener('statechange', listener)
+            resolve()
+          } else if (worker.state === 'redundant') {
+            worker.removeEventListener('statechange', listener)
+            reject(new Error('Service Worker 설치 실패'))
+          }
+        })
+      })
+    }
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-      serviceWorkerRegistration: sw,
+      serviceWorkerRegistration: swReg,
     })
     if (!token) return
     await serviceApi.post('/api/service/api/v1/mypage/push-subscriptions', { fcmToken: token })
