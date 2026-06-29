@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import usaIcon from '@/assets/exchange/usa.svg'
 import koreaIcon from '@/assets/exchange/korea.svg'
 import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
+import { useExchangeRate } from '@/features/home/hooks/useExchangeRate'
 import { useExchange } from '@/features/home/hooks/useExchange'
 import { useAnimatedInput } from '@/hooks/useAnimatedInput'
 import { useState } from 'react'
@@ -21,7 +22,9 @@ export function ExchangePage() {
   const depth: number = state?.depth ?? 0
 
   const { data: assets } = useHomeAssets()
-  const rate = assets?.exchangeRateInfo?.rate ?? 0
+  const liveRate = useExchangeRate()
+  const tts = liveRate?.tts ?? 0
+  const ttb = liveRate?.ttb ?? 0
   const usdBalance = assets?.securities?.usdAvailableBalance ?? 0
   const krwBalance = assets?.securities?.krwBalance ?? 0
 
@@ -44,15 +47,15 @@ export function ExchangePage() {
   }
 
   const amountNum = parseFloat(amount) || 0
-  const convertedAmount = amountNum > 0 && rate > 0
+  const convertedAmount = amountNum > 0
     ? isDollarToWon
-      ? (amountNum * rate).toLocaleString('ko-KR', { maximumFractionDigits: 0 })
-      : (amountNum / rate).toLocaleString('en-US', { maximumFractionDigits: 2 })
+      ? (ttb > 0 ? (amountNum * ttb).toLocaleString('ko-KR', { maximumFractionDigits: 0 }) : '0')
+      : (tts > 0 ? (amountNum / tts).toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0.00')
     : isDollarToWon ? '0' : '0.00'
 
   const maxBalance = isDollarToWon ? usdBalance : krwBalance
   const isOverBalance = amountNum > 0 && amountNum > maxBalance
-  const canComplete = amountNum > 0 && !isOverBalance && !!rate
+  const canComplete = amountNum > 0 && !isOverBalance && !!(isDollarToWon ? ttb : tts)
 
   const fromIcon = isDollarToWon ? usaIcon : koreaIcon
   const toIcon = isDollarToWon ? koreaIcon : usaIcon
@@ -85,9 +88,11 @@ export function ExchangePage() {
       <div className="flex-1 flex flex-col px-5 pt-6 min-h-0">
         <div className="mb-6">
           <p className="text-sm font-semibold text-text-primary">
-            1달러 = {rate > 0 ? rate.toLocaleString('ko-KR') : '—'}원
+            1달러 = {(isDollarToWon ? ttb : tts) > 0 ? (isDollarToWon ? ttb : tts).toLocaleString('ko-KR') : '—'}원
           </p>
-          <p className="text-xs text-text-tertiary mt-0.5">95% 우대</p>
+          <p className="text-xs text-text-tertiary mt-0.5">
+            {isDollarToWon ? '달러 팔 때 (전신환 매입율)' : '달러 살 때 (전신환 매도율)'}
+          </p>
         </div>
 
         <div className="bg-surface-bg rounded-2xl px-4 py-4 flex items-center gap-3 overflow-hidden">
