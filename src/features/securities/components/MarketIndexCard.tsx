@@ -28,9 +28,20 @@ export function MarketIndexCard({ index }: Props) {
           : '—'}
       </p>
       <p className={cn('text-xs mt-0.5', index.isUp ? 'text-up' : 'text-down')}>
-        {index.value != null
-          ? `${index.isUp ? '+' : ''}${(index.changeAmount ?? 0).toFixed(2)} ${(index.changeRate ?? 0).toFixed(2)}%`
-          : '데이터 없음'}
+        {index.value != null ? (
+          showBadge ? (
+            <>
+              <span className="font-medium">
+                {index.isUp ? '+' : '-'}${Math.abs(index.changeAmount ?? 0).toFixed(2)}
+              </span>
+              <span className="text-[10px] opacity-70 ml-1">
+                {(index.changeRate ?? 0).toFixed(2)}%
+              </span>
+            </>
+          ) : (
+            <span>{(index.changeRate ?? 0).toFixed(2)}%</span>
+          )
+        ) : '데이터 없음'}
       </p>
     </div>
   )
