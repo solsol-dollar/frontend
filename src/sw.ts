@@ -38,9 +38,13 @@ const app = initializeApp({
 
 const messaging = getMessaging(app)
 
+function toSafePath(url: unknown): string {
+  return typeof url === 'string' && /^\/(?!\/)/.test(url) ? url : '/home'
+}
+
 onBackgroundMessage(messaging, (payload) => {
   const { title, body } = payload.notification ?? {}
-  const url = payload.data?.url || '/home'
+  const url = toSafePath(payload.data?.url)
   return Promise.all([
     self.registration.showNotification(title ?? 'SOL SOL 달러', {
       body,
@@ -55,7 +59,7 @@ onBackgroundMessage(messaging, (payload) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = event.notification.data?.url || '/home'
+  const url = toSafePath(event.notification.data?.url)
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const target = clients.find((c) => 'navigate' in c)
