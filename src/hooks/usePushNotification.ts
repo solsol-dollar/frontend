@@ -14,8 +14,10 @@ export function usePushNotification() {
       const title = payload.notification?.title ?? '알림'
       const body = payload.notification?.body
 
-      if (Notification.permission === 'granted') {
-        new Notification(title, { body, icon: '/icons/icon-192.png' })
+      if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then((sw) => {
+          sw.showNotification(title, { body, icon: '/icons/icon-192.png' })
+        })
       }
 
       qc.invalidateQueries({ queryKey: ['mypage', 'notifications'] })
