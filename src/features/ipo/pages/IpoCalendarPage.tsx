@@ -315,7 +315,7 @@ function computeDDay(subscriptionEnd: string): { label: string; isEnded: boolean
 
 function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: Ipo; onClick: () => void; isWishlisted: boolean; onWishlistToggle: () => void }) {
   const isUpcoming = ipo.status === 'upcoming'
-  const { label: dDayLabel } = computeDDay((isUpcoming ? ipo.subscription_start : ipo.subscription_end) ?? '')
+  const { label: dDayLabel } = computeDDay((isUpcoming ? ipo.listing_date : ipo.subscription_end) ?? '')
   const handleKey = useCallback((e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick() }, [onClick])
   const dragRef = useRef({ startX: 0, startY: 0, moved: false })
 
@@ -341,8 +341,8 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           alt={isUpcoming ? '청약예정' : '청약가능'}
           className="absolute top-[19.5px] right-[17px] translate-x-[3px]"
         />
-        {!isUpcoming && (
-          <span className="absolute top-[39px] right-[17px] text-[11px] font-bold text-[#CA3D40]">{dDayLabel}</span>
+        {dDayLabel && (
+          <span className={`absolute top-[39px] right-[17px] text-[11px] font-bold ${isUpcoming ? 'text-[#3045BB]' : 'text-[#CA3D40]'}`}>{dDayLabel}</span>
         )}
       </div>
       <div className="pl-[58px] space-y-[8px]">

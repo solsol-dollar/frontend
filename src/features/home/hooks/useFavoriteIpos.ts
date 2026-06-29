@@ -11,6 +11,7 @@ export interface FavoriteIpo {
   ipoStatus: 'UPCOMING' | 'OPEN' | 'CLOSED'
   subscriptionStartDate: string
   subscriptionEndDate: string
+  listingDate: string | null
   confirmedOfferPrice: number
 }
 
@@ -20,10 +21,10 @@ function calcDDay(dateStr: string): string {
   return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
 }
 
-export function getIpoDisplay(ipo: FavoriteIpo): { label: string; dday: string } {
-  if (ipo.ipoStatus === 'CLOSED') return { label: '청약마감', dday: '' }
-  if (ipo.ipoStatus === 'OPEN') return { label: '청약가능', dday: calcDDay(ipo.subscriptionEndDate) }
-  return { label: '청약예정', dday: calcDDay(ipo.subscriptionStartDate) }
+export function getIpoDisplay(ipo: FavoriteIpo): { label: string; dday: string; isUpcoming: boolean } {
+  if (ipo.ipoStatus === 'CLOSED') return { label: '청약마감', dday: '', isUpcoming: false }
+  if (ipo.ipoStatus === 'OPEN') return { label: '청약가능', dday: calcDDay(ipo.subscriptionEndDate), isUpcoming: false }
+  return { label: '청약예정', dday: ipo.listingDate ? calcDDay(ipo.listingDate) : '', isUpcoming: true }
 }
 
 const IPO_COLORS = ['#FF6830', '#4CAF50', '#2196F3', '#9C27B0', '#FF9800']

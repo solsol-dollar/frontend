@@ -5,18 +5,21 @@ import { Header } from '@/components/common/Header'
 import { useNotifications, useMarkNotificationRead, type Notification } from '@/features/mypage/hooks/useMyPage'
 
 const TYPE_ICON: Record<string, string> = {
-  IPO_ALLOCATION: '🎉',
-  IPO_REFUND: '💰',
-  IDLE_DOLLAR: '😴',
+  IPO_ALLOCATION: '/icons/notification_con.svg',
+  IPO_REFUND: '/icons/notification_return.svg',
+  IDLE_DOLLAR: '/icons/notification_dollar.svg',
 }
 
-const TARGET_PATH: Record<string, (id: number) => string> = {
-  IPO: (id) => `/ipo/${id}`,
+const TARGET_PATH: Record<string, (id: number | null, notificationType: string) => string> = {
+  IPO: (id, type) => type === 'IPO_ALLOCATION' ? `/ipo/${id}/result` : `/ipo/${id}`,
+  RETURN_PLAN: (id) => `/return-plan/result/${id}`,
+  ACCOUNT: () => '/home/sleeping-dollar',
+  CARD: () => '/home/card/history',
 }
 
 function NotifCard({ n, onRead }: { n: Notification; onRead: (id: number) => void }) {
   const navigate = useNavigate()
-  const path = TARGET_PATH[n.targetType]?.(n.targetId)
+  const path = n.targetType ? TARGET_PATH[n.targetType]?.(n.targetId, n.notificationType) : undefined
 
   const handleClick = () => {
     if (!n.isRead) onRead(n.notificationId)
@@ -26,18 +29,31 @@ function NotifCard({ n, onRead }: { n: Notification; onRead: (id: number) => voi
   return (
     <div
       onClick={handleClick}
-      className={`p-4 border-b border-border ${!n.isRead ? 'bg-white border-l-2 border-l-primary' : 'bg-white'} ${path ? 'cursor-pointer' : ''}`}
+      className={`p-4 border-b border-border ${!n.isRead ? 'bg-[#FAFCFF] border-l-[3px] border-l-primary' : 'bg-white'} ${path ? 'cursor-pointer' : ''}`}
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-xl flex-shrink-0">
-          {TYPE_ICON[n.notificationType] ?? '🔔'}
+        <div className="w-[42px] h-[42px] flex-shrink-0">
+          {TYPE_ICON[n.notificationType]
+            ? <img src={TYPE_ICON[n.notificationType]} alt="" className="w-full h-full" />
+            : <div className="w-full h-full rounded-full bg-surface flex items-center justify-center text-xl">🔔</div>
+          }
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-text-primary">{n.title}</p>
             <span className="text-xs text-text-tertiary">{dayjs(n.sentAt).format('A h:mm')}</span>
           </div>
-          <p className="text-xs text-text-secondary mt-1 whitespace-pre-line">{n.message}</p>
+          <p className="text-xs text-text-secondary mt-1 whitespace-pre-line font-medium">
+            {n.message
+              .replace('배정되었습니다.', '배정되었습니다.\n')
+              .replace('잠자고 있어요.', '잠자고 있어요.\n')
+              .split(/(\$[\d,]+(?:\.\d+)?)/g)
+              .map((part, i) =>
+                /^\$[\d,]+(?:\.\d+)?$/.test(part)
+                  ? <span key={i} className="font-bold text-primary">{part}</span>
+                  : part
+              )}
+          </p>
         </div>
       </div>
     </div>
@@ -65,12 +81,12 @@ export function NotificationsPage() {
   }
 
   return (
-    <div className="page-content">
+    <div className="mobile-container flex flex-col h-screen bg-[#F6F6F9]">
       <Header
         showBack
-        title="알림센터"
         showNotification={false}
         showMypage={false}
+        centerContent={<span className="text-base font-bold text-text-primary">알림 센터</span>}
         rightAction={
           <button onClick={() => navigate('/notifications/settings')} className="p-1">
             <Settings size={20} className="text-text-primary" />
@@ -83,15 +99,15 @@ export function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <div className="flex items-center justify-center h-40 text-sm text-text-secondary">알림이 없습니다.</div>
       ) : (
-        <div className="pt-2">
+        <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
           {sortedDates.map((date) => (
             <div key={date}>
-              <div className="flex items-center justify-between px-4 py-3">
-                <p className="text-xs text-text-secondary font-medium">
+              <div className="flex items-end justify-between px-4 py-3">
+                <p className="text-[14px] text-[#999EA4] font-semibold">
                   {date === todayStr ? `오늘 · ${dayjs(date).format('YYYY.MM.DD')}` : dayjs(date).format('YYYY.MM.DD')}
                 </p>
                 {date === sortedDates[0] && unreadIds.length > 0 && (
-                  <button onClick={handleMarkAll} className="text-xs text-primary">모두 읽음</button>
+                  <button onClick={handleMarkAll} className="text-[12px] font-bold text-primary">모두 읽음</button>
                 )}
               </div>
               {grouped[date].map((n) => (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Header } from '@/components/common/Header'
 import { useNotificationSettings, useUpdateNotificationSettings } from '@/features/mypage/hooks/useMyPage'
 
@@ -20,8 +20,11 @@ export function NotificationSettingsPage() {
     idleDollarEnabled: true,
   })
 
+  const initialized = useRef(false)
+
   useEffect(() => {
-    if (data) {
+    if (data && !initialized.current) {
+      initialized.current = true
       setSettings({
         ipoAllocationEnabled: data.ipoAllocationEnabled,
         ipoRefundEnabled: data.ipoRefundEnabled,
@@ -33,7 +36,7 @@ export function NotificationSettingsPage() {
   const allEnabled = ITEMS.every((item) => settings[item.key])
 
   const toggle = (key: SettingKey | 'all') => {
-    const prev = settings
+    const prev = { ...settings }
     let next: Record<SettingKey, boolean>
     if (key === 'all') {
       const val = !allEnabled
@@ -42,7 +45,7 @@ export function NotificationSettingsPage() {
       next = { ...settings, [key]: !settings[key] }
     }
     setSettings(next)
-    update.mutate(next, { onError: () => setSettings(prev) })
+    update.mutate(next, { onError: (err) => { console.error('[알림설정 실패]', err); setSettings(prev) } })
   }
 
   const rows = [
@@ -52,21 +55,21 @@ export function NotificationSettingsPage() {
 
   return (
     <div className="mobile-container">
-      <Header showBack title="알림설정" showNotification={false} showMypage={false} />
+      <Header showBack showNotification={false} showMypage={false} centerContent={<span className="text-base font-bold text-text-primary">알림 설정</span>} />
 
-      <div className="px-4 pt-4 space-y-0">
+      <div className="bg-[#F6F6F9] min-h-screen">
         {rows.map((s) => (
-          <div key={s.id} className="flex items-center justify-between py-5 border-b border-border">
+          <div key={s.id} className={`flex items-center justify-between px-4 py-5 border-b border-border ${s.id === 'all' ? 'bg-white' : 'bg-[#F6F6F9]'}`}>
             <div>
               <p className="text-sm font-semibold text-text-primary">{s.label}</p>
               <p className="text-xs text-text-secondary mt-0.5">{s.desc}</p>
             </div>
             <button
               onClick={() => toggle(s.id as SettingKey | 'all')}
-              className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 ${s.checked ? 'bg-primary' : 'bg-border'}`}
+              className={`relative w-12 h-7 rounded-full transition-colors flex-shrink-0 overflow-hidden ${s.checked ? 'bg-primary' : 'bg-border'}`}
             >
               <span
-                className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${s.checked ? 'translate-x-6' : 'translate-x-1'}`}
+                className={`absolute top-[3px] left-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-sm transition-transform ${s.checked ? 'translate-x-[20px]' : 'translate-x-0'}`}
               />
             </button>
           </div>
