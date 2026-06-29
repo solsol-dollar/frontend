@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+﻿import { useQuery } from '@tanstack/react-query'
 import { ledgerApi } from '@/lib/axios'
 import type { ApiResponse } from '@/features/securities/types/securities'
 import type { ReturnPlanListItem } from '../types/returnPlan'
 
-// RP-004: GET /api/v1/return-plans
+// RP-004: GET /api/ledger/api/v1/return-plans
 export function useReturnPlans(page = 0, size = 20) {
   return useQuery({
     queryKey: ['returnPlans', page, size],
@@ -13,3 +13,5 @@ export function useReturnPlans(page = 0, size = 20) {
     },
   })
 }
+
+

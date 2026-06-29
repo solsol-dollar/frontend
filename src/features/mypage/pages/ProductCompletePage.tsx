@@ -40,7 +40,7 @@ export function ProductCompletePage() {
       </div>
 
       <button
-        onClick={() => navigate('/mypage', { replace: true })}
+        onClick={() => navigate(state?.returnTo ?? '/mypage', { replace: true })}
         className="mx-4 mb-8 bg-primary text-white py-4 rounded-2xl font-semibold text-base"
       >
         완료

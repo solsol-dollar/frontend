@@ -1,9 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+﻿import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ledgerApi } from '@/lib/axios'
 import type { ApiResponse } from '@/features/securities/types/securities'
 import type { AllocationItem, ImmediateAllocationResponse } from '../types/returnPlan'
 
-// RP-008: POST /api/v1/return-plans/immediate
+// RP-008: POST /api/ledger/api/v1/return-plans/immediate
 export function useExecuteImmediateAllocation() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -18,3 +18,5 @@ export function useExecuteImmediateAllocation() {
     },
   })
 }
+
+
