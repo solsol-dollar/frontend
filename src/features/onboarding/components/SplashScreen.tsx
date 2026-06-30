@@ -10,10 +10,13 @@ export function SplashScreen() {
 
           <div className="relative w-36 h-36 animate-splash-in" style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
             <img
-              src="/icons/appLogo_dollar.png"
+              src="/icons/appLogo_dollar.svg"
               alt="SOL SOL 달러"
               className="w-36 h-36 object-contain"
+<<<<<<< HEAD
               style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+=======
+>>>>>>> 856832ed445c58d8c693169fc5977d55143d842f
             />
             <div
               className="absolute inset-0 pointer-events-none animate-shimmer"

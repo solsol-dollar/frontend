@@ -31,7 +31,6 @@
     overflow: hidden;
     height: 100%;
     padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
@@ -69,7 +68,7 @@
 
   /* 바텀 탭 높이만큼 패딩 */
   .page-content {
-    @apply pb-20;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
   }
 
   /* 금액 표시용 */

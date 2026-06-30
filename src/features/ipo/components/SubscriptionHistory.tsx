@@ -18,7 +18,7 @@ import {
   useCancelSubscription,
   useRevealScratch,
 } from "@/features/ipo/hooks/useSubscriptions";
-import { useReturnPlans } from "@/features/return-plan/hooks/useReturnPlans";
+import { useIpoList } from "@/features/ipo/hooks/useIpo";
 import {
   subscriptionResultQueryKey,
   fetchSubscriptionResult,
@@ -28,20 +28,20 @@ import type { AllocationResultDetail } from "@/features/ipo/types/allocation";
 import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
 import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
 
-type StatusType = "청약신청" | "취소완료" | "배정완료" | "상장완료";
+type StatusType = "청약신청" | "취소완료" | "배정완료" | "입고완료";
 type PeriodMode = "월별" | "기간별";
 type PeriodPreset = "1주일" | "1개월" | "3개월" | "6개월" | "직접설정";
-type TypeFilter = "전체" | "청약신청/취소완료" | "배정완료";
+type TypeFilter = "전체" | "청약신청/취소완료" | "배정완료" | "입고완료";
 
 const STATUS_BADGE: Record<StatusType, string> = {
   청약신청: "border-primary text-primary",
   취소완료: "border-border text-text-secondary",
   배정완료: "border-primary text-primary",
-  상장완료: "border-up text-up",
+  입고완료: "border-up text-up",
 };
 
 const QUICK_PRESETS = ["1주일", "1개월", "3개월", "6개월"] as const;
-const TYPE_FILTERS: TypeFilter[] = ["전체", "청약신청/취소완료", "배정완료"];
+const TYPE_FILTERS: TypeFilter[] = ["전체", "청약신청/취소완료", "배정완료", "입고완료"];
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 const ITEM_H = 44;
 const DOW_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -349,11 +349,12 @@ function getCalendarCells(month: Dayjs): (Dayjs | null)[] {
 function deriveStatus(
   sub: SubscriptionRes,
   hasAllocationResult: boolean,
-  executedSubscriptionIds: Set<number>,
 ): StatusType {
   if (sub.subscriptionStatus === "CANCELLED") return "취소완료";
-  if (sub.resultStatus === "DEPOSITED" && executedSubscriptionIds.has(sub.subscriptionId)) return "상장완료";
-  if (sub.resultStatus === "COMPLETED" || sub.resultStatus === "DEPOSITED") return "배정완료";
+  // 입고완료(DEPOSITED) = 상장 후 주식이 계좌에 입고된 상태 → 입고완료
+  if (sub.resultStatus === "DEPOSITED") return "입고완료";
+  // 배정만 확정(COMPLETED)되고 아직 입고 전 → 배정완료
+  if (sub.resultStatus === "COMPLETED") return "배정완료";
   if (sub.subscriptionStatus === "CONFIRMED") return "배정완료";
   if (hasAllocationResult) return "배정완료";
   return "청약신청";
@@ -363,13 +364,13 @@ function toSubscription(
   sub: SubscriptionRes,
   result: AllocationResultDetail | undefined,
   allocationResultState?: Subscription["allocationResultState"],
-  executedSubscriptionIds: Set<number> = new Set(),
+  ipoCurrentPrice: number | null = null,
 ): Subscription {
   const today = dayjs().startOf("day");
   const listingDayReached =
     sub.listingDate != null && !dayjs(sub.listingDate).isAfter(today, "day");
   const hasAllocationResult = sub.subscriptionResultId != null;
-  const status = deriveStatus(sub, hasAllocationResult, executedSubscriptionIds);
+  const status = deriveStatus(sub, hasAllocationResult);
   const offeringPrice =
     sub.confirmedOfferPrice ??
     sub.offerPriceMax ??
@@ -377,11 +378,16 @@ function toSubscription(
     undefined;
   const confirmedPrice = sub.confirmedOfferPrice ?? offeringPrice;
 
+  // 현재가/수익률은 입고완료에서만 의미가 있으므로 그 외 상태에서는 노출하지 않는다.
+  // 입고완료일 때는 청약 일정과 동일하게 IPO 목록 현재가를 우선 사용하고, 없으면 배정 결과 현재가로 fallback.
+  const effectiveCurrentPrice =
+    status === "입고완료" ? (ipoCurrentPrice ?? result?.currentPrice ?? null) : null;
+
   let returnRate: string | undefined;
   let returnPositive: boolean | undefined;
-  if (result?.currentPrice != null && confirmedPrice) {
+  if (effectiveCurrentPrice != null && confirmedPrice) {
     const rate =
-      ((result.currentPrice - confirmedPrice) / confirmedPrice) * 100;
+      ((effectiveCurrentPrice - confirmedPrice) / confirmedPrice) * 100;
     returnPositive = rate >= 0;
     returnRate = `${rate >= 0 ? "+" : ""}${rate.toFixed(1)}%`;
   }
@@ -402,14 +408,14 @@ function toSubscription(
       ? dayjs(sub.listingDate).format("YYYY.MM.DD")
       : undefined,
     currentPrice:
-      result?.currentPrice != null
-        ? `USD ${result.currentPrice.toFixed(2)}`
+      effectiveCurrentPrice != null
+        ? `USD ${effectiveCurrentPrice.toFixed(2)}`
         : undefined,
     allocatedQty: result ? (result.allocatedShares ?? 0) : undefined,
     allocationResultState:
       status === "배정완료" && allocationResultState == null
         ? "pending"
-        : status === "상장완료" && allocationResultState == null
+        : status === "입고완료" && allocationResultState == null
           ? "ready"
           : allocationResultState,
     returnRate,
@@ -467,14 +473,16 @@ export function SubscriptionHistory() {
 
   const { data: listData, isLoading: isListLoading } = useSubscriptionList();
   const { data: assets } = useHomeAssets();
-  const { data: returnPlans } = useReturnPlans();
   const cancelSubscription = useCancelSubscription();
   const revealScratch = useRevealScratch();
-  const executedSubscriptionIds = new Set(
-    returnPlans?.filter((p) => p.planStatus === "EXECUTED").map((p) => p.subscriptionId) ?? []
-  );
   const rawSubscriptions = listData?.data.subscriptions ?? [];
   const accountNumberMasked = assets?.securities.accountNumberMasked ?? "-";
+
+  // 청약 일정과 동일하게 IPO 목록에서 ticker → 현재가 매핑 (입고완료 현재가 출처 통일)
+  const { data: ipoListRes } = useIpoList();
+  const currentPriceByTicker = new Map(
+    (ipoListRes?.data.ipos ?? []).map((ipo) => [ipo.ticker, ipo.currentPrice]),
+  );
 
   const pendingItems = rawSubscriptions.filter(
     (s) =>
@@ -516,7 +524,7 @@ export function SubscriptionHistory() {
       sub,
       resultMap.get(sub.subscriptionId),
       resultStateMap.get(sub.subscriptionId),
-      executedSubscriptionIds,
+      currentPriceByTicker.get(sub.ticker) ?? null,
     ),
   );
 
@@ -713,24 +721,17 @@ export function SubscriptionHistory() {
                       ticker={sub.ticker}
                       status={sub.status}
                       statusClassName={STATUS_BADGE[sub.status]}
-                      secondaryText={sub.status !== "상장완료" ? sub.returnRate : undefined}
+                      secondaryText={sub.returnRate}
                       secondaryClassName={
                         sub.returnPositive ? "text-up" : "text-down"
                       }
                       align="start"
                       size="sm"
                     />
-                    {sub.status === "상장완료" && sub.returnRate && (
-                      <div className="flex justify-end mt-1">
-                        <span className={`text-sm font-bold ${sub.returnPositive ? "text-up" : "text-down"}`}>
-                          {sub.returnRate}
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   <div className="space-y-2 pl-[52px]">
-                    {sub.status === "상장완료" ? (
+                    {sub.status === "입고완료" ? (
                       <>
                         <InfoRow label="청약신청금액" value={sub.amount} />
                         {sub.offeringPrice != null && (
