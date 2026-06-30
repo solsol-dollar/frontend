@@ -238,6 +238,7 @@ export function AllocationResultPage() {
       <Header
         title="배정 결과"
         showBack
+        onBack={() => navigate('/ipo', { state: { tab: '청약내역/취소' } })}
         showSearch={false}
         showNotification={false}
         showMypage={false}
