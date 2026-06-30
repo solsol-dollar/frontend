@@ -460,20 +460,14 @@ export function SubscribePage() {
         </button>
         <button
           onClick={() => {
-            const nowKst = dayjs().utcOffset(9);
-            const day = nowKst.day();
-            const minutes = nowKst.hour() * 60 + nowKst.minute();
-            if (
-              day === 0 ||
-              day === 6 ||
-              minutes < 9 * 60 ||
-              minutes >= 17 * 60
-            ) {
-              setErrorModalMessage(
-                <>청약 신청은 <span className="text-primary">영업일 09:00 ~ 17:00</span> 에 가능해요.</>,
-              );
-              return;
-            }
+            // TODO: 청약 가능 시간 제한 임시 해제
+            // const nowKst = dayjs().utcOffset(9);
+            // const day = nowKst.day();
+            // const minutes = nowKst.hour() * 60 + nowKst.minute();
+            // if (day === 0 || day === 6 || minutes < 9 * 60 || minutes >= 17 * 60) {
+            //   setErrorModalMessage(<>청약 신청은 <span className="text-primary">영업일 09:00 ~ 17:00</span> 에 가능해요.</>);
+            //   return;
+            // }
             setShowConfirmModal(true);
           }}
           disabled={!isValidAmount || isSubmitting}
