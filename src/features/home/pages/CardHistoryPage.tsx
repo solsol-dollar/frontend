@@ -468,7 +468,7 @@ export function CardHistoryPage() {
                   </div>
                   <p className="text-white/70 text-[15px] font-medium">{categoryTx?.length ?? 0}건</p>
                 </div>
-                {categoryTx?.map(tx => (
+                {categoryTx?.map((tx: any) => (
                   <div key={tx.id} className="flex items-center justify-between py-3.5 border-b border-white/10 last:border-0">
                     <div>
                       <p className="text-[17px] font-bold text-white">{tx.merchantName}</p>

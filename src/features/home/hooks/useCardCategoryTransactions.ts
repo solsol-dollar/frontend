@@ -1,12 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { serviceApi } from '@/lib/axios'
-import type { CardTransaction } from './useCardSummary'
-
-interface ApiResponse<T> {
-  code: string
-  message: string
-  data: T
-}
 
 export function useCardCategoryTransactions(year: number, month: number, category?: string | null) {
   return useQuery({
