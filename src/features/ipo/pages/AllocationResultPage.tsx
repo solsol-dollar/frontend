@@ -33,15 +33,15 @@ function ExistingPlanView({ plan, refundAmount }: { plan: ReturnPlanResponse; re
   ];
 
   const ACCOUNTS = [
-    { id: "cma", name: "신한투자증권 CMA 계좌", nameLines: ["신한투자증권", "CMA 계좌"], desc: "다음 IPO 대기금 · ETF 재투자" },
-    { id: "valueup", name: "신한 Value-up 외화적립예금", nameLines: ["신한 Value-up", "외화적립예금"], desc: "연 3.2% · 3개월 이상" },
-    { id: "changeup", name: "신한 외화 체인지업 예금", nameLines: ["신한 외화", "체인지업 예금"], desc: "체크카드로 해외소비 시 간편추가" },
+    { id: "cma", name: "신한투자증권 CMA 계좌", nameLines: ["CMA 계좌", ""], desc: "다음 IPO 대기금 · ETF 재투자" },
+    { id: "valueup", name: "신한 Value-up 외화적립예금", nameLines: ["외화적립예금", ""], desc: "연 3.2% · 3개월 이상" },
+    { id: "changeup", name: "신한 외화 체인지업 예금", nameLines: ["체인지업 예금", ""], desc: "체크카드로 해외소비 시 간편추가" },
   ];
 
   return (
     <>
       <section className="bg-white px-4 pb-6">
-        <div className="pt-4">
+        <div className="pt-5">
           <DonutGauge ratios={ratios} amount={refundAmount} message="분배될 예정입니다" />
         </div>
         <div className="flex items-center justify-center gap-4 mt-4">
@@ -49,20 +49,20 @@ function ExistingPlanView({ plan, refundAmount }: { plan: ReturnPlanResponse; re
             <div key={acc.id} className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ACCOUNT_COLORS[acc.id] }} />
               <span className="text-xs text-text-secondary leading-tight">
-                {acc.nameLines[0]}<br />{acc.nameLines[1]}
+                {acc.nameLines[0]}
               </span>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="px-4 py-5 bg-surface-bg space-y-3">
+      <section className="px-4 py-5 bg-white space-y-3">
         {ACCOUNTS.map((acc, i) => {
           const color = ACCOUNT_COLORS[acc.id]
           const ratio = ratios[i]
           const amount = ((refundAmount * ratio) / 100).toFixed(2)
           return (
-            <div key={acc.id} className="rounded-2xl px-4 py-3" style={{ backgroundColor: '#F4F5F8' }}>
+            <div key={acc.id} className="rounded-2xl px-4 py-3 bg-surface-bg">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
@@ -247,7 +247,7 @@ export function AllocationResultPage() {
 
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {/* 배정 결과 카드 */}
-        <section className="bg-white pb-3">
+        <section className="bg-white pb-5">
           <div className="flex items-center gap-3 px-4 pt-5 pb-5">
             {logoUrl && !logoImgError ? (
               <img
