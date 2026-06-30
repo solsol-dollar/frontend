@@ -1,9 +1,26 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { useCountUp } from '../hooks/useCountUp'
 import { useReturnPlans } from '../hooks/useReturnPlans'
 import { useReturnPlanDetail } from '../hooks/useReturnPlanDetail'
+import { useIpoList } from '@/features/ipo/hooks/useIpo'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
+
+function LogoAvatar({ logoUrl, ticker }: { logoUrl: string | null; ticker: string }) {
+  const [error, setError] = useState(false)
+  useEffect(() => { setError(false) }, [logoUrl])
+  const cls = 'w-10 h-10 rounded-full flex-shrink-0'
+  if (logoUrl && !error) {
+    return <img src={logoUrl} alt={ticker} onError={() => setError(true)} className={`${cls} object-cover`} />
+  }
+  return (
+    <div className={`${cls} flex items-center justify-center text-white text-xs font-bold`} style={{ backgroundColor: generateLogoColor(ticker) }}>
+      {ticker.slice(0, 2)}
+    </div>
+  )
+}
 
 const formatUsd = (n: number) =>
   `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -11,6 +28,12 @@ const formatUsd = (n: number) =>
 export function ReturnPlanPage() {
   const navigate = useNavigate()
   const { data: returnPlans = [] } = useReturnPlans()
+
+  // IPO 청약 일정 목록에서 ticker → logoUrl 매핑 (리턴 플랜 응답엔 로고가 없어 보강)
+  const { data: ipoListRes } = useIpoList()
+  const logoByTicker = new Map(
+    (ipoListRes?.data.ipos ?? []).map((ipo) => [ipo.ticker, ipo.logoUrl]),
+  )
 
   const SUMMARY_LABELS = ['CMA 계좌', '외화적립예금', '체인지업 예금']
 
@@ -24,6 +47,7 @@ export function ReturnPlanPage() {
       id: plan.returnPlanId,
       name: plan.sourceCompanyName,
       ticker: plan.sourceTicker,
+      logoUrl: logoByTicker.get(plan.sourceTicker) ?? plan.sourceLogoUrl ?? null,
       date: plan.refundDate ? plan.refundDate.slice(0, 10).replace(/-/g, '.') : '예정',
       amount: formatUsd(plan.totalRefundAmount),
       distributed: plan.planStatus === 'EXECUTED',
@@ -160,7 +184,7 @@ export function ReturnPlanPage() {
                 }
                 className="w-full flex items-center gap-3 p-3 text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-primary flex-shrink-0" />
+                <LogoAvatar logoUrl={item.logoUrl} ticker={item.ticker} />
                 <div className="flex-1">
                   <p className="text-base font-semibold text-text-primary">{item.name}</p>
                   <p className="text-sm text-text-tertiary">

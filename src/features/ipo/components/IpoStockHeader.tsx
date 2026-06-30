@@ -148,8 +148,8 @@ export function IpoStockHeader({
           <img src="/icons/IPO_complete.svg" alt="배정완료" width={50} height={17} className="mt-[1px]" />
         ) : status === '취소완료' ? (
           <img src="/icons/IPO_cancel.svg" alt="취소완료" width={50} height={17} className="mt-[1px]" />
-        ) : status === '상장완료' ? (
-          <img src="/icons/IPO_listed.svg" alt="상장완료" width={50} height={17} className="mt-[1px]" />
+        ) : status === '입고완료' ? (
+          <img src="/icons/IPO_deposited.svg" alt="입고완료" width={50} height={17} className="mt-[1px]" />
         ) : (
           <span
             className={cn(
