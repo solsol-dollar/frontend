@@ -1,10 +1,26 @@
-import { useState, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { cn } from '@/lib/utils'
 import { MonthPickerSheet } from '../components/MonthPickerSheet'
 import { useReturnPlans } from '../hooks/useReturnPlans'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
+
+function LogoAvatar({ logoUrl, ticker, size = 10 }: { logoUrl: string | null; ticker: string; size?: number }) {
+  const [error, setError] = useState(false)
+  useEffect(() => { setError(false) }, [logoUrl])
+  const color = generateLogoColor(ticker)
+  const cls = `w-${size} h-${size} rounded-full flex-shrink-0`
+  if (logoUrl && !error) {
+    return <img src={logoUrl} alt={ticker} onError={() => setError(true)} className={`${cls} object-cover`} />
+  }
+  return (
+    <div className={`${cls} flex items-center justify-center text-white text-xs font-bold`} style={{ backgroundColor: color }}>
+      {ticker.slice(0, 2)}
+    </div>
+  )
+}
 
 const formatUsd = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -36,6 +52,7 @@ export function ReturnPlanHistoryPage() {
         month: itemMonth,
         name: plan.sourceCompanyName,
         ticker: plan.sourceTicker,
+        logoUrl: plan.sourceLogoUrl ?? null,
         amount: formatUsd(plan.totalRefundAmount),
         rawAmount: plan.totalRefundAmount,
         status: (plan.planStatus === 'EXECUTED' ? 'DONE' : 'UPCOMING') as 'DONE' | 'UPCOMING',
@@ -126,9 +143,7 @@ export function ReturnPlanHistoryPage() {
                   }
                   className="w-full flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 text-left"
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary-300 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs font-bold">{item.ticker.slice(0, 2)}</span>
-                  </div>
+                  <LogoAvatar logoUrl={item.logoUrl} ticker={item.ticker} />
                   <div className="flex-1">
                     <p className="text-base font-semibold text-text-primary">{item.name}</p>
                     <p className="text-sm text-text-tertiary">

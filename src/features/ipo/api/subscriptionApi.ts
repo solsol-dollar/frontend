@@ -19,9 +19,11 @@ export interface SubscriptionRes {
   offerPriceMin: number
   offerPriceMax: number
   confirmedOfferPrice: number | null
+  subscriptionEndDate: string | null
   listingDate: string | null
   resultStatus: string | null
   logoUrl: string | null
+  scratchRevealed: boolean
 }
 
 export interface SubscriptionCancelRes {
@@ -56,4 +58,7 @@ export const subscriptionApi = {
 
   getList: (params?: SubscriptionListParams): Promise<ApiResponse<{ subscriptions: SubscriptionRes[] }>> =>
     ledgerApi.get('/api/ledger/api/v1/subscriptions', { params }),
+
+  revealScratch: (subscriptionId: number): Promise<ApiResponse<SubscriptionRes>> =>
+    ledgerApi.patch(`/api/ledger/api/v1/subscriptions/${subscriptionId}/scratch`),
 }

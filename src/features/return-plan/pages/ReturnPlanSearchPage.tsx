@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -118,15 +118,26 @@ function ReturnPlanSearchItem({
   const color = generateLogoColor(item.sourceTicker)
   const isDone = item.planStatus === 'EXECUTED'
   const date = item.refundDate ? item.refundDate.slice(0, 10).replace(/-/g, '.') : '예정'
+  const [logoImgError, setLogoImgError] = useState(false)
+  useEffect(() => { setLogoImgError(false) }, [item.sourceLogoUrl])
 
   return (
     <button onClick={onClick} className={cn('w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl', isFirst && 'bg-surface-bg')}>
-      <div
-        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: color }}
-      >
-        <span className="text-white text-xs font-bold">{item.sourceTicker.slice(0, 2)}</span>
-      </div>
+      {item.sourceLogoUrl && !logoImgError ? (
+        <img
+          src={item.sourceLogoUrl}
+          alt={item.sourceTicker}
+          onError={() => setLogoImgError(true)}
+          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+        />
+      ) : (
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: color }}
+        >
+          <span className="text-white text-xs font-bold">{item.sourceTicker.slice(0, 2)}</span>
+        </div>
+      )}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-primary truncate">{item.sourceCompanyName}</p>
         <p className="text-xs text-text-tertiary">

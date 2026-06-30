@@ -13,6 +13,7 @@ interface HeaderProps {
   showSettings?: boolean
   rightAction?: React.ReactNode
   onSearchClick?: () => void
+  onBack?: () => void
 }
 
 export function BellIcon() {
@@ -30,6 +31,7 @@ export function Header({
   showSettings = false,
   rightAction,
   onSearchClick,
+  onBack,
 }: HeaderProps) {
   const navigate = useNavigate()
 
@@ -37,7 +39,7 @@ export function Header({
   if (showBack) {
     return (
       <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 h-[56px]">
-        <button onClick={() => navigate(-1)} className="p-1 -ml-1 z-10">
+        <button onClick={onBack ?? (() => navigate(-1))} className="p-1 -ml-1 z-10">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

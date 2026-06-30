@@ -17,6 +17,7 @@ import {
   useSubscriptionList,
   useCancelSubscription,
 } from "@/features/ipo/hooks/useSubscriptions";
+import { subscriptionApi } from "@/features/ipo/api/subscriptionApi";
 import { useReturnPlans } from "@/features/return-plan/hooks/useReturnPlans";
 import {
   subscriptionResultQueryKey,
@@ -416,7 +417,8 @@ function toSubscription(
     canCancel:
       sub.subscriptionStatus === "REQUESTED" &&
       !hasAllocationResult &&
-      !listingDayReached,
+      !listingDayReached &&
+      (sub.subscriptionEndDate == null || dayjs().isBefore(dayjs(sub.subscriptionEndDate).hour(17).minute(0).second(0))),
   };
 }
 
@@ -500,6 +502,15 @@ export function SubscriptionHistory() {
     );
   });
 
+  useEffect(() => {
+    const revealedIds = rawSubscriptions
+      .filter((s) => s.scratchRevealed)
+      .map((s) => s.subscriptionId);
+    if (revealedIds.length > 0) {
+      setConfirmedIds(new Set(revealedIds));
+    }
+  }, [rawSubscriptions]);
+
   const SUBSCRIPTIONS = rawSubscriptions.map((sub) =>
     toSubscription(
       sub,
@@ -548,14 +559,7 @@ export function SubscriptionHistory() {
 
   // 배정결과 스크래치
   const [scratchTarget, setScratchTarget] = useState<number | null>(null);
-  const [confirmedIds, setConfirmedIds] = useState<Set<number>>(() => {
-    try {
-      const saved = localStorage.getItem("scratched_subscription_ids");
-      return saved ? new Set(JSON.parse(saved) as number[]) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
+  const [confirmedIds, setConfirmedIds] = useState<Set<number>>(() => new Set());
   const [showConfetti, setShowConfetti] = useState(false);
   const scratchItem = SUBSCRIPTIONS.find((s) => s.id === scratchTarget);
 
@@ -628,15 +632,10 @@ export function SubscriptionHistory() {
 
   function confirmScratch() {
     if (scratchTarget != null) {
-      setConfirmedIds((prev) => {
-        const next = new Set([...prev, scratchTarget]);
-        try {
-          localStorage.setItem(
-            "scratched_subscription_ids",
-            JSON.stringify([...next]),
-          );
-        } catch {}
-        return next;
+      const id = scratchTarget;
+      setConfirmedIds((prev) => new Set([...prev, id]));
+      subscriptionApi.revealScratch(id).catch(() => {
+        // 실패해도 UI는 닫은 상태 유지 (다음 목록 로드 시 서버 상태로 동기화됨)
       });
     }
     setScratchTarget(null);
