@@ -31,7 +31,7 @@ import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
 type StatusType = "청약신청" | "취소완료" | "배정완료" | "상장완료";
 type PeriodMode = "월별" | "기간별";
 type PeriodPreset = "1주일" | "1개월" | "3개월" | "6개월" | "직접설정";
-type TypeFilter = "전체" | "청약신청/취소완료" | "배정완료";
+type TypeFilter = "전체" | "청약신청/취소완료" | "배정완료" | "상장완료";
 
 const STATUS_BADGE: Record<StatusType, string> = {
   청약신청: "border-primary text-primary",
@@ -41,7 +41,7 @@ const STATUS_BADGE: Record<StatusType, string> = {
 };
 
 const QUICK_PRESETS = ["1주일", "1개월", "3개월", "6개월"] as const;
-const TYPE_FILTERS: TypeFilter[] = ["전체", "청약신청/취소완료", "배정완료"];
+const TYPE_FILTERS: TypeFilter[] = ["전체", "청약신청/취소완료", "배정완료", "상장완료"];
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 const ITEM_H = 44;
 const DOW_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
