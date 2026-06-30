@@ -99,9 +99,9 @@ export function ReturnPlanPage() {
           <section className="px-4 pt-2 pb-5 bg-white shrink-0">
             <p className="text-sm text-text-tertiary">최근 실행건 · {formatUsd(lastExecuted.totalRefundAmount)}</p>
 
-            <div className="flex items-center justify-between mt-2">
-              <h2 className="text-2xl font-bold text-text-primary">{lastExecuted.sourceCompanyName}</h2>
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/10 text-success text-xs font-medium">
+            <div className="flex items-center justify-between gap-2 mt-2 min-w-0">
+              <h2 className="text-2xl font-bold text-text-primary truncate min-w-0">{lastExecuted.sourceCompanyName}</h2>
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/10 text-success text-xs font-medium flex-shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-success" />
                 분배 완료
               </span>
