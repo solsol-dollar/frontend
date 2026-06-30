@@ -18,8 +18,11 @@ export function TickerLogo({ ticker, size = 'md', className }: Props) {
       <img
         src={`https://financialmodelingprep.com/image-stock/${ticker}.png`}
         alt={ticker}
-        className={cn(dim, 'rounded-full object-cover flex-shrink-0 ring-1 ring-black/[0.08]', className)}
+        className={cn(dim, 'rounded-full object-cover flex-shrink-0 ring-1 ring-black/[0.08] bg-zinc-800', className)}
         onError={() => setFailed(true)}
+        onLoad={(e) => {
+          if (e.currentTarget.naturalWidth < 10) setFailed(true)
+        }}
       />
     )
   }
