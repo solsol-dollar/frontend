@@ -705,7 +705,7 @@ export function SubscriptionHistory() {
             return (
               <div
                 key={sub.id}
-                className="bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none"
+                className="bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px]"
               >
                 <div>
                   <div className="mb-[13px]">
@@ -850,10 +850,12 @@ export function SubscriptionHistory() {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-text-tertiary px-1 mt-3">
-          <Info size={13} />
-          <span>청약 취소는 청약 기간 중에만 가능합니다.</span>
-        </div>
+        {filtered.length > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-text-tertiary px-1 mt-3">
+            <Info size={13} />
+            <span>청약 취소는 청약 기간 중에만 가능합니다.</span>
+          </div>
+        )}
       </div>
 
       {/* ── 조회 조건 설정 시트 ── */}
@@ -875,7 +877,7 @@ export function SubscriptionHistory() {
         <div className="flex justify-center pt-3 pb-2 shrink-0">
           <div className="w-10 h-1 rounded-full bg-border" />
         </div>
-        <div className="px-4 pb-8 flex-1 flex flex-col overflow-hidden">
+        <div className="px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex-1 flex flex-col overflow-hidden">
           <p className="text-base font-bold text-text-primary mb-5 shrink-0">
             조회 조건 설정
           </p>
@@ -1009,7 +1011,7 @@ export function SubscriptionHistory() {
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowRangePicker(false)}
           />
-          <div className="relative w-full max-w-mobile bg-white rounded-t-2xl px-4 pt-5 pb-8">
+          <div className="relative w-full max-w-mobile bg-white rounded-t-2xl px-4 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             <div className="flex items-center justify-between mb-4">
               <p className="text-base font-bold text-text-primary">
                 날짜 범위 선택

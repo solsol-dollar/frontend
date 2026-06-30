@@ -525,7 +525,7 @@ export function IpoCalendarPage() {
       if (el && container) {
         const elTop = el.getBoundingClientRect().top
         const containerTop = container.getBoundingClientRect().top
-        container.scrollTop += elTop - containerTop - (container.clientHeight - 300)
+        container.scrollTop += elTop - containerTop - 8
       }
     })
   }
@@ -714,7 +714,7 @@ export function IpoCalendarPage() {
       if (el) {
         const elTop = el.getBoundingClientRect().top
         const containerTop = container.getBoundingClientRect().top
-        container.scrollTop += elTop - containerTop - (container.clientHeight - 300)
+        container.scrollTop += elTop - containerTop - 8
       }
     })
   }, [filteredIpos])
@@ -1070,10 +1070,10 @@ export function IpoCalendarPage() {
                             'flex items-center gap-3 ml-[7px] mt-[16px]',
                             hasNextDateInSameWeek ? 'mb-[28px]' : 'mb-4',
                           )}>
-                            <div className="w-11 h-11 rounded-full bg-[#F0F1F4] flex items-center justify-center">
-                              <img src="/icons/docs.svg" width={22} height={22} alt="" />
+                            <div className="w-[52px] h-[52px] rounded-full bg-[#F0F1F4] flex items-center justify-center">
+                              <img src="/icons/docs.svg" width={26} height={26} alt="" />
                             </div>
-                            <span className="text-[17px] font-bold text-[#3A3D45] ml-1">소식이 없어요</span>
+                            <span className="text-[19px] font-bold text-[#3A3D45] ml-1">소식이 없어요</span>
                           </div>
                         )
                       ) : (

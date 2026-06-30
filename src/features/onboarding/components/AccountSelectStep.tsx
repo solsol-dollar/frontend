@@ -40,9 +40,6 @@ export function AccountSelectStep({ onConfirm }: Props) {
                       ? `가상계좌 ${securities[0].virtualAccountNumber}`
                       : securities[0].accountNumberMasked}
                   </p>
-                  <span className="text-[10px] font-semibold text-amber-500 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
-                    필수
-                  </span>
                 </div>
               </div>
             </div>
@@ -81,7 +78,7 @@ export function AccountSelectStep({ onConfirm }: Props) {
 
       </div>
 
-      <div className="px-4 pb-10 pt-2">
+      <div className="px-4 pb-[calc(3.5rem+env(safe-area-inset-bottom))] pt-2">
         <button
           onClick={() => setShowConsent(true)}
           className="w-full bg-primary text-white py-3 rounded-xl font-medium text-base"

@@ -204,8 +204,8 @@ export function FillPage() {
             </button>
           ))}
         </div>
-        <div className="pb-8" />
-      </div>}
+            <div className="pb-[calc(2rem+env(safe-area-inset-bottom))]" />
+          </div>}
     </div>
   )
 }

@@ -177,7 +177,7 @@ export function MaturityDatePage() {
           <DrumColumn items={days} selected={day} onSelect={setDay} />
         </div>
 
-        <div className="flex" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <div className="flex" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}>
           <button
             onClick={() => setSheetOpen(false)}
             className="flex-1 py-5 text-base font-normal text-text-secondary bg-surface-bg"
