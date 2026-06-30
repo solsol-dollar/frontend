@@ -7,6 +7,7 @@ import linoImg from '@/assets/card/lino.png'
 import { useCardSummary, type CardSummary } from '../hooks/useCardSummary'
 import { useCardCategoryTransactions } from '../hooks/useCardCategoryTransactions'
 import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
+import { useNotificationSettings, useUpdateNotificationSettings } from '@/features/mypage/hooks/useMyPage'
 import { Header } from '@/components/common/Header'
 import { ChevronDown } from 'lucide-react'
 
@@ -352,6 +353,16 @@ export function CardHistoryPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const navigate = useNavigate()
   const { data: homeAssets } = useHomeAssets()
+  const { data: notifSettings } = useNotificationSettings()
+  const updateNotif = useUpdateNotificationSettings()
+  const spendingEnabled = notifSettings?.spendingReportEnabled ?? false
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>()
+  const showToast = (msg: string) => {
+    clearTimeout(toastTimer.current)
+    setToast(msg)
+    toastTimer.current = setTimeout(() => setToast(null), 1500)
+  }
   const { data, isLoading } = useCardSummary(year, month)
   const { data: categoryTx } = useCardCategoryTransactions(year, month, selectedCategory)
 
@@ -468,7 +479,7 @@ export function CardHistoryPage() {
                   </div>
                   <p className="text-white/70 text-[15px] font-medium">{categoryTx?.length ?? 0}건</p>
                 </div>
-                {categoryTx?.map(tx => (
+                {categoryTx?.map((tx: any) => (
                   <div key={tx.id} className="flex items-center justify-between py-3.5 border-b border-white/10 last:border-0">
                     <div>
                       <p className="text-[17px] font-bold text-white">{tx.merchantName}</p>
@@ -565,17 +576,22 @@ export function CardHistoryPage() {
               >
                 카드 사용 내역 보러가기
               </button>
-              <button 
-                className="bg-white text-[#1f4a5c] text-[16px] font-semibold py-[16px] px-6 rounded-[18px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100 active:scale-[0.97] transition-all"
-                onClick={() => alert('알림이 설정되었습니다.')}
+              <button
+                className={`text-[#1f4a5c] text-[16px] font-semibold py-[16px] px-6 rounded-[18px] border border-gray-100 active:scale-[0.97] transition-all ${spendingEnabled ? 'bg-gray-100' : 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.03)]'}`}
+                onClick={() => { if (!notifSettings) return; updateNotif.mutate({ ipoAllocationEnabled: notifSettings.ipoAllocationEnabled, ipoRefundEnabled: notifSettings.ipoRefundEnabled, idleDollarEnabled: notifSettings.idleDollarEnabled, spendingReportEnabled: !spendingEnabled }); showToast(spendingEnabled ? '알림이 해제되었습니다' : '알림이 설정되었습니다') }}
               >
-                매달 리포트 알림 받기
+                {spendingEnabled ? '알림 설정 완료' : '매달 리포트 알림 받기'}
               </button>
             </div>
           </div>
         </div>
 
       </div>
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-max max-w-[calc(100%-2rem)] bg-gray-800 text-white text-sm px-4 py-2.5 rounded-xl z-50">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }

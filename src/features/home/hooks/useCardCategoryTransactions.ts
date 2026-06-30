@@ -1,12 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { serviceApi } from '@/lib/axios'
-import type { CardTransaction } from './useCardSummary'
-
-interface ApiResponse<T> {
-  code: string
-  message: string
-  data: T
-}
 
 export function useCardCategoryTransactions(year: number, month: number, category?: string | null) {
   return useQuery({
@@ -16,7 +9,7 @@ export function useCardCategoryTransactions(year: number, month: number, categor
       if (category) {
         params.category = category
       }
-      const res = (await serviceApi.get('/api/v1/card/transactions/categories', {
+      const res = (await serviceApi.get('/api/service/api/v1/card/transactions/categories', {
         params,
       })) as any
       console.log('API response:', res.data)

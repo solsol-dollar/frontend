@@ -250,8 +250,10 @@ function getWeekOfMonth(date: dayjs.Dayjs): number {
   return Math.ceil((date.date() + adjusted) / 7);
 }
 
+const failedLogoUrls = new Set<string>()
+
 function IpoLogo({ ipo, size = 40 }: { ipo: Ipo; size?: number }) {
-  const [imgError, setImgError] = useState(false)
+  const [imgError, setImgError] = useState(() => !!ipo.logo_url && failedLogoUrls.has(ipo.logo_url))
   const abbr = getAbbr(ipo.company)
   const cls = `rounded-full flex-shrink-0 overflow-hidden`
   if (ipo.logo_url && !imgError) {
@@ -261,7 +263,7 @@ function IpoLogo({ ipo, size = 40 }: { ipo: Ipo; size?: number }) {
         alt={ipo.company}
         className={cls}
         style={{ width: size, height: size, objectFit: 'cover' }}
-        onError={() => setImgError(true)}
+        onError={() => { failedLogoUrls.add(ipo.logo_url!); setImgError(true) }}
       />
     )
   }
@@ -1113,7 +1115,7 @@ export function IpoCalendarPage() {
               )
             })}
             {bottomFilter === '전체' ? (
-              <div className="h-[450px] flex flex-col justify-end px-[6px] pb-[100px]">
+              <div className="h-[450px] flex flex-col justify-end px-[6px] pb-[140px]">
                 <p className="text-[12px] font-medium text-[#9AA0AB] mb-[8px]">유의사항</p>
                 <ul className="space-y-[6px]">
                   {[
@@ -1138,29 +1140,6 @@ export function IpoCalendarPage() {
 
       {tab === '청약내역/취소' && <SubscriptionHistory />}
 
-      {tab === "청약 일정" && (
-        <div className="fixed bottom-[91px] left-1/2 -translate-x-1/2 w-full max-w-mobile px-4 flex justify-end z-20 pointer-events-none">
-          <div className="relative flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)] pointer-events-auto">
-            <div
-              className="absolute top-0.5 bottom-0.5 rounded-[13px] bg-white shadow-[0_2px_2px_rgba(0,0,0,0.05)] transition-all duration-200 ease-in-out"
-              style={{ left: filterIndicator.left, width: filterIndicator.width }}
-            />
-            {(["전체", "관심"] as BottomFilter[]).map((f, i) => (
-              <button
-                key={f}
-                ref={el => { filterTabRefs.current[i] = el }}
-                onClick={() => setBottomFilter(f)}
-                className={cn(
-                  "relative z-10 px-5 py-1.5 rounded-[15px] text-[13px] transition-colors duration-200",
-                  bottomFilter === f ? "text-black font-semibold" : "text-[#999EA4] font-medium",
-                )}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {daySheet && (
         <>
@@ -1203,6 +1182,30 @@ export function IpoCalendarPage() {
             </div>
           </div>
         </>
+      )}
+
+      {tab === "청약 일정" && calendarView !== 'monthly' && (
+        <div className="fixed bottom-[120px] left-1/2 -translate-x-1/2 w-full max-w-mobile px-4 flex justify-end z-20 pointer-events-none">
+          <div className="relative flex bg-[#EFEFEF] rounded-[15px] p-0.5 shadow-[1px_1px_10px_0px_rgba(0,0,0,0.25)] pointer-events-auto">
+            <div
+              className="absolute top-0.5 bottom-0.5 rounded-[13px] bg-white shadow-[0_2px_2px_rgba(0,0,0,0.05)] transition-all duration-200 ease-in-out"
+              style={{ left: filterIndicator.left, width: filterIndicator.width }}
+            />
+            {(["전체", "관심"] as BottomFilter[]).map((f, i) => (
+              <button
+                key={f}
+                ref={el => { filterTabRefs.current[i] = el }}
+                onClick={() => setBottomFilter(f)}
+                className={cn(
+                  "relative z-10 px-5 py-1.5 rounded-[15px] text-[13px] transition-colors duration-200",
+                  bottomFilter === f ? "text-black font-semibold" : "text-[#999EA4] font-medium",
+                )}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {showDiagnosis && (

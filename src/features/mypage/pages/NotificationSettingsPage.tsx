@@ -6,9 +6,10 @@ const ITEMS = [
   { key: 'ipoAllocationEnabled', label: '배정 결과 알림', desc: '상장일 당일 배정 결과' },
   { key: 'ipoRefundEnabled', label: '환불금 입금 알림', desc: '미배정 환불금 입금 시' },
   { key: 'idleDollarEnabled', label: '쉬는 달러 감지', desc: '30일 이상 유휴 달러 감지 시' },
+  { key: 'spendingReportEnabled', label: '월간 소비 리포트', desc: '매월 소비 리포트 알림' },
 ] as const
 
-type SettingKey = 'ipoAllocationEnabled' | 'ipoRefundEnabled' | 'idleDollarEnabled'
+type SettingKey = 'ipoAllocationEnabled' | 'ipoRefundEnabled' | 'idleDollarEnabled' | 'spendingReportEnabled'
 
 export function NotificationSettingsPage() {
   const { data } = useNotificationSettings()
@@ -18,6 +19,7 @@ export function NotificationSettingsPage() {
     ipoAllocationEnabled: true,
     ipoRefundEnabled: true,
     idleDollarEnabled: true,
+    spendingReportEnabled: true,
   })
 
   const initialized = useRef(false)
@@ -29,6 +31,7 @@ export function NotificationSettingsPage() {
         ipoAllocationEnabled: data.ipoAllocationEnabled,
         ipoRefundEnabled: data.ipoRefundEnabled,
         idleDollarEnabled: data.idleDollarEnabled,
+        spendingReportEnabled: data.spendingReportEnabled,
       })
     }
   }, [data])
@@ -40,7 +43,7 @@ export function NotificationSettingsPage() {
     let next: Record<SettingKey, boolean>
     if (key === 'all') {
       const val = !allEnabled
-      next = { ipoAllocationEnabled: val, ipoRefundEnabled: val, idleDollarEnabled: val }
+      next = { ipoAllocationEnabled: val, ipoRefundEnabled: val, idleDollarEnabled: val, spendingReportEnabled: val }
     } else {
       next = { ...settings, [key]: !settings[key] }
     }

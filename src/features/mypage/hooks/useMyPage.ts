@@ -87,6 +87,7 @@ export interface NotificationSettings {
   ipoAllocationEnabled: boolean
   ipoRefundEnabled: boolean
   idleDollarEnabled: boolean
+  spendingReportEnabled: boolean
 }
 
 export function useNotifications(params?: { isRead?: boolean; page?: number; size?: number }) {
