@@ -24,7 +24,7 @@ export function SellProfitsPage() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-surface-bg">
-      <Header showBack showNotification={false} showMypage={false} title="판매 수익" />
+      <Header showBack showNotification={false} showMypage={false} centerContent={<span className="text-base font-bold text-text-primary">판매 수익</span>} />
 
       <div className="flex-1 overflow-y-auto pb-20">
         {/* 필터 칩 */}

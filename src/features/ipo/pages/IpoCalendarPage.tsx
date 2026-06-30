@@ -374,7 +374,7 @@ function ActiveIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           e.stopPropagation();
           onWishlistToggle();
         }}
-        className="absolute bottom-[14px] right-[9px] p-2"
+        className="absolute bottom-[14px] right-[14px] p-2"
         style={{ WebkitTapHighlightColor: 'transparent' }}
       >
         <HeartIcon isActive={isWishlisted} />
@@ -447,7 +447,7 @@ function ClosedIpoCard({ ipo, onClick, isWishlisted, onWishlistToggle }: { ipo: 
           e.stopPropagation();
           onWishlistToggle();
         }}
-        className="absolute bottom-[14px] right-[9px] p-2"
+        className="absolute bottom-[14px] right-[14px] p-2"
         style={{ WebkitTapHighlightColor: 'transparent' }}
       >
         <HeartIcon isActive={isWishlisted} />

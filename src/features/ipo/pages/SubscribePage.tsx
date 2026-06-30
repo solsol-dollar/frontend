@@ -310,28 +310,23 @@ export function SubscribePage() {
 
           {/* 청약 가능 금액 */}
           <div className="px-4 pt-4 pb-3">
-            <p className="text-xs text-text-tertiary mb-1">신청가능금액</p>
-            <span className="text-2xl font-bold text-text-primary">
-              $
-              {ipo.availableAmount.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </span>
-            <div className="mt-1">
-              <p className="text-sm text-primary font-semibold">
-                최대 {maxShares.toLocaleString("en-US")}주 청약 가능해요!
-              </p>
-              <p className="text-[11px] text-text-tertiary mt-0.5">
-                공모가 기준 예상 수량
-              </p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-text-secondary whitespace-nowrap w-20 flex-shrink-0">신청가능금액</span>
+              <div className="ml-auto text-right">
+                <p className="text-sm font-bold text-text-primary">
+                  ${ipo.availableAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p className="text-xs text-primary font-semibold mt-0.5">
+                  최대 {maxShares.toLocaleString("en-US")}주 청약 가능해요! <span className="text-text-tertiary font-normal">(공모가 기준 예상 수량)</span>
+                </p>
+              </div>
             </div>
           </div>
 
           {/* 청약신청금액 입력 */}
           <div className="px-4 py-3">
             <div className="flex items-center gap-3">
-              <span className="text-sm text-text-secondary whitespace-nowrap w-20 flex-shrink-0">
+              <span className="text-sm font-medium text-text-secondary whitespace-nowrap w-20 flex-shrink-0">
                 청약신청금액
               </span>
               <div className="w-48 ml-auto flex items-center border border-border rounded-xl overflow-hidden">
@@ -362,7 +357,7 @@ export function SubscribePage() {
                       else if (v > maxSubscribable)
                         setAmount(String(maxSubscribable));
                     }}
-                    placeholder="최소 $100"
+                    placeholder="최소 $100 · $1 단위"
                     className="text-center text-sm text-text-primary outline-none bg-transparent min-w-0 w-full"
                   />
                 </div>
@@ -377,9 +372,7 @@ export function SubscribePage() {
               </div>
             </div>
             <div className="flex items-center justify-between mt-1.5">
-              <span className="text-[11px] text-text-tertiary">
-                최소 USD 100 · USD 1 단위
-              </span>
+              <span />
               <button
                 onClick={() => setAmount(String(maxSubscribable))}
                 className="text-xs text-text-secondary px-2 py-0.5 bg-surface rounded"
@@ -398,7 +391,7 @@ export function SubscribePage() {
 
           {/* 청약대행증거금 */}
           <div className="px-4 pt-3 pb-5 flex items-center justify-between">
-            <span className="text-sm text-text-secondary">청약대행증거금</span>
+            <span className="text-sm font-medium text-text-secondary">청약대행증거금</span>
             <span className="text-base font-bold text-text-primary">
               USD{" "}
               {subscriptionFee.toLocaleString("en-US", {
@@ -431,7 +424,7 @@ export function SubscribePage() {
                 });
               }}
               disabled={!depositAccount}
-              className="p-3 border border-border rounded-xl text-left disabled:opacity-40"
+              className="p-3 border border-border rounded-xl text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none disabled:opacity-40"
             >
               <p className="text-xs font-semibold text-text-primary">
                 외화통장에서 끌어오기
@@ -451,19 +444,13 @@ export function SubscribePage() {
                   },
                 });
               }}
-              className="p-3 border border-border rounded-xl text-left"
+              className="p-3 border border-border rounded-xl text-left transition-all duration-75 active:scale-[0.97] active:bg-[#F2F3F5] select-none"
             >
-              <div className="flex items-center gap-1">
-                <p className="text-xs font-semibold text-text-primary">
-                  환전하기
-                </p>
-                <p className="text-[11px] text-text-tertiary">
-                  1달러 = {ipo.exchangeRate.toLocaleString("ko-KR")}원
-                </p>
-              </div>
-              <p className="text-xs font-bold text-text-primary mt-1">
-                {ipo.exchangeableKrw.toLocaleString("ko-KR")}원 → $
-                {ipo.exchangeableUsd.toFixed(2)}
+              <p className="text-xs font-semibold text-text-primary">
+                환전하기 <span className="text-[11px] text-text-tertiary font-normal">1달러 = {ipo.exchangeRate.toLocaleString("ko-KR")}원</span>
+              </p>
+              <p className="text-sm font-bold text-text-primary mt-1">
+                {ipo.exchangeableKrw.toLocaleString("ko-KR")}원 → ${ipo.exchangeableUsd.toFixed(2)}
               </p>
             </button>
           </div>
@@ -474,7 +461,7 @@ export function SubscribePage() {
       <div className="px-4 pb-8 pt-3 flex gap-3 bg-white border-t border-border">
         <button
           onClick={() => navigate(-1)}
-          className="flex-1 bg-surface text-text-primary py-4 rounded-xl font-semibold"
+          className="flex-1 py-4 bg-surface rounded-2xl font-semibold text-text-secondary"
         >
           취소
         </button>
@@ -497,7 +484,7 @@ export function SubscribePage() {
             setShowConfirmModal(true);
           }}
           disabled={!isValidAmount || isSubmitting}
-          className="flex-1 bg-primary disabled:bg-border text-white py-4 rounded-xl font-semibold"
+          className="flex-1 py-4 bg-primary text-white rounded-2xl font-semibold disabled:opacity-40"
         >
           확인
         </button>
@@ -565,7 +552,7 @@ export function SubscribePage() {
           <div className="flex gap-3">
             <button
               onClick={() => setShowConfirmModal(false)}
-              className="flex-1 py-4 bg-surface text-text-primary rounded-xl font-semibold"
+              className="flex-1 py-4 bg-surface rounded-2xl font-semibold text-text-secondary"
             >
               취소
             </button>
@@ -574,7 +561,7 @@ export function SubscribePage() {
                 setShowConfirmModal(false);
                 setShowPinScreen(true);
               }}
-              className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold"
+              className="flex-1 py-4 bg-primary text-white rounded-2xl font-semibold"
             >
               확인
             </button>
