@@ -19,6 +19,7 @@ export interface ReturnPlanResponse {
   totalRefundAmount: number
   sourceTicker: string
   sourceCompanyName: string
+  sourceLogoUrl: string | null
   refundDate: string | null
   subscriptionAmount: number | null
   allocationRate: number | null
@@ -36,6 +37,7 @@ export interface ReturnPlanListItem {
   planStatus: 'DRAFT' | 'EXECUTED'
   sourceTicker: string
   sourceCompanyName: string
+  sourceLogoUrl: string | null
   refundDate: string | null
   depositDate: string | null
 }
