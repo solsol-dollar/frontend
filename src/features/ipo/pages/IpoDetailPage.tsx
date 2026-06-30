@@ -374,7 +374,7 @@ export function IpoDetailPage() {
             status={status}
             statusClassName={getSubscriptionStatusBadgeClass(status)}
             secondaryText={dday || undefined}
-            secondaryClassName={dday ? 'text-[#CA3D40]' : undefined}
+            secondaryClassName={dday ? (status === '청약예정' ? 'text-[#3045BB]' : 'text-[#CA3D40]') : undefined}
           />
         </section>
 

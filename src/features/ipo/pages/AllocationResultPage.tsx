@@ -14,7 +14,7 @@ import { useUpdateReturnPlanRatios } from "@/features/return-plan/hooks/useUpdat
 import { useReturnPlans } from "@/features/return-plan/hooks/useReturnPlans";
 import { useReturnPlanDetail } from "@/features/return-plan/hooks/useReturnPlanDetail";
 import { DonutGauge } from "@/features/return-plan/components/DonutGauge";
-import { ZONE_COLORS } from "@/features/return-plan/constants";
+import { ACCOUNT_COLORS } from "@/features/return-plan/constants";
 import { useSubscriptionResultDetail } from "@/features/ipo/hooks/useSubscriptionResultDetail";
 import { useSubscriptionList } from "@/features/ipo/hooks/useSubscriptions";
 import { useMyPageAccounts } from "@/features/mypage/hooks/useMyPage";
@@ -33,52 +33,54 @@ function ExistingPlanView({ plan, refundAmount }: { plan: ReturnPlanResponse; re
   ];
 
   const ACCOUNTS = [
-    { id: "cma", name: "신한투자증권 CMA 계좌", nameLines: ["신한투자증권", "CMA 계좌"], desc: "다음 IPO 대기금 · ETF 재투자" },
-    { id: "valueup", name: "신한 Value-up 외화적립예금", nameLines: ["신한 Value-up", "외화적립예금"], desc: "연 3.2% · 3개월 이상" },
-    { id: "changeup", name: "신한 외화 체인지업 예금", nameLines: ["신한 외화", "체인지업 예금"], desc: "체크카드로 해외소비 시 간편추가" },
+    { id: "cma", name: "신한투자증권 CMA 계좌", nameLines: ["CMA 계좌", ""], desc: "다음 IPO 대기금 · ETF 재투자" },
+    { id: "valueup", name: "신한 Value-up 외화적립예금", nameLines: ["외화적립예금", ""], desc: "연 3.2% · 3개월 이상" },
+    { id: "changeup", name: "신한 외화 체인지업 예금", nameLines: ["체인지업 예금", ""], desc: "체크카드로 해외소비 시 간편추가" },
   ];
+  const TRACK_COLORS = ['#C5D1F5', '#DFCDFF', '#C8F2FB'];
 
   return (
     <>
       <section className="bg-white px-4 pb-6">
-        <div className="pt-4">
+        <div className="pt-8">
           <DonutGauge ratios={ratios} amount={refundAmount} message="분배될 예정입니다" />
         </div>
         <div className="flex items-center justify-center gap-4 mt-4">
-          {ACCOUNTS.map((acc, i) => (
+          {ACCOUNTS.map((acc) => (
             <div key={acc.id} className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[i] }} />
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ACCOUNT_COLORS[acc.id] }} />
               <span className="text-xs text-text-secondary leading-tight">
-                {acc.nameLines[0]}<br />{acc.nameLines[1]}
+                {acc.nameLines[0]}
               </span>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="px-4 py-5 bg-surface-bg space-y-3">
+      <section className="px-4 pt-5 pb-10 bg-surface-bg space-y-3">
         {ACCOUNTS.map((acc, i) => {
+          const color = ACCOUNT_COLORS[acc.id]
           const ratio = ratios[i]
           const amount = ((refundAmount * ratio) / 100).toFixed(2)
           return (
-            <div key={acc.id} className="rounded-2xl px-4 py-3" style={{ backgroundColor: '#F4F5F8' }}>
+            <div key={acc.id} className="rounded-2xl px-4 py-3 bg-white">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[i] }} />
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-text-primary">{acc.name}</p>
                     <p className="text-xs text-text-tertiary mt-0.5">{acc.desc}</p>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0 ml-3">
-                  <p className="text-sm font-bold" style={{ color: ZONE_COLORS[i] }}>
+                  <p className="text-sm font-bold" style={{ color }}>
                     <span className="text-lg">{ratio}</span> %
                   </p>
                   <p className="text-xs text-text-tertiary">${amount}</p>
                 </div>
               </div>
-              <div className="h-1 rounded-full" style={{ backgroundColor: `${ZONE_COLORS[i]}33` }}>
-                <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${ratio}%`, backgroundColor: ZONE_COLORS[i] }} />
+              <div className="h-1 rounded-full" style={{ backgroundColor: `${TRACK_COLORS[i]}4D` }}>
+                <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${ratio}%`, backgroundColor: color }} />
               </div>
             </div>
           )
@@ -246,7 +248,7 @@ export function AllocationResultPage() {
 
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {/* 배정 결과 카드 */}
-        <section className="bg-white pb-3">
+        <section className="bg-white pb-5">
           <div className="flex items-center gap-3 px-4 pt-5 pb-5">
             {logoUrl && !logoImgError ? (
               <img
@@ -267,14 +269,12 @@ export function AllocationResultPage() {
               <p className="text-base font-bold text-text-primary">{name}</p>
               <p className="text-xs text-text-tertiary mt-0.5">{ticker}</p>
             </div>
-            <span className="px-3 py-1 rounded-full border border-primary text-primary text-xs font-semibold flex-shrink-0">
-              배정완료
-            </span>
+            <img src="/icons/IPO_complete.svg" width={50} height={17} alt="배정완료" className="flex-shrink-0" />
           </div>
 
-          <div className="h-2 bg-surface-bg" />
+          <div className="h-[13px] bg-surface-bg" />
 
-          <div className="px-10 pt-5 pb-2 space-y-3">
+          <div className="px-10 pt-5 pb-2 space-y-[13px]">
             <InfoRow label="공모가" value={formatUsd(finalOfferingPrice)} />
             <InfoRow label="배정 수량" value={`${allocatedShares}주`} />
             <InfoRow label="청약신청금액" value={formatUsd(subscriptionRequestAmount)} />
@@ -293,7 +293,8 @@ export function AllocationResultPage() {
         </section>
 
         {/* 리턴 플랜 */}
-        <div className="mt-2">
+        <div className="h-[13px] bg-surface-bg" />
+        <div className="mt-0">
           {existingPlan && planDetail ? (
             <ExistingPlanView
               plan={planDetail}
@@ -387,10 +388,7 @@ export function AllocationResultPage() {
         </div>
         <div className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2 shrink-0">
           <button
-            onClick={() => {
-              setShowEtfSheet(false);
-              navigate("/ipo", { state: { tab: "청약내역/취소" } });
-            }}
+            onClick={() => setShowEtfSheet(false)}
             className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
           >
             완료

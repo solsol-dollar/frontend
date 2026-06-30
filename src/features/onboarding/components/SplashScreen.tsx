@@ -8,11 +8,12 @@ export function SplashScreen() {
         <div className="relative">
           <div className="absolute -inset-8 rounded-full bg-blue-300/10 blur-3xl animate-glow-pulse" />
 
-          <div className="relative w-36 h-36 animate-splash-in">
+          <div className="relative w-36 h-36 animate-splash-in" style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
             <img
-              src="/icons/appLogo_dollar.svg"
+              src="/icons/appLogo_dollar.png"
               alt="SOL SOL 달러"
               className="w-36 h-36 object-contain"
+              style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
             />
             <div
               className="absolute inset-0 pointer-events-none animate-shimmer"

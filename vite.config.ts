@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['icons/*.png'],
         manifest: {
           name: 'SOL SOL 달러',
-          short_name: 'SOL SOL',
+          short_name: 'SOLSOL 달러',
           description: '신한 그룹 연계 해외 공모주 IPO 청약 앱',
           theme_color: '#1C1FE8',
           background_color: '#FFFFFF',
@@ -31,8 +31,8 @@ export default defineConfig(({ mode }) => {
           scope: '/',
           start_url: '/',
           icons: [
-            { src: '/icons/appLogo.png', sizes: '192x192', type: 'image/png' },
-            { src: '/icons/appLogo.png', sizes: '512x512', type: 'image/png' },
+            { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
           ],
         },
         injectManifest: {

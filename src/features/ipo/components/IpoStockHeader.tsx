@@ -135,7 +135,7 @@ export function IpoStockHeader({
           <p className="text-sm text-text-secondary mt-0.5">{ticker}</p>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
         {status === '청약종료' ? (
           <img src="/icons/IPO_end.svg" alt="청약종료" width={50} height={17} className="mt-[-18px]" />
         ) : status === '청약가능' ? (

@@ -27,6 +27,7 @@ import type { SubscriptionRes } from "@/features/ipo/api/subscriptionApi";
 import type { AllocationResultDetail } from "@/features/ipo/types/allocation";
 import { generateLogoColor } from "@/features/ipo/utils/ipoUtils";
 import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
+import { useReturnPlans } from "@/features/return-plan/hooks/useReturnPlans";
 
 type StatusType = "청약신청" | "취소완료" | "배정완료" | "입고완료";
 type PeriodMode = "월별" | "기간별";
@@ -473,6 +474,8 @@ export function SubscriptionHistory() {
 
   const { data: listData, isLoading: isListLoading } = useSubscriptionList();
   const { data: assets } = useHomeAssets();
+  const { data: returnPlans = [] } = useReturnPlans();
+  const reservedSubscriptionIds = new Set(returnPlans.map((p) => p.subscriptionId));
   const cancelSubscription = useCancelSubscription();
   const revealScratch = useRevealScratch();
   const rawSubscriptions = listData?.data.subscriptions ?? [];
@@ -643,8 +646,11 @@ export function SubscriptionHistory() {
       const id = scratchTarget;
       setConfirmedIds((prev) => new Set([...prev, id]));
       revealScratch.mutate(id);
+      setScratchTarget(null);
+      navigate(`/ipo/${id}/result`);
+    } else {
+      setScratchTarget(null);
     }
-    setScratchTarget(null);
   }
 
   const { start: rangeStart, end: rangeEnd } = getEffectiveRange(applied);
@@ -721,20 +727,11 @@ export function SubscriptionHistory() {
                       ticker={sub.ticker}
                       status={sub.status}
                       statusClassName={STATUS_BADGE[sub.status]}
-                      secondaryText={sub.status !== "입고완료" ? sub.returnRate : undefined}
-                      secondaryClassName={
-                        sub.returnPositive ? "text-up" : "text-down"
-                      }
+                      secondaryText={sub.returnRate}
+                      secondaryClassName="text-[#2563EB]"
                       align="start"
                       size="sm"
                     />
-                    {sub.status === "입고완료" && sub.returnRate && (
-                      <div className="flex justify-end mt-1">
-                        <span className={`text-sm font-bold ${sub.returnPositive ? "text-up" : "text-down"}`}>
-                          {sub.returnRate}
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   <div className="space-y-2 pl-[52px]">
@@ -830,7 +827,7 @@ export function SubscriptionHistory() {
                         onClick={() => navigate(`/ipo/${sub.id}/result`)}
                         className="flex-1 py-3 rounded-xl text-sm font-semibold text-text-secondary bg-[#F0F1F4]"
                       >
-                        상세보기
+                        {reservedSubscriptionIds.has(sub.id) ? "예약 상세보기" : "상세보기"}
                       </button>
                     )}
                   </div>
@@ -855,7 +852,7 @@ export function SubscriptionHistory() {
         </div>
 
         {filtered.length > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-text-tertiary px-1 mt-3">
+          <div className="flex items-center gap-1.5 text-xs text-text-tertiary px-1 mt-3 mb-6">
             <Info size={13} />
             <span>청약 취소는 청약 기간 중에만 가능합니다.</span>
           </div>

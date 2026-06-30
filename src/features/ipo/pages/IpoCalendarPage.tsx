@@ -686,6 +686,27 @@ export function IpoCalendarPage() {
   uniqueDatesRef.current = uniqueDates
 
   const scrollRestored = useRef(false)
+  const prevTab = useRef<Tab>(tab)
+
+  useEffect(() => {
+    if (tab !== '청약 일정') {
+      prevTab.current = tab
+      return
+    }
+    if (prevTab.current === '청약 일정') return
+    prevTab.current = tab
+    requestAnimationFrame(() => {
+      if (calendarView === 'monthly') {
+        scrollToTodayMonth()
+      } else {
+        const container = scrollContainerRef.current
+        const el = dateSectionRefs.current.get(todayStr)
+        if (el && container) {
+          container.scrollTop += el.getBoundingClientRect().top - container.getBoundingClientRect().top - 8
+        }
+      }
+    })
+  }, [tab])
 
   useEffect(() => {
     if (filteredIpos.length === 0) return
@@ -732,7 +753,8 @@ export function IpoCalendarPage() {
         let topPos: number | null = null
         dateSectionRefs.current.forEach((el, dateStr) => {
           const rect = el.getBoundingClientRect()
-          const effectiveBottom = rect.bottom - 80
+          const hasIpos = filteredIpos.some((ipo) => ipo.subscription_start === dateStr)
+          const effectiveBottom = hasIpos ? rect.bottom - 80 : rect.bottom
           if (effectiveBottom > HEADER_OFFSET && rect.top < window.innerHeight) {
             if (topPos === null || effectiveBottom < topPos) {
               topPos = effectiveBottom
