@@ -20,7 +20,7 @@ export function usePushNotification() {
 
       if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((sw) => {
-          sw.showNotification(title, { body, icon: '/icons/icon-192.png', data: { url: toSafePath(payload.data?.url) } })
+          sw.showNotification(title, { body, icon: '/icons/appLogo.png', data: { url: toSafePath(payload.data?.url) } })
         })
       }
 

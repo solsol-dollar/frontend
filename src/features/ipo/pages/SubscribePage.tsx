@@ -531,7 +531,7 @@ export function SubscribePage() {
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-text-secondary">청약대행증거금</span>
+              <span className="text-text-secondary">청약대행증거금(101%)</span>
               <span className="font-semibold text-text-primary">
                 USD{" "}
                 {subscriptionFee.toLocaleString("en-US", {
