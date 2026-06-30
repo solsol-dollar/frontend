@@ -24,6 +24,7 @@ interface LocationState {
   totalUsdBalance?: number
   balance?: number
   maturityDate?: string | null
+  initialFilter?: string
 }
 
 function calcDDay(dateStr: string): string {
@@ -62,6 +63,7 @@ export function TransferHistoryPage() {
     totalUsdBalance,
     balance,
     maturityDate,
+    initialFilter,
   } = (state as LocationState) ?? {}
 
   const { data: assets } = useHomeAssets()
@@ -73,7 +75,7 @@ export function TransferHistoryPage() {
   const liveTotalUsdBalance = accountType === 'SECURITIES' ? (assets?.securities?.totalUsdBalance ?? totalUsdBalance) : totalUsdBalance
   const liveUsdAvailableBalance = accountType === 'SECURITIES' ? (assets?.securities?.usdAvailableBalance ?? usdAvailableBalance) : usdAvailableBalance
 
-  const [filterLabel, setFilterLabel] = useState('전체')
+  const [filterLabel, setFilterLabel] = useState(initialFilter || '전체')
   const [showFilter, setShowFilter] = useState(false)
   const [showExchange, setShowExchange] = useState(false)
 
@@ -95,7 +97,7 @@ export function TransferHistoryPage() {
 
   return (
     <div className="mobile-container flex flex-col h-screen bg-surface-bg">
-      <Header showBack title="송금 내역" showNotification={false} showMypage={false} />
+      <Header showBack title="거래 내역" showNotification={false} showMypage={false} />
 
       <div className="flex-1 overflow-y-auto">
         <div className="mx-4 mt-4 bg-white rounded-2xl p-5">

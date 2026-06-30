@@ -203,6 +203,9 @@ export function AllocationResultPage() {
   const ticker = subscription?.ticker ?? "";
   const name = subscription?.companyName ?? "불러오는 중...";
   const color = ticker ? generateLogoColor(ticker) : "#E5E7EB";
+  const logoUrl = subscription?.logoUrl ?? null;
+  const [logoImgError, setLogoImgError] = useState(false);
+  useEffect(() => { setLogoImgError(false) }, [logoUrl]);
   const subscriptionRequestAmount = resultDetail?.subscriptionAmount ?? subscription?.subscriptionAmount ?? 0;
   const allocatedShares = resultDetail?.allocatedShares ?? 0;
   const subscriptionMargin = subscription?.subscriptionAgencyDeposit ?? 0;
@@ -235,6 +238,7 @@ export function AllocationResultPage() {
       <Header
         title="배정 결과"
         showBack
+        onBack={() => navigate('/ipo', { state: { tab: '청약내역/취소' } })}
         showSearch={false}
         showNotification={false}
         showMypage={false}
@@ -244,12 +248,21 @@ export function AllocationResultPage() {
         {/* 배정 결과 카드 */}
         <section className="bg-white pb-3">
           <div className="flex items-center gap-3 px-4 pt-5 pb-5">
-            <div
-              className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-              style={{ backgroundColor: color }}
-            >
-              {ticker.slice(0, 2)}
-            </div>
+            {logoUrl && !logoImgError ? (
+              <img
+                src={logoUrl}
+                alt={name}
+                onError={() => setLogoImgError(true)}
+                className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                style={{ backgroundColor: color }}
+              >
+                {ticker.slice(0, 2)}
+              </div>
+            )}
             <div className="flex-1">
               <p className="text-base font-bold text-text-primary">{name}</p>
               <p className="text-xs text-text-tertiary mt-0.5">{ticker}</p>
@@ -372,7 +385,7 @@ export function AllocationResultPage() {
             </div>
           )}
         </div>
-        <div className="px-5 pb-4 pt-2 shrink-0">
+        <div className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2 shrink-0">
           <button
             onClick={() => {
               setShowEtfSheet(false);

@@ -58,66 +58,51 @@ function BarShape({ x = 0, y = 0, width = 0, height = 0, fill, background, isNeg
   return <path d={`M${x},${y + height} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + width - r},${y} Q${x + width},${y} ${x + width},${y + r} L${x + width},${y + height} Z`} fill={fill} />
 }
 
-type FinancialRow = { fiscalYear: number; revenue: number | null; operatingIncome: number | null; netIncome: number | null; currency: string; revenueKrw: number | null; operatingIncomeKrw: number | null; netIncomeKrw: number | null }
+type FinancialRow = { fiscalYear: number; currency: string; revenue: string | null; operatingIncome: string | null; netIncome: string | null; revenueKrw: string | null; operatingIncomeKrw: string | null; netIncomeKrw: string | null }
+
+function parseFinancialString(s: string | null): number | null {
+  if (s == null) return null
+  const neg = s.startsWith('-')
+  const abs = s.replace('-', '').trim()
+  const units: [string, number][] = [['조', 1e12], ['억', 1e8], ['만', 1e4]]
+  for (const [unit, mult] of units) {
+    if (abs.endsWith(unit)) return (neg ? -1 : 1) * parseFloat(abs.slice(0, -unit.length)) * mult
+  }
+  const n = parseFloat(abs)
+  return isNaN(n) ? null : (neg ? -1 : 1) * n
+}
 
 function buildChartData(financials: FinancialRow[], useKrw: boolean) {
-  const k = (v: number | null) => v != null ? v * 1000 : null
-  const getVals = (d: FinancialRow) => useKrw
-    ? [k(d.revenueKrw), k(d.operatingIncomeKrw), k(d.netIncomeKrw)] as const
-    : [k(d.revenue), k(d.operatingIncome), k(d.netIncome)] as const
-
   const currency = financials[0]?.currency ?? 'USD'
   const sym = CURRENCY_SYMBOL[currency] ?? currency
-  const allAbs = financials.flatMap(d => getVals(d)).filter((v): v is number => v != null).map(v => Math.abs(v))
-  const maxAbs = allAbs.length ? Math.max(...allAbs) : 0
 
-  let divisor: number, unitPrefix: string, unitSuffix: string
-  if (useKrw) {
-    unitPrefix = ''
-    if (maxAbs >= 1_000_000_000_000) { divisor = 1_000_000_000_000; unitSuffix = '조원' }
-    else if (maxAbs >= 100_000_000) { divisor = 100_000_000; unitSuffix = '억원' }
-    else if (maxAbs >= 10_000) { divisor = 10_000; unitSuffix = '만원' }
-    else { divisor = 1; unitSuffix = '원' }
-  } else {
-    unitPrefix = sym
-    if (maxAbs >= 100_000_000) { divisor = 100_000_000; unitSuffix = '억' }
-    else if (maxAbs >= 10_000) { divisor = 10_000; unitSuffix = '만' }
-    else { divisor = 1; unitSuffix = '' }
-  }
+  const getLabels = (d: FinancialRow) => useKrw
+    ? [d.revenueKrw, d.operatingIncomeKrw, d.netIncomeKrw] as const
+    : [d.revenue, d.operatingIncome, d.netIncome] as const
 
-  // null → 0 (점선), 음수 → 실제 음수값 (0 기준 아래로)
+  const allNums = financials.flatMap(d => getLabels(d).map(parseFinancialString)).filter((v): v is number => v != null)
+  const maxAbs = allNums.length ? Math.max(...allNums.map(Math.abs)) : 1
+
   const toBar = (v: number | null): number => {
     if (v == null) return 0
-    const s = Math.round(Math.sqrt(Math.abs(v) / divisor) * 100) / 100
+    const s = Math.round(Math.sqrt(Math.abs(v) / maxAbs) * 100) / 100
     return v < 0 ? -s : s
   }
-  const toLabel = (v: number | null): string | null => {
-    if (v == null) return null
-    const sign = v < 0 ? '-' : ''
-    const abs = Math.abs(v)
-    let n = abs / divisor
-    let pfx = unitPrefix
-    let sfx = unitSuffix
-    if (Math.floor(n * 10) / 10 === 0) {
-      if (useKrw) {
-        if (divisor >= 100_000_000) { n = abs / 10_000; sfx = '만원' }
-        else if (divisor >= 10_000) { n = abs; sfx = '원' }
-      } else {
-        if (divisor >= 100_000_000) { n = abs / 10_000; sfx = '만' }
-        else if (divisor >= 10_000) { n = abs; sfx = '' }
-      }
-    }
-    const num = n >= 10 ? Math.floor(n).toLocaleString() : Math.floor(n * 10) / 10
-    return `${sign}${pfx}${num}${sfx}`
+
+  const withSym = (s: string | null): string | null => {
+    if (s == null || useKrw) return s
+    if (s.startsWith('-')) return `-${sym}${s.slice(1)}`
+    return `${sym}${s}`
   }
 
   const sorted = [...financials].sort((a, b) => a.fiscalYear - b.fiscalYear)
   const rows = sorted.map(d => {
-    const [rv, oi, ni] = getVals(d)
+    const [rvStr, oiStr, niStr] = getLabels(d)
+    const rv = parseFinancialString(rvStr), oi = parseFinancialString(oiStr), ni = parseFinancialString(niStr)
     const sales = toBar(rv), op = toBar(oi), net = toBar(ni)
     return {
       year: `${d.fiscalYear}년`, sales, op, net,
-      salesLabel: toLabel(rv), opLabel: toLabel(oi), netLabel: toLabel(ni),
+      salesLabel: withSym(rvStr), opLabel: withSym(oiStr), netLabel: withSym(niStr),
       salesIsNeg: rv != null && rv < 0,
       opIsNeg: oi != null && oi < 0,
       netIsNeg: ni != null && ni < 0,
@@ -136,7 +121,7 @@ function buildChartData(financials: FinancialRow[], useKrw: boolean) {
   const blank = { year: '', sales: 0, op: 0, net: 0, salesLabel: null, opLabel: null, netLabel: null, salesIsNeg: false, opIsNeg: false, netIsNeg: false, salesNullDown: false, opNullDown: false, netNullDown: false, _groupMax: 0, _domainMax: domainMax, _domainMin: chartMin, _isEmpty: true }
   const padded = rows.map(r => ({ ...r, _domainMax: domainMax, _domainMin: chartMin }))
   while (padded.length < 3) padded.unshift({ ...blank })
-  return { rows: padded, domainMax, chartMin, unitPrefix, unitSuffix, sym }
+  return { rows: padded, domainMax, chartMin, sym }
 }
 
 
@@ -262,14 +247,13 @@ export function IpoDetailPage() {
   const { data: financialsData } = useIpoFinancials(ipoId)
   const originalCurrency = financialsData?.data?.[0]?.currency ?? null
   const { rows: chartRows, domainMax: chartDomainMax, chartMin: chartDomainMin, sym: chartSym } = useMemo(
-    () => financialsData?.data?.length ? buildChartData(financialsData.data, showKrw) : { rows: [], domainMax: 1, chartMin: 0, unitPrefix: '', unitSuffix: '억원', sym: '' },
+    () => financialsData?.data?.length ? buildChartData(financialsData.data, showKrw) : { rows: [], domainMax: 1, chartMin: 0, sym: '' },
     [financialsData, showKrw]
   )
   const exchangeRate = useMemo(() => {
     if (!showKrw || !originalCurrency || originalCurrency === 'KRW' || !financialsData?.data) return null
-    const d = financialsData.data.find(item => item.revenue != null && item.revenueKrw != null && item.revenue !== 0)
-    if (!d) return null
-    const rate = d.revenueKrw! / d.revenue!
+    const rate = financialsData.data.find(item => item.exchangeRate != null)?.exchangeRate
+    if (!rate) return null
     return rate >= 100 ? Math.round(rate).toLocaleString() : (Math.round(rate * 10) / 10).toString()
   }, [financialsData, showKrw, originalCurrency])
 
@@ -629,7 +613,7 @@ export function IpoDetailPage() {
             className="fixed inset-0 bg-black/40 z-20"
             onClick={() => setShowScoreInfo(false)}
           />
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-[20px] z-30 px-5 pb-5">
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-[20px] z-30 px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             <div className="flex justify-center pt-3 pb-2">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>

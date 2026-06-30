@@ -12,7 +12,7 @@ export function SplashScreen() {
             <img
               src="/icons/appLogo_dollar.png"
               alt="SOL SOL 달러"
-              className="w-36 h-36 object-contain"
+              className="w-36 h-36 object-contain mix-blend-multiply"
             />
             <div
               className="absolute inset-0 pointer-events-none animate-shimmer"

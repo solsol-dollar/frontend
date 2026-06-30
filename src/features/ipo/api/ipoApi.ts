@@ -92,13 +92,14 @@ export interface IpoNewsDetailItem {
 
 export interface IpoFinancialItem {
   fiscalYear: number
-  revenue: number | null
-  operatingIncome: number | null
-  netIncome: number | null
   currency: string
-  revenueKrw: number | null
-  operatingIncomeKrw: number | null
-  netIncomeKrw: number | null
+  exchangeRate: number | null
+  revenue: string | null
+  operatingIncome: string | null
+  netIncome: string | null
+  revenueKrw: string | null
+  operatingIncomeKrw: string | null
+  netIncomeKrw: string | null
 }
 
 export interface FavoriteIpoItem {

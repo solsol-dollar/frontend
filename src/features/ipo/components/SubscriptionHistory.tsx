@@ -17,6 +17,7 @@ import {
   useSubscriptionList,
   useCancelSubscription,
 } from "@/features/ipo/hooks/useSubscriptions";
+import { subscriptionApi } from "@/features/ipo/api/subscriptionApi";
 import { useReturnPlans } from "@/features/return-plan/hooks/useReturnPlans";
 import {
   subscriptionResultQueryKey,
@@ -416,7 +417,8 @@ function toSubscription(
     canCancel:
       sub.subscriptionStatus === "REQUESTED" &&
       !hasAllocationResult &&
-      !listingDayReached,
+      !listingDayReached &&
+      (sub.subscriptionEndDate == null || dayjs().isBefore(dayjs(sub.subscriptionEndDate).hour(17).minute(0).second(0))),
   };
 }
 
@@ -500,6 +502,15 @@ export function SubscriptionHistory() {
     );
   });
 
+  useEffect(() => {
+    const revealedIds = rawSubscriptions
+      .filter((s) => s.scratchRevealed)
+      .map((s) => s.subscriptionId);
+    if (revealedIds.length > 0) {
+      setConfirmedIds(new Set(revealedIds));
+    }
+  }, [rawSubscriptions]);
+
   const SUBSCRIPTIONS = rawSubscriptions.map((sub) =>
     toSubscription(
       sub,
@@ -548,14 +559,7 @@ export function SubscriptionHistory() {
 
   // 배정결과 스크래치
   const [scratchTarget, setScratchTarget] = useState<number | null>(null);
-  const [confirmedIds, setConfirmedIds] = useState<Set<number>>(() => {
-    try {
-      const saved = localStorage.getItem("scratched_subscription_ids");
-      return saved ? new Set(JSON.parse(saved) as number[]) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
+  const [confirmedIds, setConfirmedIds] = useState<Set<number>>(() => new Set());
   const [showConfetti, setShowConfetti] = useState(false);
   const scratchItem = SUBSCRIPTIONS.find((s) => s.id === scratchTarget);
 
@@ -628,15 +632,10 @@ export function SubscriptionHistory() {
 
   function confirmScratch() {
     if (scratchTarget != null) {
-      setConfirmedIds((prev) => {
-        const next = new Set([...prev, scratchTarget]);
-        try {
-          localStorage.setItem(
-            "scratched_subscription_ids",
-            JSON.stringify([...next]),
-          );
-        } catch {}
-        return next;
+      const id = scratchTarget;
+      setConfirmedIds((prev) => new Set([...prev, id]));
+      subscriptionApi.revealScratch(id).catch(() => {
+        // 실패해도 UI는 닫은 상태 유지 (다음 목록 로드 시 서버 상태로 동기화됨)
       });
     }
     setScratchTarget(null);
@@ -704,7 +703,7 @@ export function SubscriptionHistory() {
             return (
               <div
                 key={sub.id}
-                className="bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none"
+                className="bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px]"
               >
                 <div>
                   <div className="mb-[13px]">
@@ -849,10 +848,12 @@ export function SubscriptionHistory() {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-text-tertiary px-1 mt-3">
-          <Info size={13} />
-          <span>청약 취소는 청약 기간 중에만 가능합니다.</span>
-        </div>
+        {filtered.length > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-text-tertiary px-1 mt-3">
+            <Info size={13} />
+            <span>청약 취소는 청약 기간 중에만 가능합니다.</span>
+          </div>
+        )}
       </div>
 
       {/* ── 조회 조건 설정 시트 ── */}
@@ -874,7 +875,7 @@ export function SubscriptionHistory() {
         <div className="flex justify-center pt-3 pb-2 shrink-0">
           <div className="w-10 h-1 rounded-full bg-border" />
         </div>
-        <div className="px-4 pb-8 flex-1 flex flex-col overflow-hidden">
+        <div className="px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex-1 flex flex-col overflow-hidden">
           <p className="text-base font-bold text-text-primary mb-5 shrink-0">
             조회 조건 설정
           </p>
@@ -1008,7 +1009,7 @@ export function SubscriptionHistory() {
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowRangePicker(false)}
           />
-          <div className="relative w-full max-w-mobile bg-white rounded-t-2xl px-4 pt-5 pb-8">
+          <div className="relative w-full max-w-mobile bg-white rounded-t-2xl px-4 pt-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             <div className="flex items-center justify-between mb-4">
               <p className="text-base font-bold text-text-primary">
                 날짜 범위 선택
