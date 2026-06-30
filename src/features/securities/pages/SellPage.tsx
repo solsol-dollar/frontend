@@ -49,6 +49,10 @@ export function SellPage() {
           setShowConfirm(false)
           setResult(data)
         },
+        onError: (err: any) => {
+          const msg = err?.response?.data?.message ?? '주문 처리 중 오류가 발생했습니다.'
+          alert(msg)
+        },
       },
     )
   }
@@ -146,7 +150,7 @@ export function SellPage() {
       <div className="px-4 pt-3 pb-4 bg-white border-t border-border">
         {!canTrade && (
           <p className="text-center text-[11px] text-text-tertiary mb-2">
-            미국 장 마감 중 · 23:30 ~ 06:00에 거래 가능
+            미국 장 마감 중 · 22:30 ~ 05:00에 거래 가능 (하절기)
           </p>
         )}
         <button
