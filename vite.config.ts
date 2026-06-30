@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['icons/*.png'],
         manifest: {
           name: 'SOL SOL 달러',
-          short_name: 'SOL SOL',
+          short_name: 'SOLSOL 달러',
           description: '신한 그룹 연계 해외 공모주 IPO 청약 앱',
           theme_color: '#1C1FE8',
           background_color: '#FFFFFF',
