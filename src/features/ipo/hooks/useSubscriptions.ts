@@ -27,6 +27,16 @@ export function useCreateSubscription() {
   })
 }
 
+export function useRevealScratch() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (subscriptionId: number) => subscriptionApi.revealScratch(subscriptionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: subscriptionKeys.all })
+    },
+  })
+}
+
 export function useCancelSubscription() {
   const queryClient = useQueryClient()
   return useMutation({
