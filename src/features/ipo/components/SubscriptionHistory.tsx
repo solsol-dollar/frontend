@@ -641,16 +641,15 @@ export function SubscriptionHistory() {
     setTimeout(() => setShowConfetti(false), 3000);
   }
 
-  function confirmScratch() {
-    if (scratchTarget != null) {
-      const id = scratchTarget;
-      setConfirmedIds((prev) => new Set([...prev, id]));
-      revealScratch.mutate(id);
-      setScratchTarget(null);
-      navigate(`/ipo/${id}/result`);
-    } else {
-      setScratchTarget(null);
-    }
+  async function confirmScratch() {
+    if (scratchTarget == null) { setScratchTarget(null); return; }
+    const id = scratchTarget;
+    setConfirmedIds((prev) => new Set([...prev, id]));
+    setScratchTarget(null);
+    try {
+      await revealScratch.mutateAsync(id);
+    } catch { /* 실패해도 navigate */ }
+    navigate(`/ipo/${id}/result`);
   }
 
   const { start: rangeStart, end: rangeEnd } = getEffectiveRange(applied);
@@ -808,7 +807,7 @@ export function SubscriptionHistory() {
 
                 {sub.status === "배정완료" && (
                   <div className="mt-4 flex gap-2">
-                    {!isRevealed ? (
+                    {!isRevealed && !reservedSubscriptionIds.has(sub.id) ? (
                       <button
                         onClick={() => setScratchTarget(sub.id)}
                         disabled={sub.allocationResultState !== "ready"}
