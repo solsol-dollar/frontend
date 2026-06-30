@@ -16,8 +16,8 @@ import dayjs, { Dayjs } from "dayjs";
 import {
   useSubscriptionList,
   useCancelSubscription,
+  useRevealScratch,
 } from "@/features/ipo/hooks/useSubscriptions";
-import { subscriptionApi } from "@/features/ipo/api/subscriptionApi";
 import { useReturnPlans } from "@/features/return-plan/hooks/useReturnPlans";
 import {
   subscriptionResultQueryKey,
@@ -469,6 +469,7 @@ export function SubscriptionHistory() {
   const { data: assets } = useHomeAssets();
   const { data: returnPlans } = useReturnPlans();
   const cancelSubscription = useCancelSubscription();
+  const revealScratch = useRevealScratch();
   const executedSubscriptionIds = new Set(
     returnPlans?.filter((p) => p.planStatus === "EXECUTED").map((p) => p.subscriptionId) ?? []
   );
@@ -506,10 +507,9 @@ export function SubscriptionHistory() {
     const revealedIds = rawSubscriptions
       .filter((s) => s.scratchRevealed)
       .map((s) => s.subscriptionId);
-    if (revealedIds.length > 0) {
-      setConfirmedIds(new Set(revealedIds));
-    }
-  }, [rawSubscriptions]);
+    // 서버 데이터를 낙관적 상태에 머지 (PATCH 반영 전 stale 데이터로 덮이는 레이스 방지)
+    setConfirmedIds((prev) => new Set([...prev, ...revealedIds]));
+  }, [listData]);
 
   const SUBSCRIPTIONS = rawSubscriptions.map((sub) =>
     toSubscription(
@@ -634,9 +634,7 @@ export function SubscriptionHistory() {
     if (scratchTarget != null) {
       const id = scratchTarget;
       setConfirmedIds((prev) => new Set([...prev, id]));
-      subscriptionApi.revealScratch(id).catch(() => {
-        // 실패해도 UI는 닫은 상태 유지 (다음 목록 로드 시 서버 상태로 동기화됨)
-      });
+      revealScratch.mutate(id);
     }
     setScratchTarget(null);
   }
