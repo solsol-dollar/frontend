@@ -686,6 +686,27 @@ export function IpoCalendarPage() {
   uniqueDatesRef.current = uniqueDates
 
   const scrollRestored = useRef(false)
+  const prevTab = useRef<Tab>(tab)
+
+  useEffect(() => {
+    if (tab !== '청약 일정') {
+      prevTab.current = tab
+      return
+    }
+    if (prevTab.current === '청약 일정') return
+    prevTab.current = tab
+    requestAnimationFrame(() => {
+      if (calendarView === 'monthly') {
+        scrollToTodayMonth()
+      } else {
+        const container = scrollContainerRef.current
+        const el = dateSectionRefs.current.get(todayStr)
+        if (el && container) {
+          container.scrollTop += el.getBoundingClientRect().top - container.getBoundingClientRect().top - 8
+        }
+      }
+    })
+  }, [tab])
 
   useEffect(() => {
     if (filteredIpos.length === 0) return
