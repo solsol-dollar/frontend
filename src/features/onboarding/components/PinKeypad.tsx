@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 function shuffle(arr: number[]) {
@@ -7,10 +8,11 @@ function shuffle(arr: number[]) {
 
 interface Props {
   onEnter: (pin: string) => void
+  onBack?: () => void
   error?: string | null
 }
 
-export function PinKeypad({ onEnter, error }: Props) {
+export function PinKeypad({ onEnter, onBack, error }: Props) {
   const [pin, setPin] = useState<number[]>([])
   const [nums, setNums] = useState(() => shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]))
 
@@ -36,6 +38,11 @@ export function PinKeypad({ onEnter, error }: Props) {
   return (
     <div className="mobile-container flex flex-col h-screen">
       <div className="flex-1 flex flex-col bg-white">
+        {onBack && (
+          <button onClick={onBack} className="p-4 self-start">
+            <ChevronLeft size={24} className="text-text-primary" />
+          </button>
+        )}
         <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6">
           <div className="text-center">
             <h2 className="text-xl font-bold text-text-primary">신한인증서</h2>
