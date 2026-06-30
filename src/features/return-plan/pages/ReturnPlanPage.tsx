@@ -69,7 +69,7 @@ export function ReturnPlanPage() {
 
             <div className="flex items-center justify-between mt-2">
               <h2 className="text-2xl font-bold text-text-primary">{lastExecuted.sourceCompanyName}</h2>
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/10 text-success text-sm font-medium">
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/10 text-success text-xs font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-success" />
                 분배 완료
               </span>

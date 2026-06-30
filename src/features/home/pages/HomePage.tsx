@@ -372,7 +372,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <div className="h-6" />
+        <div className="h-16" />
       </div>
     </div>
   )

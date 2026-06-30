@@ -66,7 +66,7 @@ function MyHomeTab() {
   }
 
   return (
-    <div className="pb-20">
+    <div className="pb-32">
       {/* 내 투자 요약 */}
       <section className="bg-white px-4 pt-5 pb-5">
         <p className="text-sm font-semibold text-text-tertiary">
@@ -189,7 +189,7 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   return (
-    <div className="pb-20">
+    <div className="pb-32">
       {/* 마켓 인덱스 카드 */}
       {indices.length > 0 && (
         <div className="px-4 py-4 flex gap-3 overflow-x-auto scrollbar-none">
