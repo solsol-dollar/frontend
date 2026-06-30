@@ -15,7 +15,7 @@ export function RankingSection({ productType }: Props) {
   const title = productType === 'ETF' ? '급등 ETF' : '급등주'
 
   return (
-    <section className="bg-white mt-2">
+    <section className="bg-white">
       <div className="px-4 pt-4 pb-2 flex items-center gap-1.5">
         <p className="text-sm font-bold text-text-primary">{title}</p>
         <p className="text-xs text-text-tertiary">상승률 TOP 3</p>

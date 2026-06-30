@@ -33,15 +33,15 @@ export function ReturnPlanPage() {
     .filter((plan) => plan.planStatus !== 'EXECUTED')
     .sort((a, b) => (a.refundDate ?? '').localeCompare(b.refundDate ?? ''))[0]
 
-  const nextPendingDday = nextPending?.refundDate
-    ? (() => {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const target = new Date(nextPending.refundDate as string)
-        const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-        return diff === 0 ? 'D-Day' : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
-      })()
-    : null
+  const nextPendingDday = (() => {
+    const dateStr = nextPending?.depositDate ?? nextPending?.refundDate
+    if (!dateStr) return null
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const target = new Date(dateStr)
+    const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    return diff === 0 ? 'D-Day' : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
+  })()
 
   const lastExecuted = returnPlans
     .filter((plan) => plan.planStatus === 'EXECUTED')

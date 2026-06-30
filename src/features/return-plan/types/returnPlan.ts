@@ -37,6 +37,7 @@ export interface ReturnPlanListItem {
   sourceTicker: string
   sourceCompanyName: string
   refundDate: string | null
+  depositDate: string | null
 }
 
 // RP-007: GET /api/v1/return-plans/summary
