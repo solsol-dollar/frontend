@@ -399,7 +399,7 @@ export function CardHistoryPage() {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    paddingBottom: '8vh',
+    paddingBottom: '14vh',
   }
 
   return (
