@@ -502,11 +502,7 @@ export function SubscribePage() {
         <div className="flex justify-center pt-3 pb-2">
           <div className="w-10 h-1 rounded-full bg-border" />
         </div>
-        <div className="px-5 pt-3 pb-7">
-          <h2 className="text-base font-bold text-text-primary mb-6">
-            청약 신청
-          </h2>
-
+        <div className="px-5 pt-5 pb-7">
           <p className="text-lg font-bold text-text-primary text-center mb-6">
             청약을 신청하시겠습니까?
           </p>
@@ -567,10 +563,7 @@ export function SubscribePage() {
           <PinKeypad
             key={pinKey}
             onEnter={handlePinEnter}
-            onBack={() => {
-              setShowPinScreen(false);
-              setShowConfirmModal(true);
-            }}
+            onBack={() => setShowPinScreen(false)}
             error={pinError}
           />
         </div>
