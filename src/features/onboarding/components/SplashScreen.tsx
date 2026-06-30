@@ -10,9 +10,9 @@ export function SplashScreen() {
 
           <div className="relative w-36 h-36 animate-splash-in">
             <img
-              src="/icons/appLogo_dollar.png"
+              src="/icons/appLogo_dollar.svg"
               alt="SOL SOL 달러"
-              className="w-36 h-36 object-contain mix-blend-multiply"
+              className="w-36 h-36 object-contain"
             />
             <div
               className="absolute inset-0 pointer-events-none animate-shimmer"
