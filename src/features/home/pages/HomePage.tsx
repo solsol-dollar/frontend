@@ -111,7 +111,7 @@ export function HomePage() {
       <Header />
 
       {/* 총 자산 — 고정 */}
-      <section className="bg-white px-4 pt-5 pb-7 flex-shrink-0">
+      <section className="bg-white px-4 pt-2 pb-7 flex-shrink-0">
         <p className="text-[16px] text-text-secondary">총 자산 (USD)</p>
         {assetsLoading ? (
           <div className="mt-2 flex items-center justify-between">
@@ -292,7 +292,7 @@ export function HomePage() {
                   onClick={(e) => { e.stopPropagation(); navigate('/home/card/history') }}
                   className="flex-shrink-0 px-4 py-2 bg-surface-bg rounded-lg text-xs font-medium text-text-secondary transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none"
                 >
-                  내역
+                  분석
                 </button>
               </div>
             </section>

@@ -629,7 +629,7 @@ export function IpoDetailPage() {
             className="fixed inset-0 bg-black/40 z-20"
             onClick={() => setShowScoreInfo(false)}
           />
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-[20px] z-30 px-5 pb-5">
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-[20px] z-30 px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             <div className="flex justify-center pt-3 pb-2">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>

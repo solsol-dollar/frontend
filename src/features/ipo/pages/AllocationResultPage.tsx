@@ -372,7 +372,7 @@ export function AllocationResultPage() {
             </div>
           )}
         </div>
-        <div className="px-5 pb-4 pt-2 shrink-0">
+        <div className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2 shrink-0">
           <button
             onClick={() => {
               setShowEtfSheet(false);

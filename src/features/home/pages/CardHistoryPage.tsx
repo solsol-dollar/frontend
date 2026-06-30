@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import cardHistoryImg from '@/assets/card/card_history.svg'
 import coinImg from '@/assets/card/coin.svg'
 import chalkLineImg from '@/assets/card/line.png'
 import linoImg from '@/assets/card/lino.png'
 import { useCardSummary, type CardSummary } from '../hooks/useCardSummary'
+import { useCardCategoryTransactions } from '../hooks/useCardCategoryTransactions'
+import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 import { Header } from '@/components/common/Header'
+import { ChevronDown } from 'lucide-react'
 
 function useInView(threshold = 0.3) {
   const ref = useRef<HTMLDivElement>(null)
@@ -25,7 +29,7 @@ function useInView(threshold = 0.3) {
 /* ── 오각형 레이더 ── */
 const RADAR_AXES = ['여행', '쇼핑', '구독', '기타', '컨텐츠']
 
-function SpendingRadar({ byCategory }: { byCategory: CardSummary['byCategory'] }) {
+function SpendingRadar({ byCategory, selectedCategory, onSelectCategory }: { byCategory: CardSummary['byCategory'], selectedCategory: string | null, onSelectCategory: (c: string | null) => void }) {
   const { ref, inView } = useInView(0.4)
   const [progress, setProgress] = useState(0)
 
@@ -59,8 +63,10 @@ function SpendingRadar({ byCategory }: { byCategory: CardSummary['byCategory'] }
     Array.from({ length: N }, (_, i) => pt(i, t)).map(p => `${p.x},${p.y}`).join(' ')
 
   return (
-    <div ref={ref}>
-      <svg width="320" height="340" viewBox="0 0 320 340" className="mx-auto">
+    <div ref={ref} className="transition-transform duration-500 ease-out" style={{ transform: selectedCategory ? 'scale(0.75) translateY(-5px)' : 'scale(1) translateY(0)' }}>
+      <svg width="320" height="340" viewBox="0 0 320 340" className="mx-auto" 
+        onClick={() => selectedCategory && onSelectCategory(null)}
+        style={{ cursor: selectedCategory ? 'pointer' : 'default', overflow: 'visible' }}>
         <defs>
           <radialGradient id="radarBg" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="rgba(255,255,255,0.07)" />
@@ -77,7 +83,10 @@ function SpendingRadar({ byCategory }: { byCategory: CardSummary['byCategory'] }
         </defs>
 
         {/* 배경 원 */}
-        <circle cx={cx} cy={cy} r={r * 1.15} fill="url(#radarBg)" />
+        <circle cx={cx} cy={cy} r={r * 1.15} fill="url(#radarBg)" 
+          onClick={() => selectedCategory && onSelectCategory(null)}
+          className={selectedCategory ? "cursor-pointer" : ""}
+        />
 
         {/* 격자 — 파스텔 톤 */}
         {([
@@ -100,6 +109,8 @@ function SpendingRadar({ byCategory }: { byCategory: CardSummary['byCategory'] }
         <polygon
           points={norm.map((v, i) => { const p = pt(i, v); return `${p.x},${p.y}` }).join(' ')}
           fill="url(#dataGrad)" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinejoin="round"
+          onClick={() => selectedCategory && onSelectCategory(null)}
+          className={selectedCategory ? "cursor-pointer" : ""}
         />
 
         {/* 꼭짓점 — 글로우 효과 */}
@@ -119,7 +130,11 @@ function SpendingRadar({ byCategory }: { byCategory: CardSummary['byCategory'] }
           const p = pt(i, 1.35)
           return (
             <text key={i} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle"
-              fontSize="14" fontWeight="700" fill="rgba(255,255,255,0.88)" fontFamily="sans-serif">
+              fontSize={selectedCategory ? "18" : "15"} fontWeight={selectedCategory === label ? "800" : "700"} 
+              fill={selectedCategory && selectedCategory !== label ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.88)"} 
+              fontFamily="sans-serif"
+              cursor="pointer"
+              onClick={(e) => { e.stopPropagation(); onSelectCategory(selectedCategory === label ? null : label); }}>
               {label}
             </text>
           )
@@ -242,7 +257,7 @@ function LinoBubble() {
             alt=""
             className="w-10 h-10 object-contain"
             style={inView
-              ? { animation: 'lino-rise 0.6s 0.8s cubic-bezier(0.175,0.885,0.32,1.15) both' }
+              ? { animation: 'lino-rise 0.6s 0.5s cubic-bezier(0.175,0.885,0.32,1.15) both' }
               : { transform: 'translateY(100%)', opacity: 0 }}
           />
         </div>
@@ -322,7 +337,7 @@ function ProgressBar({ active }: { active: number }) {
     <div className="w-full overflow-hidden" style={{ height: 3, background: 'rgba(0,0,0,0.08)' }}>
       <div
         className="h-full transition-all duration-500"
-        style={{ width: `${((active + 1) / 5) * 100}%`, background: '#2dd4bf' }}
+        style={{ width: `${((active + 1) / 6) * 100}%`, background: '#2dd4bf' }}
       />
     </div>
   )
@@ -334,8 +349,11 @@ export function CardHistoryPage() {
   const [year] = useState(now.getFullYear())
   const [month] = useState(now.getMonth() + 1)
   const [activeSection, setActiveSection] = useState(0)
-
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const { data: homeAssets } = useHomeAssets()
   const { data, isLoading } = useCardSummary(year, month)
+  const { data: categoryTx } = useCardCategoryTransactions(year, month, selectedCategory)
 
   const totalAmount = data?.totalAmount ?? 0
   const savedAmountKrw = data?.fxSavings.savingsKrw ?? 0
@@ -343,6 +361,7 @@ export function CardHistoryPage() {
   const topDate = topSpend ? new Date(topSpend.transactedAt) : null
 
   const sectionRefs = [
+    useRef<HTMLDivElement>(null),
     useRef<HTMLDivElement>(null),
     useRef<HTMLDivElement>(null),
     useRef<HTMLDivElement>(null),
@@ -365,15 +384,21 @@ export function CardHistoryPage() {
 
   const snap: React.CSSProperties = {
     scrollSnapAlign: 'start',
-    minHeight: '100dvh',
+    height: '100%',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
+    paddingBottom: '8vh',
   }
 
   return (
     <div className="mobile-container flex flex-col h-screen" style={{ background: MINT }}>
-      <style>{`@keyframes skPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+      <style>{`
+        @keyframes skPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #1f4a5c; border-radius: 10px; }
+      `}</style>
 
       {/* Header */}
       <div className="flex-shrink-0 bg-white" style={{ zIndex: 50 }}>
@@ -386,7 +411,7 @@ export function CardHistoryPage() {
       <div className="flex-1 overflow-y-scroll" style={{ scrollSnapType: 'y mandatory' }}>
 
         {/* ── 1: Hero ── */}
-        <div ref={sectionRefs[0]} className="bg-white px-6 text-center" style={{ ...snap }}>
+        <div ref={sectionRefs[0]} className="bg-white px-6 text-center relative" style={{ ...snap }}>
           <div>
             <p className="text-base font-medium text-gray-700">체인지업 카드로 결제한</p>
             <p className="flex items-center justify-center gap-2 text-2xl font-extrabold text-gray-900 mt-1.5">
@@ -399,10 +424,14 @@ export function CardHistoryPage() {
               <img src={cardHistoryImg} alt="card history illustration" className="w-72 h-auto" />
             </div>
           </div>
+          <div className="absolute bottom-12 left-0 right-0 flex flex-col items-center animate-bounce opacity-60 pointer-events-none w-full">
+            <span className="text-[15px] font-extrabold text-text-secondary mb-1 tracking-tight whitespace-nowrap">아래로 넘겨보세요</span>
+            <ChevronDown size={32} className="text-text-secondary" />
+          </div>
         </div>
 
         {/* ── 2: 총 지출 + 계산기 ── */}
-        <div ref={sectionRefs[1]} className="px-6" style={{ ...snap, background: NAVY, justifyContent: 'flex-start', paddingTop: 250 }}>
+        <div ref={sectionRefs[1]} className="px-6" style={{ ...snap, background: NAVY }}>
           <div>
             <p className="text-[22px] font-medium leading-relaxed text-white">
               이번 달 체인지업 카드로<br />소비한 금액은 ?
@@ -418,12 +447,42 @@ export function CardHistoryPage() {
 
         {/* ── 3: 레이더 차트 ── */}
         <div ref={sectionRefs[2]} className="px-6" style={{ ...snap, background: NAVY2 }}>
-          <div>
-            <p className="text-[19px] font-medium mb-8" style={{ color: '#ffffffcc' }}>어떤 곳에서 가장 많이 사용했을까?</p>
+          <div className="flex flex-col h-full justify-center">
+            <div className={`transition-all duration-300 ${selectedCategory ? 'mb-0 mt-6' : 'mb-8'}`}>
+              <p className={`font-medium transition-all duration-500 ${selectedCategory ? 'text-[16px]' : 'text-[19px]'}`} style={{ color: '#ffffffcc' }}>어떤 곳에서 가장 많이 사용했을까?</p>
+              <div className={`transition-all duration-300 overflow-hidden ${selectedCategory ? 'max-h-0 opacity-0' : 'max-h-[30px] opacity-100 mt-1.5'}`}>
+                <p className="text-[13px] font-medium" style={{ color: '#ffffff88' }}>카테고리를 클릭하면 사용내역을 보여드려요</p>
+              </div>
+            </div>
             {isLoading
               ? <Sk className="mx-auto" style={{ width: 280, height: 280, borderRadius: '50%' }} />
-              : data?.byCategory && data.byCategory.length > 0 && <SpendingRadar byCategory={data.byCategory} />
+              : data?.byCategory && data.byCategory.length > 0 && <SpendingRadar byCategory={data.byCategory} selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
             }
+            
+            <div className={`transition-all duration-500 ease-out overflow-hidden flex flex-col ${selectedCategory ? 'flex-1 max-h-[65dvh] opacity-100 mb-2 -mt-4' : 'max-h-0 opacity-0 mb-0'}`}>
+              <div className="bg-white/10 rounded-3xl p-5 overflow-y-auto flex-1 shadow-inner backdrop-blur-md custom-scrollbar">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-white font-bold text-[15px]">{selectedCategory}</h3>
+                    <span className="text-white/80 text-[14px] font-semibold">총 ${(data?.byCategory.find(c => c.category === selectedCategory)?.amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <p className="text-white/70 text-[15px] font-medium">{categoryTx?.length ?? 0}건</p>
+                </div>
+                {categoryTx?.map(tx => (
+                  <div key={tx.id} className="flex items-center justify-between py-3.5 border-b border-white/10 last:border-0">
+                    <div>
+                      <p className="text-[17px] font-bold text-white">{tx.merchantName}</p>
+                      <p className="text-[14px] text-white/60 mt-1">{new Date(tx.transactedAt).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                    <p className="text-[19px] font-bold text-white">
+                      {tx.currency === 'USD' ? '$' : ''}{tx.amount.toLocaleString('en-US', { minimumFractionDigits: tx.currency === 'USD' ? 2 : 0 })}
+                      {tx.currency === 'KRW' ? '원' : ''}
+                    </p>
+                  </div>
+                ))}
+                {!categoryTx?.length && <p className="text-center text-white/60 py-8 text-sm">결제 내역이 없습니다.</p>}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -473,6 +532,46 @@ export function CardHistoryPage() {
                 </>
               )
             }
+          </div>
+        </div>
+
+        {/* ── 6: 완료 페이지 ── */}
+        <div ref={sectionRefs[5]} className="px-6 flex flex-col items-center justify-center text-center" style={{ ...snap, background: MINT }}>
+          <div className="w-full">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              이번 달 소비 분석 완료!
+            </h2>
+            <p className="text-gray-600 mb-12 leading-relaxed text-lg">
+              매달 1일 이전 달의<br />소비 리포트를 보내드려요!
+            </p>
+            <div className="flex flex-col gap-3 w-full max-w-[280px] mx-auto mt-6">
+              <button 
+                className="bg-[#1f4a5c] text-white text-[16px] font-semibold py-[16px] px-6 rounded-[18px] shadow-sm active:scale-[0.97] transition-all"
+                onClick={() => {
+                  const depositAccount = homeAssets?.accounts.find(a => a.accountType === 'DEPOSIT')
+                  if (depositAccount) {
+                    navigate('/home/transfer/history', { 
+                      state: {
+                        accountIds: [depositAccount.accountId],
+                        accountName: depositAccount.accountName,
+                        accountNumber: depositAccount.accountNumberMasked,
+                        accountType: depositAccount.accountType,
+                        balance: depositAccount.balance,
+                        initialFilter: '체크카드'
+                      }
+                    })
+                  }
+                }}
+              >
+                카드 사용 내역 보러가기
+              </button>
+              <button 
+                className="bg-white text-[#1f4a5c] text-[16px] font-semibold py-[16px] px-6 rounded-[18px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100 active:scale-[0.97] transition-all"
+                onClick={() => alert('알림이 설정되었습니다.')}
+              >
+                매달 리포트 알림 받기
+              </button>
+            </div>
           </div>
         </div>
 
