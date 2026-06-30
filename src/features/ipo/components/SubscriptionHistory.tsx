@@ -722,9 +722,7 @@ export function SubscriptionHistory() {
                       status={sub.status}
                       statusClassName={STATUS_BADGE[sub.status]}
                       secondaryText={sub.returnRate}
-                      secondaryClassName={
-                        sub.returnPositive ? "text-up" : "text-down"
-                      }
+                      secondaryClassName="text-[#2563EB]"
                       align="start"
                       size="sm"
                     />
