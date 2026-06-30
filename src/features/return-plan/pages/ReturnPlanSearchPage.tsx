@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useReturnPlans } from '../hooks/useReturnPlans'
+import { useIpoList } from '@/features/ipo/hooks/useIpo'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 import type { ReturnPlanListItem } from '../types/returnPlan'
 
@@ -23,6 +24,12 @@ export function ReturnPlanSearchPage() {
 
   const items = q ? searchPlans : defaultPlans
   const loading = q ? isFetching : defaultLoading
+
+  // IPO 청약 일정 목록에서 ticker → logoUrl 매핑 (리턴 플랜 응답엔 로고가 없어 보강)
+  const { data: ipoListRes } = useIpoList()
+  const logoByTicker = new Map(
+    (ipoListRes?.data.ipos ?? []).map((ipo) => [ipo.ticker, ipo.logoUrl]),
+  )
 
   const getPlanPath = (plan: ReturnPlanListItem) =>
     plan.planStatus === 'EXECUTED'
@@ -65,6 +72,7 @@ export function ReturnPlanSearchPage() {
             <ReturnPlanSearchItem
               key={plan.returnPlanId}
               item={plan}
+              logoUrl={logoByTicker.get(plan.sourceTicker) ?? plan.sourceLogoUrl ?? null}
               isFirst={i === 0}
               onClick={() => navigate(getPlanPath(plan))}
             />
@@ -108,10 +116,12 @@ export function ReturnPlanSearchPage() {
 
 function ReturnPlanSearchItem({
   item,
+  logoUrl,
   isFirst,
   onClick,
 }: {
   item: ReturnPlanListItem
+  logoUrl: string | null
   isFirst?: boolean
   onClick: () => void
 }) {
@@ -119,13 +129,13 @@ function ReturnPlanSearchItem({
   const isDone = item.planStatus === 'EXECUTED'
   const date = item.refundDate ? item.refundDate.slice(0, 10).replace(/-/g, '.') : '예정'
   const [logoImgError, setLogoImgError] = useState(false)
-  useEffect(() => { setLogoImgError(false) }, [item.sourceLogoUrl])
+  useEffect(() => { setLogoImgError(false) }, [logoUrl])
 
   return (
     <button onClick={onClick} className={cn('w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl', isFirst && 'bg-surface-bg')}>
-      {item.sourceLogoUrl && !logoImgError ? (
+      {logoUrl && !logoImgError ? (
         <img
-          src={item.sourceLogoUrl}
+          src={logoUrl}
           alt={item.sourceTicker}
           onError={() => setLogoImgError(true)}
           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
