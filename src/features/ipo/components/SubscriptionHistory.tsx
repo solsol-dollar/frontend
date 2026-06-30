@@ -474,7 +474,7 @@ export function SubscriptionHistory() {
 
   const { data: listData, isLoading: isListLoading } = useSubscriptionList();
   const { data: assets } = useHomeAssets();
-  const { data: returnPlans = [] } = useReturnPlans({ size: 100 });
+  const { data: returnPlans = [] } = useReturnPlans();
   const reservedSubscriptionIds = new Set(returnPlans.map((p) => p.subscriptionId));
   const cancelSubscription = useCancelSubscription();
   const revealScratch = useRevealScratch();
