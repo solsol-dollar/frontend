@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -119,6 +119,7 @@ function ReturnPlanSearchItem({
   const isDone = item.planStatus === 'EXECUTED'
   const date = item.refundDate ? item.refundDate.slice(0, 10).replace(/-/g, '.') : '예정'
   const [logoImgError, setLogoImgError] = useState(false)
+  useEffect(() => { setLogoImgError(false) }, [item.sourceLogoUrl])
 
   return (
     <button onClick={onClick} className={cn('w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl', isFirst && 'bg-surface-bg')}>

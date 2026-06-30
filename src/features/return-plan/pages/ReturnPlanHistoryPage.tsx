@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { Header } from '@/components/common/Header'
@@ -9,6 +9,7 @@ import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 
 function LogoAvatar({ logoUrl, ticker, size = 10 }: { logoUrl: string | null; ticker: string; size?: number }) {
   const [error, setError] = useState(false)
+  useEffect(() => { setError(false) }, [logoUrl])
   const color = generateLogoColor(ticker)
   const cls = `w-${size} h-${size} rounded-full flex-shrink-0`
   if (logoUrl && !error) {
