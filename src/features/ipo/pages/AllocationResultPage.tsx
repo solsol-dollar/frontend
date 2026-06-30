@@ -37,11 +37,12 @@ function ExistingPlanView({ plan, refundAmount }: { plan: ReturnPlanResponse; re
     { id: "valueup", name: "신한 Value-up 외화적립예금", nameLines: ["외화적립예금", ""], desc: "연 3.2% · 3개월 이상" },
     { id: "changeup", name: "신한 외화 체인지업 예금", nameLines: ["체인지업 예금", ""], desc: "체크카드로 해외소비 시 간편추가" },
   ];
+  const TRACK_COLORS = ['#C5D1F5', '#DFCDFF', '#C8F2FB'];
 
   return (
     <>
       <section className="bg-white px-4 pb-6">
-        <div className="pt-5">
+        <div className="pt-8">
           <DonutGauge ratios={ratios} amount={refundAmount} message="분배될 예정입니다" />
         </div>
         <div className="flex items-center justify-center gap-4 mt-4">
@@ -56,13 +57,13 @@ function ExistingPlanView({ plan, refundAmount }: { plan: ReturnPlanResponse; re
         </div>
       </section>
 
-      <section className="px-4 py-5 bg-white space-y-3">
+      <section className="px-4 pt-5 pb-10 bg-surface-bg space-y-3">
         {ACCOUNTS.map((acc, i) => {
           const color = ACCOUNT_COLORS[acc.id]
           const ratio = ratios[i]
           const amount = ((refundAmount * ratio) / 100).toFixed(2)
           return (
-            <div key={acc.id} className="rounded-2xl px-4 py-3 bg-surface-bg">
+            <div key={acc.id} className="rounded-2xl px-4 py-3 bg-white">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
@@ -78,7 +79,7 @@ function ExistingPlanView({ plan, refundAmount }: { plan: ReturnPlanResponse; re
                   <p className="text-xs text-text-tertiary">${amount}</p>
                 </div>
               </div>
-              <div className="h-1 rounded-full" style={{ backgroundColor: `${color}33` }}>
+              <div className="h-1 rounded-full" style={{ backgroundColor: `${TRACK_COLORS[i]}4D` }}>
                 <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${ratio}%`, backgroundColor: color }} />
               </div>
             </div>
@@ -387,10 +388,7 @@ export function AllocationResultPage() {
         </div>
         <div className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-2 shrink-0">
           <button
-            onClick={() => {
-              setShowEtfSheet(false);
-              navigate("/ipo", { state: { tab: "청약내역/취소" } });
-            }}
+            onClick={() => setShowEtfSheet(false)}
             className="w-full bg-primary text-white py-4 rounded-xl font-semibold"
           >
             완료
