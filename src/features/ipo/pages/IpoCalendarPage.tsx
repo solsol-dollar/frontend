@@ -732,7 +732,8 @@ export function IpoCalendarPage() {
         let topPos: number | null = null
         dateSectionRefs.current.forEach((el, dateStr) => {
           const rect = el.getBoundingClientRect()
-          const effectiveBottom = rect.bottom - 80
+          const hasIpos = filteredIpos.some((ipo) => ipo.subscription_start === dateStr)
+          const effectiveBottom = hasIpos ? rect.bottom - 80 : rect.bottom
           if (effectiveBottom > HEADER_OFFSET && rect.top < window.innerHeight) {
             if (topPos === null || effectiveBottom < topPos) {
               topPos = effectiveBottom

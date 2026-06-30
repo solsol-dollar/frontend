@@ -722,9 +722,7 @@ export function SubscriptionHistory() {
                       status={sub.status}
                       statusClassName={STATUS_BADGE[sub.status]}
                       secondaryText={sub.returnRate}
-                      secondaryClassName={
-                        sub.returnPositive ? "text-up" : "text-down"
-                      }
+                      secondaryClassName="text-[#2563EB]"
                       align="start"
                       size="sm"
                     />
@@ -848,7 +846,7 @@ export function SubscriptionHistory() {
         </div>
 
         {filtered.length > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-text-tertiary px-1 mt-3">
+          <div className="flex items-center gap-1.5 text-xs text-text-tertiary px-1 mt-3 mb-6">
             <Info size={13} />
             <span>청약 취소는 청약 기간 중에만 가능합니다.</span>
           </div>
