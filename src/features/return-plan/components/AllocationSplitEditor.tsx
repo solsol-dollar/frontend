@@ -1,6 +1,6 @@
 import { useCallback, useRef, type ReactNode } from "react";
 import layCharacter from "@/assets/common/lay.png";
-import { ZONE_COLORS } from "../constants";
+import { ZONE_COLORS, ACCOUNT_COLORS } from "../constants";
 
 const formatDollar = (n: number) =>
   `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -237,7 +237,7 @@ function SliderArea({ accounts, ratios, onRatiosChange }: SliderAreaProps) {
     return (
       <>
         <p className="text-xs font-medium text-text-tertiary mb-2">추천 플랜</p>
-        <div className="flex px-1 py-1.5 rounded-full mb-3" style={{ backgroundColor: '#F4F5F8' }}>
+        <div className="flex px-1 py-1.5 rounded-xl mb-3" style={{ backgroundColor: '#F4F5F8' }}>
           {presets.map((preset) => (
             <button
               key={preset.presetName}
@@ -247,7 +247,7 @@ function SliderArea({ accounts, ratios, onRatiosChange }: SliderAreaProps) {
               }}
               className={
                 selectedPreset === preset.presetName
-                  ? 'flex-1 text-center text-sm font-bold text-text-primary py-2 rounded-full bg-white shadow-sm'
+                  ? 'flex-1 text-center text-sm font-bold text-text-primary py-2 rounded-lg bg-white shadow-sm'
                   : 'flex-1 text-center text-sm font-medium text-text-secondary py-2'
               }
             >
@@ -286,7 +286,7 @@ function SliderArea({ accounts, ratios, onRatiosChange }: SliderAreaProps) {
   return (
     <>
       <p className="text-xs font-medium text-text-tertiary mb-2">추천 플랜</p>
-      <div className="flex px-1 py-1.5 rounded-full mb-3" style={{ backgroundColor: '#F4F5F8' }}>
+      <div className="flex px-1 py-1.5 rounded-xl mb-3" style={{ backgroundColor: '#F4F5F8' }}>
         {presets.map((preset) => (
           <button
             key={preset.presetName}
@@ -296,7 +296,7 @@ function SliderArea({ accounts, ratios, onRatiosChange }: SliderAreaProps) {
             }}
             className={
               selectedPreset === preset.presetName
-                ? 'flex-1 text-center text-sm font-bold text-text-primary py-2 rounded-full bg-white shadow-sm'
+                ? 'flex-1 text-center text-sm font-bold text-text-primary py-2 rounded-lg bg-white shadow-sm'
                 : 'flex-1 text-center text-sm font-medium text-text-secondary py-2'
             }
           >
@@ -350,11 +350,12 @@ function AllocationAccountList({
       {accounts.map((acc, i) => {
         const ratio = Math.round(ratios[i] ?? 0);
         const amount = formatDollar((totalAmount * ratio) / 100);
+        const color = ACCOUNT_COLORS[acc.id] ?? ZONE_COLORS[i];
         return (
           <div key={acc.id} className="rounded-[16px] px-5 py-4" style={{ backgroundColor: '#F4F5F8' }}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[i] }} />
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-text-primary">{acc.name}</p>
@@ -368,14 +369,14 @@ function AllocationAccountList({
                 </div>
               </div>
               <div className="text-right flex-shrink-0 ml-3">
-                <p className="text-sm font-bold" style={{ color: ZONE_COLORS[i] }}>
+                <p className="text-sm font-bold" style={{ color }}>
                   <span className="text-lg">{ratio}</span> %
                 </p>
                 <p className="text-xs text-text-tertiary">{amount}</p>
               </div>
             </div>
-            <div className="h-1 rounded-full" style={{ backgroundColor: `${ZONE_COLORS[i]}33` }}>
-              <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${ratio}%`, backgroundColor: ZONE_COLORS[i] }} />
+            <div className="h-1 rounded-full" style={{ backgroundColor: `${color}33` }}>
+              <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${ratio}%`, backgroundColor: color }} />
             </div>
           </div>
         );

@@ -4,6 +4,7 @@ import { Header } from '@/components/common/Header'
 import { useCountUp } from '../hooks/useCountUp'
 import { useReturnPlans } from '../hooks/useReturnPlans'
 import { useReturnPlanDetail } from '../hooks/useReturnPlanDetail'
+import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 
 const formatUsd = (n: number) =>
   `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -12,7 +13,6 @@ export function ReturnPlanPage() {
   const navigate = useNavigate()
   const { data: returnPlans = [] } = useReturnPlans()
 
-  const SUMMARY_LABELS = ['CMA 계좌', '외화적립예금', '체인지업 예금']
 
   const history = [...returnPlans]
     .sort((a, b) => {
@@ -48,6 +48,16 @@ export function ReturnPlanPage() {
     .sort((a, b) => (b.refundDate ?? '').localeCompare(a.refundDate ?? ''))[0]
 
   const { data: lastExecutedDetail, isLoading: isDetailLoading } = useReturnPlanDetail(lastExecuted?.returnPlanId ?? NaN)
+  const { data: homeAssets } = useHomeAssets()
+
+  const hasSavings = homeAssets?.accounts?.some((a) => a.accountType === 'SAVINGS') ?? false
+  const hasDeposit = homeAssets?.accounts?.some((a) => a.accountType === 'DEPOSIT') ?? false
+
+  const SUMMARY_ACCOUNTS = [
+    { label: 'CMA 계좌', connected: true, navigateTo: null },
+    { label: '외화적립예금', connected: hasSavings, navigateTo: '/mypage/product/valueup' },
+    { label: '체인지업 예금', connected: hasDeposit, navigateTo: '/mypage/product/changeup' },
+  ]
 
   const securitiesAmount = lastExecutedDetail?.allocations.find((a) => a.destinationType === 'SECURITIES')?.amount ?? 0
   const savingsAmount = lastExecutedDetail?.allocations.find((a) => a.destinationType === 'SAVINGS')?.amount ?? 0
@@ -76,12 +86,26 @@ export function ReturnPlanPage() {
             </div>
 
             <div className="flex items-center gap-2 mt-4">
-              {SUMMARY_LABELS.map((label, i) => (
-                <div key={label} className="flex-1 bg-surface-bg rounded-2xl py-6 px-3 text-left">
-                  <p className="text-sm text-text-tertiary">{label}</p>
+              {SUMMARY_ACCOUNTS.map((acc, i) => (
+                <div
+                  key={acc.label}
+                  className="flex-1 bg-surface-bg rounded-2xl py-6 px-3 text-left"
+                  onClick={() => !acc.connected && acc.navigateTo && navigate(acc.navigateTo)}
+                  style={{ cursor: !acc.connected ? 'pointer' : 'default' }}
+                >
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <p className="text-sm text-text-tertiary">{acc.label}</p>
+                    {!acc.connected && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
+                        미연동
+                      </span>
+                    )}
+                  </div>
                   {isDetailLoading
                     ? <div className="h-4 w-14 mt-1 rounded-md bg-gray-200 animate-pulse" />
-                    : <p className="text-sm font-bold text-text-primary mt-1">{formatUsd(amounts[i])}</p>
+                    : <p className="text-sm font-bold text-text-primary mt-1">
+                        {acc.connected ? formatUsd(amounts[i]) : '-'}
+                      </p>
                   }
                 </div>
               ))}
