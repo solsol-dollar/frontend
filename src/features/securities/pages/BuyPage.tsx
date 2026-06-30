@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { useStockDetail } from '../hooks/useStockDetail'
 import { usePlaceOrder } from '../hooks/usePlaceOrder'
 import { useMyInvestments } from '../hooks/useMyInvestments'
+import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 import type { TradeOrderResponse } from '../types/securities'
 import { useMarketStatus } from '../utils/marketHours'
 
@@ -16,6 +17,7 @@ export function BuyPage() {
   const { data: stock } = useStockDetail(id)
   const { mutate: placeOrder, isPending } = usePlaceOrder()
   const { data: holdings } = useMyInvestments()
+  const { data: assets } = useHomeAssets()
 
   const availableCash = holdings?.cashUsd ?? 0
   const maxBuyQty = stock?.currentPriceUsd && stock.currentPriceUsd > 0
@@ -40,7 +42,7 @@ export function BuyPage() {
     placeOrder(
       {
         productId: stock.productId,
-        accountId: 1, // MVP: 고정값, 실서비스에서 사용자 계좌 ID로 교체
+        accountId: assets?.securities.usdAccountId ?? 1,
         orderSide: 'BUY',
         quantity: qtyNum,
         requestedPrice: stock.currentPriceUsd,

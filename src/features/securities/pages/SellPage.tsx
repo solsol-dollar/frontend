@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { useStockDetail } from '../hooks/useStockDetail'
 import { useMyInvestments } from '../hooks/useMyInvestments'
 import { usePlaceOrder } from '../hooks/usePlaceOrder'
+import { useHomeAssets } from '@/features/home/hooks/useHomeAssets'
 import type { TradeOrderResponse, HoldingItem } from '../types/securities'
 import { useMarketStatus } from '../utils/marketHours'
 
@@ -16,6 +17,7 @@ export function SellPage() {
   const { data: stock } = useStockDetail(id)
   const { data: holdings } = useMyInvestments()
   const { mutate: placeOrder, isPending } = usePlaceOrder()
+  const { data: assets } = useHomeAssets()
 
   const holdingItems: HoldingItem[] = holdings?.holdings ?? []
   const holding = holdingItems.find((h) => h.productId === Number(id))
@@ -39,7 +41,7 @@ export function SellPage() {
     placeOrder(
       {
         productId: stock.productId,
-        accountId: 1, // MVP: 고정값, 실서비스에서 사용자 계좌 ID로 교체
+        accountId: assets?.securities.usdAccountId ?? 1,
         orderSide: 'SELL',
         quantity: qtyNum,
         requestedPrice: stock.currentPriceUsd,
