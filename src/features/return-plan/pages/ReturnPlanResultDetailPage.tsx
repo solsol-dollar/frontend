@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { Header } from '@/components/common/Header'
 import { DonutGauge } from '../components/DonutGauge'
@@ -5,6 +6,7 @@ import { ZONE_COLORS } from '../constants'
 import { useReturnPlanDetail } from '../hooks/useReturnPlanDetail'
 import { allocationItemsToSplits } from '../utils/allocationMapper'
 import { AllocationSplitAccountList, type AllocationAccount } from '../components/AllocationSplitEditor'
+import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 
 const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
   { id: 'cma', name: '신한투자증권 CMA 계좌', nameLines: ['신한투자증권', 'CMA 계좌'], desc: '다음 IPO 대기금 · ETF 투자' },
@@ -18,6 +20,10 @@ export function ReturnPlanResultDetailPage() {
   const { id } = useParams()
   const returnPlanId = Number(id)
   const { data: plan } = useReturnPlanDetail(returnPlanId)
+  const logoUrl = plan?.sourceLogoUrl ?? null
+  const logoColor = generateLogoColor(plan?.sourceTicker ?? '')
+  const [logoImgError, setLogoImgError] = useState(false)
+  useEffect(() => { setLogoImgError(false) }, [logoUrl])
 
   const refundAmount = plan?.totalRefundAmount ?? 0
   const [a, b] = plan ? allocationItemsToSplits(plan.allocations) : [0, 0]
@@ -29,7 +35,21 @@ export function ReturnPlanResultDetailPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 pt-4 pb-6 bg-white">
           <div className="bg-white rounded-2xl p-4 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-primary-300 flex-shrink-0" />
+            {logoUrl && !logoImgError ? (
+              <img
+                src={logoUrl}
+                alt={plan?.sourceCompanyName ?? ''}
+                onError={() => setLogoImgError(true)}
+                className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                style={{ backgroundColor: logoColor }}
+              >
+                {(plan?.sourceTicker ?? '').slice(0, 2)}
+              </div>
+            )}
             <div>
               <p className="text-base font-bold text-text-primary">{plan?.sourceCompanyName ?? '불러오는 중...'}</p>
               <p className="text-sm text-text-tertiary">
