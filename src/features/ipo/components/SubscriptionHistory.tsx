@@ -721,20 +721,13 @@ export function SubscriptionHistory() {
                       ticker={sub.ticker}
                       status={sub.status}
                       statusClassName={STATUS_BADGE[sub.status]}
-                      secondaryText={sub.status !== "입고완료" ? sub.returnRate : undefined}
+                      secondaryText={sub.returnRate}
                       secondaryClassName={
                         sub.returnPositive ? "text-up" : "text-down"
                       }
                       align="start"
                       size="sm"
                     />
-                    {sub.status === "입고완료" && sub.returnRate && (
-                      <div className="flex justify-end mt-1">
-                        <span className={`text-sm font-bold ${sub.returnPositive ? "text-up" : "text-down"}`}>
-                          {sub.returnRate}
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   <div className="space-y-2 pl-[52px]">
