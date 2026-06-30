@@ -136,7 +136,7 @@ export function StockDetailPage() {
                             {ask && (
                               <>
                                 <div
-                                  className="absolute top-0 right-0 h-full bg-down/15"
+                                  className="absolute top-0 right-0 h-full bg-down/15 rounded-l-md"
                                   style={{ width: `${(ask.qty / maxQty) * 100}%` }}
                                 />
                                 <div className="relative px-2 py-1.5 text-right">
@@ -153,7 +153,7 @@ export function StockDetailPage() {
                             {bid && (
                               <>
                                 <div
-                                  className="absolute top-0 left-0 h-full bg-up/15"
+                                  className="absolute top-0 left-0 h-full bg-up/15 rounded-r-md"
                                   style={{ width: `${(bid.qty / maxQty) * 100}%` }}
                                 />
                                 <div className="relative px-2 py-1.5">
