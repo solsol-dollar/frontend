@@ -41,7 +41,7 @@ export function TransferCompletePage() {
           <p className="text-[20px] font-semibold text-text-primary leading-snug">$ {amount}를 옮겼어요</p>
         </div>
       </div>
-      <div className="px-4 pb-10">
+      <div className="px-4 pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
         <button
           onClick={() => {
             qc.invalidateQueries({ queryKey: ['home', 'assets'] })

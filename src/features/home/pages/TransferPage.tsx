@@ -222,7 +222,7 @@ export function TransferPage() {
                 </button>
               ))}
             </div>
-            <div className="pb-8" />
+            <div className="pb-[calc(2rem+env(safe-area-inset-bottom))]" />
           </div>
         </>
       )}

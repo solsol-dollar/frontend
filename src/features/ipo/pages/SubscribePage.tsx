@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Wallet, ArrowRightLeft } from "lucide-react";
 import dayjs from "dayjs";
 import { Header } from "@/components/common/Header";
 import { IpoStockHeader } from "@/features/ipo/components/IpoStockHeader";
@@ -368,9 +368,9 @@ export function SubscribePage() {
               <span />
               <button
                 onClick={() => setAmount(String(maxSubscribable))}
-                className="text-xs text-text-secondary px-2 py-0.5 bg-surface rounded"
+                className="text-xs font-bold text-primary px-3 py-1.5 bg-[#EBF1FF] rounded-[8px] active:scale-[0.97] transition-transform"
               >
-                최대
+                전액 적용
               </button>
             </div>
             {amount && !isValidAmount && (
@@ -417,14 +417,17 @@ export function SubscribePage() {
                 });
               }}
               disabled={!depositAccount}
-              className="p-3 border border-border rounded-xl text-left transition-colors duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none disabled:opacity-40"
+              className="flex flex-col p-4 bg-[#F5F6F8] rounded-[16px] text-left transition-all duration-200 active:scale-[0.97] active:bg-[#EAECEF] disabled:opacity-50 h-full"
             >
-              <p className="text-xs font-semibold text-text-primary">
-                외화통장에서 끌어오기
+              <p className="text-[14px] font-bold text-text-primary mb-4 tracking-tight">
+                외화예금에서 끌어오기
               </p>
-              <p className="text-sm font-bold text-text-primary mt-1">
-                잔액 ${ipo.foreignBalance.toLocaleString("en-US")}
-              </p>
+              <div className="mt-auto">
+                <p className="text-[11px] font-medium text-text-tertiary mb-0.5">보유 잔액</p>
+                <p className="text-[16px] font-extrabold text-primary tracking-tight">
+                  ${ipo.foreignBalance.toLocaleString("en-US")}
+                </p>
+              </div>
             </button>
             <button
               onClick={() => {
@@ -437,21 +440,24 @@ export function SubscribePage() {
                   },
                 });
               }}
-              className="p-3 border border-border rounded-xl text-left transition-colors duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none"
+              className="flex flex-col p-4 bg-[#F5F6F8] rounded-[16px] text-left transition-all duration-200 active:scale-[0.97] active:bg-[#EAECEF] h-full"
             >
-              <p className="text-xs font-semibold text-text-primary">
-                환전하기 <span className="text-[11px] text-text-tertiary font-normal">1달러 = {ipo.exchangeRate.toLocaleString("ko-KR")}원</span>
+              <p className="text-[14px] font-bold text-text-primary mb-4 tracking-tight">
+                원화로 환전하기
               </p>
-              <p className="text-sm font-bold text-text-primary mt-1">
-                {ipo.exchangeableKrw.toLocaleString("ko-KR")}원 → ${ipo.exchangeableUsd.toFixed(2)}
-              </p>
+              <div className="mt-auto">
+                <p className="text-[11px] font-medium text-text-tertiary mb-0.5">보유 잔액</p>
+                <p className="text-[14px] font-extrabold text-primary tracking-tight leading-tight">
+                  {ipo.exchangeableKrw.toLocaleString("ko-KR")}<span className="text-text-primary font-bold text-[12px] ml-0.5">원</span>
+                  <span className="text-[11px] font-semibold text-text-tertiary block mt-0.5">→ ${ipo.exchangeableUsd.toFixed(2)}</span>
+                </p>
+              </div>
             </button>
           </div>
         </section>
       </div>
 
-      {/* 하단 고정 버튼 */}
-      <div className="px-5 py-4 flex gap-3 bg-white border-t border-border">
+      <div className="px-5 pt-4 pb-[calc(2rem+env(safe-area-inset-bottom))] flex gap-3 bg-white border-t border-border">
         <button
           onClick={() => navigate(-1)}
           className="flex-1 py-4 bg-surface rounded-2xl font-semibold text-text-secondary"
