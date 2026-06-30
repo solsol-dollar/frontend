@@ -9,7 +9,7 @@ export function useCardCategoryTransactions(year: number, month: number, categor
       if (category) {
         params.category = category
       }
-      const res = (await serviceApi.get('/api/v1/card/transactions/categories', {
+      const res = (await serviceApi.get('/api/service/api/v1/card/transactions/categories', {
         params,
       })) as any
       console.log('API response:', res.data)
