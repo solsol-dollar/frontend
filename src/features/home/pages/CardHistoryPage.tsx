@@ -346,9 +346,8 @@ function ProgressBar({ active }: { active: number }) {
 
 /* ── 페이지 ── */
 export function CardHistoryPage() {
-  const now = new Date()
-  const [year] = useState(now.getFullYear())
-  const [month] = useState(now.getMonth() + 1)
+  const [year] = useState(2026)
+  const [month] = useState(6)
   const [activeSection, setActiveSection] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -399,7 +398,7 @@ export function CardHistoryPage() {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    paddingBottom: '8vh',
+    paddingBottom: '14vh',
   }
 
   return (
