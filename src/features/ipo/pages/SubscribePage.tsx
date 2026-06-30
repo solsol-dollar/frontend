@@ -199,7 +199,7 @@ export function SubscribePage() {
 
   const numericAmount = Number(amount || 0);
   const maxSubscribable = Math.floor(ipo.availableAmount / 1.01);
-  const maxShares = Math.floor(maxSubscribable / pricePerShareForEstimate);
+  const maxShares = pricePerShareForEstimate > 0 ? Math.floor(maxSubscribable / pricePerShareForEstimate) : 0;
   const isValidAmount =
     numericAmount >= 100 &&
     Number.isInteger(numericAmount) &&
