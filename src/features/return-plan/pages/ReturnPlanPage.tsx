@@ -115,19 +115,19 @@ export function ReturnPlanPage() {
                   onClick={() => !acc.connected && acc.navigateTo && navigate(acc.navigateTo)}
                   style={{ cursor: !acc.connected ? 'pointer' : 'default' }}
                 >
-                  <div className="flex items-center gap-1 flex-wrap">
-                    <p className="text-sm text-text-tertiary">{acc.label}</p>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <p className="text-sm text-text-tertiary truncate">{acc.label}</p>
                     {!acc.connected && (
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
                         미연동
                       </span>
                     )}
                   </div>
                   {isDetailLoading
                     ? <div className="h-4 w-14 mt-1 rounded-md bg-gray-200 animate-pulse" />
-                    : <p className="text-sm font-bold text-text-primary mt-1">
-                        {acc.connected ? formatUsd(amounts[i]) : '-'}
-                      </p>
+                    : acc.connected
+                      ? <p className="text-sm font-bold text-text-primary mt-1">{formatUsd(amounts[i])}</p>
+                      : <p className="text-sm font-semibold text-primary mt-1">개설하기 &gt;</p>
                   }
                 </div>
               ))}
@@ -218,7 +218,7 @@ export function ReturnPlanPage() {
             ))
           )}
           </div>
-          <div className="h-[79px]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} />
+          <div className="h-[120px]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} />
         </div>
       </div>
     </div>

@@ -7,7 +7,9 @@ import { ZONE_COLORS } from "../constants";
 import {
   ReturnPlanAllocationSection,
   type AllocationAccount,
+  type LockedAccount,
 } from "../components/AllocationSplitEditor";
+import type { DestinationType } from "../types/returnPlan";
 import { useReturnPlanDetail } from "../hooks/useReturnPlanDetail";
 import { useUpdateReturnPlanRatios } from "../hooks/useUpdateReturnPlanRatios";
 import {
@@ -79,6 +81,22 @@ export function ReturnPlanPendingPage() {
     ? dayjs().isAfter(dayjs(plan.refundDate).hour(20).minute(0).second(0))
     : false;
 
+  const ALL_TYPES: DestinationType[] = ['SECURITIES', 'SAVINGS', 'DEPOSIT']
+  const ACCOUNT_NAVIGATE = ['', '/mypage/product/valueup', '/mypage/product/changeup']
+  const activeAccounts: AllocationAccount[] = ACCOUNTS.filter((_, i) => connected[i])
+  const activeTypes: DestinationType[] = ALL_TYPES.filter((_, i) => connected[i])
+  const lockedEditAccounts: LockedAccount[] = ACCOUNTS
+    .map((acc, i) => ({ acc, i }))
+    .filter(({ i }) => !connected[i])
+    .map(({ acc, i }) => ({
+      id: `${acc.id}-locked`,
+      name: acc.name,
+      desc: acc.desc,
+      navigateTo: ACCOUNT_NAVIGATE[i],
+      returnTo: `/return-plan/pending/${returnPlanId}`,
+    }))
+  const editRatios = activeAccounts.map((acc) => ratios[ACCOUNTS.findIndex((a) => a.id === acc.id)])
+
   const handleToggleEdit = async () => {
     if (!isEditing) {
       if (plan) setSplits(allocationItemsToSplits(plan.allocations));
@@ -86,10 +104,10 @@ export function ReturnPlanPendingPage() {
       return;
     }
     try {
-      await updateRatios.mutateAsync({ returnPlanId, allocations: ratiosToAllocationItems(['SECURITIES', 'SAVINGS', 'DEPOSIT'], ratios) });
+      const currentEditRatios = activeTypes.map((t) => ratios[ALL_TYPES.indexOf(t)])
+      await updateRatios.mutateAsync({ returnPlanId, allocations: ratiosToAllocationItems(activeTypes, currentEditRatios) });
       setIsEditing(false);
     } catch (e) {
-      // TODO: 에러 토스트 처리
       console.error("리턴 플랜 비율 수정 실패", e);
       alert("비율 수정에 실패했어요. 잠시 후 다시 시도해주세요.");
     }
@@ -231,11 +249,16 @@ export function ReturnPlanPendingPage() {
         {isEditing && (
           <ReturnPlanAllocationSection
             description="설정하신 리턴플랜을 수정하실 수 있어요!"
-            accounts={ACCOUNTS}
+            accounts={activeAccounts}
             totalAmount={refundAmount}
-            lockedAccounts={[]}
-            ratios={[...ratios]}
-            onRatiosChange={(r) => setSplits([r[0] ?? 0, (r[0] ?? 0) + (r[1] ?? 0)])}
+            lockedAccounts={lockedEditAccounts}
+            ratios={editRatios}
+            onRatiosChange={(r) => {
+              const items = ratiosToAllocationItems(activeTypes, r)
+              const securities = items.find((i) => i.destinationType === 'SECURITIES')?.ratio ?? 0
+              const savings = items.find((i) => i.destinationType === 'SAVINGS')?.ratio ?? 0
+              setSplits([securities, securities + savings])
+            }}
             bankIconSrc={solBankIcon}
           />
         )}
