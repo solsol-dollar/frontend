@@ -33,7 +33,7 @@ export function StockListItem({ item, sort, onClick }: Props) {
   const sparkData = item.sparkPrices
   return (
     <button onClick={onClick} className="w-full flex items-center gap-2.5 py-3 text-left">
-      <span className="text-sm text-text-tertiary w-4 flex-shrink-0 text-center">{item.rank}</span>
+      <span className="text-sm font-medium text-text-tertiary w-4 flex-shrink-0 text-center">{item.rank}</span>
       <TickerLogo ticker={item.ticker} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-primary truncate">{item.productName}</p>

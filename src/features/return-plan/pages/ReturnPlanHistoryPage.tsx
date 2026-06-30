@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { Header } from '@/components/common/Header'
@@ -11,7 +11,15 @@ const formatUsd = (n: number) => `$${n.toLocaleString('en-US', { minimumFraction
 export function ReturnPlanHistoryPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<'DONE' | 'UPCOMING'>('DONE')
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 })
   const [pickerOpen, setPickerOpen] = useState(false)
+
+  useLayoutEffect(() => {
+    const idx = tab === 'DONE' ? 0 : 1
+    const el = tabRefs.current[idx]
+    if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth })
+  }, [tab])
   const [year, setYear] = useState(new Date().getFullYear())
   const [month, setMonth] = useState(new Date().getMonth() + 1)
 
@@ -76,28 +84,27 @@ export function ReturnPlanHistoryPage() {
           </div>
         </div>
 
-        <div className="h-2 bg-surface-bg" />
+        <div className="h-[13px] bg-surface-bg" />
 
         <div className="px-4 pt-3 pb-2 flex justify-end">
-          <div className="flex bg-surface-bg rounded-full p-1">
-            <button
-              onClick={() => setTab('DONE')}
-              className={cn(
-                'px-4 py-1.5 rounded-full text-sm font-medium',
-                tab === 'DONE' ? 'bg-white text-text-primary shadow-sm' : 'text-text-tertiary',
-              )}
-            >
-              완료
-            </button>
-            <button
-              onClick={() => setTab('UPCOMING')}
-              className={cn(
-                'px-4 py-1.5 rounded-full text-sm font-medium',
-                tab === 'UPCOMING' ? 'bg-white text-text-primary shadow-sm' : 'text-text-tertiary',
-              )}
-            >
-              예정
-            </button>
+          <div className="relative flex bg-surface-bg rounded-lg p-0.5">
+            <div
+              className="absolute top-0.5 bottom-0.5 rounded-md bg-white transition-all duration-200 ease-in-out"
+              style={{ left: indicator.left, width: indicator.width }}
+            />
+            {(['DONE', 'UPCOMING'] as const).map((t, i) => (
+              <button
+                key={t}
+                ref={el => { tabRefs.current[i] = el }}
+                onClick={() => setTab(t)}
+                className={cn(
+                  'relative z-10 px-3 py-0.5 rounded-md text-[12px] transition-colors duration-200',
+                  tab === t ? 'text-black font-semibold' : 'text-[#999EA4] font-medium',
+                )}
+              >
+                {t === 'DONE' ? '완료' : '예정'}
+              </button>
+            ))}
           </div>
         </div>
 

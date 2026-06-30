@@ -67,7 +67,7 @@ function MyHomeTab() {
     <div className="pb-20">
       {/* 내 투자 요약 */}
       <section className="bg-white px-4 pt-5 pb-5">
-        <p className="text-sm text-text-tertiary">
+        <p className="text-sm font-semibold text-text-tertiary">
           {data?.hasPriceData ? '내 투자' : '투자 원금'}
         </p>
         <p className="text-2xl font-bold text-text-primary mt-1">
@@ -96,7 +96,7 @@ function MyHomeTab() {
       {isLoading ? (
         <div className="bg-white mt-2 px-4"><SkeletonList count={3} /></div>
       ) : stocks.length > 0 ? (
-        <section className="bg-white mt-2 px-4 py-4">
+        <section className="bg-white mt-[13px] px-4 py-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-text-tertiary font-medium">해외주식</p>
             <div className="flex gap-1">
@@ -119,7 +119,7 @@ function MyHomeTab() {
           </div>
         </section>
       ) : (
-        <section className="bg-white mt-2 px-4 py-10 flex flex-col items-center gap-1.5">
+        <section className="bg-white mt-[13px] px-4 py-10 flex flex-col items-center gap-1.5">
           <p className="text-sm font-medium text-text-secondary">보유 해외주식이 없습니다</p>
           <p className="text-xs text-text-tertiary">해외 탭에서 종목을 찾아보세요</p>
         </section>
@@ -127,7 +127,7 @@ function MyHomeTab() {
 
       {/* ETF 섹션 */}
       {etfs.length > 0 && (
-        <section className="bg-white mt-2 px-4 py-4">
+        <section className="bg-white mt-[13px] px-4 py-4">
           <p className="text-xs text-text-tertiary font-medium mb-2">ETF</p>
           <div className="divide-y divide-border">
             {etfs.map((h) => <HoldingRow key={h.productId} h={h} />)}
@@ -136,7 +136,7 @@ function MyHomeTab() {
       )}
 
       {/* 주문 내역 / 판매 수익 링크 */}
-      <section className="bg-white mt-2">
+      <section className="bg-white mt-[13px]">
         {[
           { label: '주문 내역', path: '/securities/orders' },
           { label: '판매 수익', path: '/securities/profits' },
@@ -201,7 +201,7 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
       <RankingSection productType={type} />
 
       {/* 전체 종목 리스트 */}
-      <section className="bg-white mt-2">
+      <section className="bg-white mt-[13px]">
         <div className="px-4 pt-4 pb-2 flex items-center gap-2">
           <p className="text-sm font-bold text-text-primary">전체 종목</p>
           <MarketStatusBadge />

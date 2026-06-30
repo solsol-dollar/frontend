@@ -62,6 +62,12 @@ const config: Config = {
         'char-in': 'char-in 0.15s ease-out',
         'char-out': 'char-out 0.12s ease-in forwards',
         'value-in': 'value-in 0.2s ease-out',
+        'splash-in': 'splash-in 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+        'splash-float': 'splash-float 3.2s ease-in-out infinite',
+        'splash-text': 'splash-text 0.5s ease-out 0.5s both',
+        'dot-bounce': 'dot-bounce 1.4s ease-in-out infinite',
+        shimmer: 'shimmer 0.75s ease-in-out 0.8s 1 normal both',
+        'glow-pulse': 'glow-pulse 2.8s ease-in-out 0.6s infinite',
       },
       keyframes: {
         blink: {
@@ -79,6 +85,31 @@ const config: Config = {
         'value-in': {
           '0%': { opacity: '0', transform: 'translateY(5px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'splash-in': {
+          '0%': { opacity: '0', transform: 'scale(0.4)' },
+          '70%': { opacity: '1', transform: 'scale(1.08)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'splash-float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        'splash-text': {
+          '0%': { opacity: '0', transform: 'translateY(14px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'dot-bounce': {
+          '0%, 60%, 100%': { transform: 'translateY(0)', opacity: '0.35' },
+          '30%': { transform: 'translateY(-9px)', opacity: '1' },
+        },
+        shimmer: {
+          '0%': { transform: 'translateX(-150%)' },
+          '100%': { transform: 'translateX(250%)' },
+        },
+        'glow-pulse': {
+          '0%, 100%': { opacity: '0.15', transform: 'scale(1)' },
+          '50%': { opacity: '0.35', transform: 'scale(1.1)' },
         },
       },
     },

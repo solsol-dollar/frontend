@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PinKeypad } from '@/features/onboarding/components/PinKeypad'
 import { LoadingStep } from '@/features/onboarding/components/LoadingStep'
+import { SplashScreen } from '@/features/onboarding/components/SplashScreen'
 import { loginWithPin } from '@/lib/auth'
 
 type Step = 'splash' | 'pin' | 'loading'
@@ -60,7 +61,5 @@ export function LoginPage() {
         onDone={() => (isCompleted ? navigate('/home') : navigate('/onboarding'))}
       />
     )
-  return (
-    <div className="mobile-container flex flex-col h-screen bg-white" />
-  )
+  return <SplashScreen />
 }
