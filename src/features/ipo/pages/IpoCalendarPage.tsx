@@ -250,8 +250,10 @@ function getWeekOfMonth(date: dayjs.Dayjs): number {
   return Math.ceil((date.date() + adjusted) / 7);
 }
 
+const failedLogoUrls = new Set<string>()
+
 function IpoLogo({ ipo, size = 40 }: { ipo: Ipo; size?: number }) {
-  const [imgError, setImgError] = useState(false)
+  const [imgError, setImgError] = useState(() => !!ipo.logo_url && failedLogoUrls.has(ipo.logo_url))
   const abbr = getAbbr(ipo.company)
   const cls = `rounded-full flex-shrink-0 overflow-hidden`
   if (ipo.logo_url && !imgError) {
@@ -261,7 +263,7 @@ function IpoLogo({ ipo, size = 40 }: { ipo: Ipo; size?: number }) {
         alt={ipo.company}
         className={cls}
         style={{ width: size, height: size, objectFit: 'cover' }}
-        onError={() => setImgError(true)}
+        onError={() => { failedLogoUrls.add(ipo.logo_url!); setImgError(true) }}
       />
     )
   }
