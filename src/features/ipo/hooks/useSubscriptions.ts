@@ -22,6 +22,7 @@ export function useCreateSubscription() {
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.all })
       queryClient.invalidateQueries({ queryKey: ['subscriptionResult'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'assets'] })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
     },
   })
 }
@@ -34,6 +35,7 @@ export function useCancelSubscription() {
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.all })
       queryClient.invalidateQueries({ queryKey: ['subscriptionResult'] })
       queryClient.invalidateQueries({ queryKey: ['home', 'assets'] })
+      queryClient.invalidateQueries({ queryKey: ['transactions'] })
     },
   })
 }

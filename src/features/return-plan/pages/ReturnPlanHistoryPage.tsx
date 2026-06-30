@@ -36,11 +36,12 @@ export function ReturnPlanHistoryPage() {
 
   const itemsInMonth = items.filter((item) => item.year === year && item.month === month)
   const doneInMonth = itemsInMonth.filter((item) => item.status === 'DONE')
+  const upcomingInMonth = itemsInMonth.filter((item) => item.status === 'UPCOMING')
 
   const SUMMARY = [
     { label: '총 분배액', value: formatUsd(doneInMonth.reduce((sum, item) => sum + item.rawAmount, 0)) },
     { label: '총 실행', value: `${doneInMonth.length}회` },
-    { label: '분배 건수', value: `${itemsInMonth.length}건` },
+    { label: '예정 건수', value: `${upcomingInMonth.length}건` },
   ]
 
   const grouped = itemsInMonth

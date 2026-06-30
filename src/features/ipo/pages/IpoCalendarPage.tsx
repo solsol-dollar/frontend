@@ -470,6 +470,12 @@ export function IpoCalendarPage() {
   const [tab, setTab] = useState<Tab>(initialTab ?? '청약 일정')
   const initialFilter = (state as { bottomFilter?: string })?.bottomFilter
   const [bottomFilter, setBottomFilter] = useState<BottomFilter>(initialFilter === '관심' ? '관심' : '전체')
+
+  useEffect(() => {
+    if ((state as { tab?: Tab })?.tab) {
+      navigate('.', { replace: true, state: {} })
+    }
+  }, [])
   const filterTabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [filterIndicator, setFilterIndicator] = useState({ left: 0, width: 0 })
   const [wishlistedIds, setWishlistedIds] = useState<Set<number>>(new Set())
@@ -868,7 +874,7 @@ export function IpoCalendarPage() {
           <button onClick={() => navigate("/notifications")}>
             <BellIcon />
           </button>
-          <button className="ml-[9px] mr-[4px]">
+          <button onClick={() => navigate('/ipo/search')} className="ml-[9px] mr-[4px]">
             <img src="/icons/search.svg" width={19} height={19} alt="" />
           </button>
         </div>

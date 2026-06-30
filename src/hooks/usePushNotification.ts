@@ -2,6 +2,10 @@ import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { messaging, onMessage, registerPushToken } from '@/lib/firebase'
 
+function toSafePath(url: unknown): string {
+  return typeof url === 'string' && /^\/(?!\/)/.test(url) ? url : '/home'
+}
+
 export function usePushNotification() {
   const qc = useQueryClient()
 
@@ -16,7 +20,7 @@ export function usePushNotification() {
 
       if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((sw) => {
-          sw.showNotification(title, { body, icon: '/icons/icon-192.png' })
+          sw.showNotification(title, { body, icon: '/icons/icon-192.png', data: { url: toSafePath(payload.data?.url) } })
         })
       }
 
