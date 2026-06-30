@@ -67,7 +67,6 @@ const config: Config = {
         'splash-text': 'splash-text 0.5s ease-out 0.5s both',
         'dot-bounce': 'dot-bounce 1.4s ease-in-out infinite',
         shimmer: 'shimmer 0.75s ease-in-out 0.8s 1 normal both',
-        'glow-pulse': 'glow-pulse 2.8s ease-in-out 0.6s infinite',
       },
       keyframes: {
         blink: {
@@ -106,10 +105,6 @@ const config: Config = {
         shimmer: {
           '0%': { transform: 'translateX(-150%)' },
           '100%': { transform: 'translateX(250%)' },
-        },
-        'glow-pulse': {
-          '0%, 100%': { opacity: '0.15', transform: 'scale(1)' },
-          '50%': { opacity: '0.35', transform: 'scale(1.1)' },
         },
       },
     },

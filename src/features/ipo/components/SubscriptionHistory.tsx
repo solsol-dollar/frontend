@@ -564,6 +564,25 @@ export function SubscriptionHistory() {
     today.startOf("month"),
   );
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem('subscription-history-scroll');
+    if (saved && scrollContainerRef.current) {
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = parseInt(saved, 10);
+      });
+      sessionStorage.removeItem('subscription-history-scroll');
+    }
+  }, []);
+
+  function navigateToDetail(id: number) {
+    if (scrollContainerRef.current) {
+      sessionStorage.setItem('subscription-history-scroll', String(scrollContainerRef.current.scrollTop));
+    }
+    navigate(`/ipo/${id}/result`);
+  }
+
   // 취소 시트
   const [cancelTarget, setCancelTarget] = useState<number | null>(null);
   const cancelItem = SUBSCRIPTIONS.find((s) => s.id === cancelTarget);
@@ -649,7 +668,7 @@ export function SubscriptionHistory() {
     try {
       await revealScratch.mutateAsync(id);
     } catch { /* 실패해도 navigate */ }
-    navigate(`/ipo/${id}/result`);
+    navigateToDetail(id);
   }
 
   const { start: rangeStart, end: rangeEnd } = getEffectiveRange(applied);
@@ -697,10 +716,10 @@ export function SubscriptionHistory() {
       </div>
 
       {/* 카드 목록 */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 pb-24">
         <div className="space-y-3">
           {filtered.map((sub) => {
-            const isRevealed = confirmedIds.has(sub.id);
+            const isRevealed = confirmedIds.has(sub.id) || reservedSubscriptionIds.has(sub.id);
             const allocationQtyText =
               sub.allocationResultState === "error"
                 ? "조회 실패"
@@ -807,7 +826,7 @@ export function SubscriptionHistory() {
 
                 {sub.status === "배정완료" && (
                   <div className="mt-4 flex gap-2">
-                    {!isRevealed && !reservedSubscriptionIds.has(sub.id) ? (
+                    {!isRevealed ? (
                       <button
                         onClick={() => setScratchTarget(sub.id)}
                         disabled={sub.allocationResultState !== "ready"}
@@ -823,7 +842,7 @@ export function SubscriptionHistory() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => navigate(`/ipo/${sub.id}/result`)}
+                        onClick={() => navigateToDetail(sub.id)}
                         className="flex-1 py-3 rounded-xl text-sm font-semibold text-text-secondary bg-[#F0F1F4]"
                       >
                         {reservedSubscriptionIds.has(sub.id) ? "예약 상세보기" : "상세보기"}
