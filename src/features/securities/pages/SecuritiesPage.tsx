@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { BellIcon } from '@/components/common/Header'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import solCharacter from '@/assets/common/쏠.png'
 import { MarketIndexCard } from '../components/MarketIndexCard'
 import { StockListItem } from '../components/StockListItem'
 import { RankingTabBar } from '../components/RankingTabBar'
@@ -67,7 +69,7 @@ function MyHomeTab() {
     <div className="pb-20">
       {/* 내 투자 요약 */}
       <section className="bg-white px-4 pt-5 pb-5">
-        <p className="text-sm text-text-tertiary">
+        <p className="text-sm font-semibold text-text-tertiary">
           {data?.hasPriceData ? '내 투자' : '투자 원금'}
         </p>
         <p className="text-2xl font-bold text-text-primary mt-1">
@@ -96,7 +98,7 @@ function MyHomeTab() {
       {isLoading ? (
         <div className="bg-white mt-2 px-4"><SkeletonList count={3} /></div>
       ) : stocks.length > 0 ? (
-        <section className="bg-white mt-2 px-4 py-4">
+        <section className="bg-white mt-[13px] px-4 py-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-text-tertiary font-medium">해외주식</p>
             <div className="flex gap-1">
@@ -119,7 +121,7 @@ function MyHomeTab() {
           </div>
         </section>
       ) : (
-        <section className="bg-white mt-2 px-4 py-10 flex flex-col items-center gap-1.5">
+        <section className="bg-white mt-[13px] px-4 py-10 flex flex-col items-center gap-1.5">
           <p className="text-sm font-medium text-text-secondary">보유 해외주식이 없습니다</p>
           <p className="text-xs text-text-tertiary">해외 탭에서 종목을 찾아보세요</p>
         </section>
@@ -127,7 +129,7 @@ function MyHomeTab() {
 
       {/* ETF 섹션 */}
       {etfs.length > 0 && (
-        <section className="bg-white mt-2 px-4 py-4">
+        <section className="bg-white mt-[13px] px-4 py-4">
           <p className="text-xs text-text-tertiary font-medium mb-2">ETF</p>
           <div className="divide-y divide-border">
             {etfs.map((h) => <HoldingRow key={h.productId} h={h} />)}
@@ -136,7 +138,7 @@ function MyHomeTab() {
       )}
 
       {/* 주문 내역 / 판매 수익 링크 */}
-      <section className="bg-white mt-2">
+      <section className="bg-white mt-[13px]">
         {[
           { label: '주문 내역', path: '/securities/orders' },
           { label: '판매 수익', path: '/securities/profits' },
@@ -201,7 +203,7 @@ function StockMarketTab({ type }: { type: 'OVERSEAS' | 'ETF' }) {
       <RankingSection productType={type} />
 
       {/* 전체 종목 리스트 */}
-      <section className="bg-white mt-2">
+      <section className="bg-white mt-[13px]">
         <div className="px-4 pt-4 pb-2 flex items-center gap-2">
           <p className="text-sm font-bold text-text-primary">전체 종목</p>
           <MarketStatusBadge />
@@ -246,6 +248,34 @@ export function SecuritiesPage() {
 
   const setTab = (t: Tab) => setSearchParams({ tab: t }, { replace: true })
 
+  const qc = useQueryClient()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const touchStartY = useRef(0)
+  const [pullY, setPullY] = useState(0)
+  const [solJump, setSolJump] = useState(false)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+  }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if ((scrollRef.current?.scrollTop ?? 0) > 0) return
+    const delta = e.touches[0].clientY - touchStartY.current
+    if (delta > 0) setPullY(Math.min(delta, 72))
+  }
+  const handleTouchEnd = async () => {
+    if (pullY >= 60) {
+      setPullY(0)
+      setSolJump(true)
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ['securities'] }),
+        new Promise(r => setTimeout(r, 700)),
+      ])
+      setSolJump(false)
+    } else {
+      setPullY(0)
+    }
+  }
+
   const [showDiagnosis, setShowDiagnosis] = useState(() => getInvestmentStatus() === 'REQUIRED')
   const submitDiagnosis = async (data: { hope: string; provide: string }) => {
     try {
@@ -285,7 +315,21 @@ export function SecuritiesPage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div
+          className="flex items-center justify-center overflow-hidden transition-all duration-200"
+          style={{ height: (pullY > 0 || solJump) ? Math.max(pullY, 56) : 0 }}
+        >
+          <div className="w-10 h-10 rounded-full bg-primary flex items-end justify-center overflow-hidden">
+            <img src={solCharacter} alt="" className={cn('w-10 h-10 object-contain translate-y-4', solJump && 'animate-bounce')} />
+          </div>
+        </div>
         {tab === 'MY홈' && <MyHomeTab />}
         {tab === '해외' && <StockMarketTab type="OVERSEAS" />}
         {tab === 'ETF' && <StockMarketTab type="ETF" />}

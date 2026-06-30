@@ -48,7 +48,7 @@ onBackgroundMessage(messaging, (payload) => {
   return Promise.all([
     self.registration.showNotification(title ?? 'SOL SOL 달러', {
       body,
-      icon: '/icons/icon-192.png',
+      icon: '/icons/appLogo.png',
       data: { url },
     }),
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {

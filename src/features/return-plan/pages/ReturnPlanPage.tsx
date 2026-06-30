@@ -33,11 +33,21 @@ export function ReturnPlanPage() {
     .filter((plan) => plan.planStatus !== 'EXECUTED')
     .sort((a, b) => (a.refundDate ?? '').localeCompare(b.refundDate ?? ''))[0]
 
+  const nextPendingDday = (() => {
+    const dateStr = nextPending?.depositDate ?? nextPending?.refundDate
+    if (!dateStr) return null
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const target = new Date(dateStr)
+    const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    return diff === 0 ? 'D-Day' : diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`
+  })()
+
   const lastExecuted = returnPlans
     .filter((plan) => plan.planStatus === 'EXECUTED')
     .sort((a, b) => (b.refundDate ?? '').localeCompare(a.refundDate ?? ''))[0]
 
-  const { data: lastExecutedDetail } = useReturnPlanDetail(lastExecuted?.returnPlanId ?? NaN)
+  const { data: lastExecutedDetail, isLoading: isDetailLoading } = useReturnPlanDetail(lastExecuted?.returnPlanId ?? NaN)
 
   const securitiesAmount = lastExecutedDetail?.allocations.find((a) => a.destinationType === 'SECURITIES')?.amount ?? 0
   const savingsAmount = lastExecutedDetail?.allocations.find((a) => a.destinationType === 'SAVINGS')?.amount ?? 0
@@ -69,7 +79,10 @@ export function ReturnPlanPage() {
               {SUMMARY_LABELS.map((label, i) => (
                 <div key={label} className="flex-1 bg-surface-bg rounded-2xl py-6 px-3 text-left">
                   <p className="text-sm text-text-tertiary">{label}</p>
-                  <p className="text-sm font-bold text-text-primary mt-1">{formatUsd(amounts[i])}</p>
+                  {isDetailLoading
+                    ? <div className="h-4 w-14 mt-1 rounded-md bg-gray-200 animate-pulse" />
+                    : <p className="text-sm font-bold text-text-primary mt-1">{formatUsd(amounts[i])}</p>
+                  }
                 </div>
               ))}
             </div>
@@ -92,47 +105,46 @@ export function ReturnPlanPage() {
           </section>
         )}
 
-        <div className="px-4 py-4">
+        <div className="px-4 pt-7 pb-4">
           <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(nextPending ? `/return-plan/pending/${nextPending.returnPlanId}` : '/ipo')}
-            className="w-1/2 min-w-0 h-[120px] bg-white rounded-2xl p-4 text-left flex flex-col justify-between"
+            className="w-[167px] h-[136px] bg-white rounded-2xl p-4 text-left flex flex-col justify-between"
           >
-            <div className="min-w-0">
-              <p className="text-sm text-text-tertiary mb-1">다음 IPO 리턴</p>
-              <p className="text-base font-bold text-text-primary truncate">
-                {nextPending ? nextPending.sourceCompanyName : '예정된 환불 없음'}
+            <div>
+              <p className="text-[13px] font-medium text-text-tertiary mb-0">다음 IPO 환불일</p>
+              <p className="text-base font-bold text-text-primary line-clamp-1">
+                {nextPending ? `${nextPending.sourceCompanyName} · ${nextPendingDday ?? '예정'}` : '예정된 환불 없음'}
               </p>
             </div>
             <div className="flex items-center justify-between">
-              <img src="/icons/Calendar.svg" width={32} height={32} alt="" />
+              <img src="/icons/ReturnPlan_cal.svg" width={42} height={42} alt="" />
               <ChevronRight size={18} className="text-text-tertiary" />
             </div>
           </button>
 
           <button
             onClick={() => navigate('/return-plan/allocation')}
-            className="w-1/2 min-w-0 h-[120px] bg-white rounded-2xl p-4 text-left flex flex-col justify-between"
+            className="w-[167px] h-[136px] bg-white rounded-2xl p-4 text-left flex flex-col justify-between"
           >
             <div>
-              <p className="text-sm text-text-tertiary mb-1 whitespace-nowrap">놀고있는 예수금도!</p>
+              <p className="text-[13px] font-medium text-text-tertiary mb-0">놀고있는 예수금도!</p>
               <p className="text-base font-bold text-text-primary">리턴 플랜</p>
             </div>
             <div className="flex items-center justify-between">
-              <img src="/icons/ArrowSolid.svg" width={32} height={32} alt="" />
+              <img src="/icons/returnPlan_icon.svg" width={42} height={42} alt="" />
               <ChevronRight size={18} className="text-text-tertiary" />
             </div>
           </button>
           </div>
 
-          <div className="flex items-center justify-between mt-5 mb-3">
-          <h3 className="text-lg font-bold text-text-primary">리턴 내역</h3>
+          <div className="flex items-center justify-between mt-7 mb-2 px-1">
+          <h3 className="text-xs text-text-secondary">리턴 내역</h3>
           <button
             onClick={() => navigate('/return-plan/history')}
-            className="flex items-center text-sm text-text-tertiary"
+            className="flex items-center gap-0.5 text-xs text-text-secondary"
           >
-            전체보기
-            <ChevronRight size={14} />
+            전체보기 <ChevronRight size={13} />
           </button>
           </div>
 

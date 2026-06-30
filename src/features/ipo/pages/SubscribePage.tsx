@@ -9,7 +9,6 @@ import {
   getSubscriptionDday,
   getSubscriptionStatus,
   getSubscriptionStatusBadgeClass,
-  getSubscriptionStatusTextClass,
 } from "@/features/ipo/utils/subscriptionStatus";
 import { cn } from "@/lib/utils";
 import { useIpoDetail, useToggleFavorite } from "@/features/ipo/hooks/useIpo";
@@ -277,22 +276,20 @@ export function SubscribePage() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto bg-surface-bg">
         {/* 종목 정보 */}
         <section className="px-5 pt-4 pb-5 bg-white">
-          <div className="mb-7">
-            <IpoStockHeader
-              avatarText={ipo.ticker.slice(0, 2)}
-              avatarColor={ipo.color}
-              logoUrl={ipo.logoUrl}
-              name={ipo.name}
-              ticker={ipo.ticker}
-              status={status}
-              statusClassName={getSubscriptionStatusBadgeClass(status)}
-              secondaryText={dday}
-              secondaryClassName={getSubscriptionStatusTextClass(status)}
-            />
-          </div>
+          <IpoStockHeader
+            avatarText={ipo.ticker.slice(0, 2)}
+            avatarColor={ipo.color}
+            logoUrl={ipo.logoUrl}
+            name={ipo.name}
+            ticker={ipo.ticker}
+            status={status}
+            statusClassName={getSubscriptionStatusBadgeClass(status)}
+            secondaryText={dday}
+            secondaryClassName={dday ? 'text-[#CA3D40]' : undefined}
+          />
+        </section>
 
-          <div className="h-2 bg-surface-bg -mx-4 mb-4" />
-
+        <section className="pl-[33px] pr-5 pt-[29px] pb-5 bg-white mt-[13px]">
           <IpoOfferingInfo
             offeringPrice={offeringPriceLabel}
             milestones={ipo.milestones}
@@ -301,37 +298,28 @@ export function SubscribePage() {
         </section>
 
         {/* 계좌 정보 + 금액 + 입력 통합 섹션 */}
-        <section className="bg-white mt-2">
+        <section className="bg-white mt-[13px]">
           {/* 계좌 정보 */}
           <div className="px-4 pt-4 pb-3">
-            <p className="text-sm text-text-secondary">{ipo.account}</p>
+            <p className="text-sm font-semibold text-text-secondary">{ipo.account}</p>
           </div>
           <div className="h-px bg-border mx-4" />
 
           {/* 청약 가능 금액 */}
           <div className="px-4 pt-4 pb-3">
-            <p className="text-xs text-text-tertiary mb-1">신청가능금액</p>
-            <span className="text-2xl font-bold text-text-primary">
-              $
-              {ipo.availableAmount.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+            <span className="text-sm font-medium text-text-secondary">신청가능금액</span>
+            <span className="text-2xl font-bold text-text-primary block mt-0.5">
+              ${ipo.availableAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <div className="mt-1">
-              <p className="text-sm text-primary font-semibold">
-                최대 {maxShares.toLocaleString("en-US")}주 청약 가능해요!
-              </p>
-              <p className="text-[11px] text-text-tertiary mt-0.5">
-                공모가 기준 예상 수량
-              </p>
-            </div>
+            <p className="text-sm text-primary font-semibold mt-1">
+              최대 {maxShares.toLocaleString("en-US")}주 청약 가능해요! <span className="text-[11px] text-text-tertiary font-normal ml-1">(공모가 기준 예상 수량)</span>
+            </p>
           </div>
 
           {/* 청약신청금액 입력 */}
           <div className="px-4 py-3">
             <div className="flex items-center gap-3">
-              <span className="text-sm text-text-secondary whitespace-nowrap w-20 flex-shrink-0">
+              <span className="text-sm font-medium text-text-secondary whitespace-nowrap w-20 flex-shrink-0">
                 청약신청금액
               </span>
               <div className="w-48 ml-auto flex items-center border border-border rounded-xl overflow-hidden">
@@ -362,7 +350,7 @@ export function SubscribePage() {
                       else if (v > maxSubscribable)
                         setAmount(String(maxSubscribable));
                     }}
-                    placeholder="최소 $100"
+                    placeholder="최소 $100 · $1 단위"
                     className="text-center text-sm text-text-primary outline-none bg-transparent min-w-0 w-full"
                   />
                 </div>
@@ -376,10 +364,8 @@ export function SubscribePage() {
                 </button>
               </div>
             </div>
-            <div className="flex items-center justify-between mt-1.5">
-              <span className="text-[11px] text-text-tertiary">
-                최소 USD 100 · USD 1 단위
-              </span>
+            <div className="flex items-center justify-between mt-2">
+              <span />
               <button
                 onClick={() => setAmount(String(maxSubscribable))}
                 className="text-xs text-text-secondary px-2 py-0.5 bg-surface rounded"
@@ -398,7 +384,7 @@ export function SubscribePage() {
 
           {/* 청약대행증거금 */}
           <div className="px-4 pt-3 pb-5 flex items-center justify-between">
-            <span className="text-sm text-text-secondary">청약대행증거금</span>
+            <span className="text-sm font-medium text-text-secondary">청약대행증거금(101%)</span>
             <span className="text-base font-bold text-text-primary">
               USD{" "}
               {subscriptionFee.toLocaleString("en-US", {
@@ -410,8 +396,8 @@ export function SubscribePage() {
         </section>
 
         {/* 청약 자금 추가 섹션 */}
-        <section className="px-4 py-5 bg-white mt-2">
-          <p className="text-sm font-semibold text-text-primary mb-3">
+        <section className="px-4 py-5 bg-white mt-[13px]">
+          <p className="text-[15px] font-bold text-[#111827] mb-4">
             청약 자금을 더 채우고 싶으신가요?
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -431,7 +417,7 @@ export function SubscribePage() {
                 });
               }}
               disabled={!depositAccount}
-              className="p-3 border border-border rounded-xl text-left disabled:opacity-40"
+              className="p-3 border border-border rounded-xl text-left transition-colors duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none disabled:opacity-40"
             >
               <p className="text-xs font-semibold text-text-primary">
                 외화통장에서 끌어오기
@@ -451,19 +437,13 @@ export function SubscribePage() {
                   },
                 });
               }}
-              className="p-3 border border-border rounded-xl text-left"
+              className="p-3 border border-border rounded-xl text-left transition-colors duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none"
             >
-              <div className="flex items-center gap-1">
-                <p className="text-xs font-semibold text-text-primary">
-                  환전하기
-                </p>
-                <p className="text-[11px] text-text-tertiary">
-                  1달러 = {ipo.exchangeRate.toLocaleString("ko-KR")}원
-                </p>
-              </div>
-              <p className="text-xs font-bold text-text-primary mt-1">
-                {ipo.exchangeableKrw.toLocaleString("ko-KR")}원 → $
-                {ipo.exchangeableUsd.toFixed(2)}
+              <p className="text-xs font-semibold text-text-primary">
+                환전하기 <span className="text-[11px] text-text-tertiary font-normal">1달러 = {ipo.exchangeRate.toLocaleString("ko-KR")}원</span>
+              </p>
+              <p className="text-sm font-bold text-text-primary mt-1">
+                {ipo.exchangeableKrw.toLocaleString("ko-KR")}원 → ${ipo.exchangeableUsd.toFixed(2)}
               </p>
             </button>
           </div>
@@ -471,10 +451,10 @@ export function SubscribePage() {
       </div>
 
       {/* 하단 고정 버튼 */}
-      <div className="px-4 pb-8 pt-3 flex gap-3 bg-white border-t border-border">
+      <div className="px-5 py-4 flex gap-3 bg-white border-t border-border">
         <button
           onClick={() => navigate(-1)}
-          className="flex-1 bg-surface text-text-primary py-4 rounded-xl font-semibold"
+          className="flex-1 py-4 bg-surface rounded-2xl font-semibold text-text-secondary"
         >
           취소
         </button>
@@ -497,7 +477,7 @@ export function SubscribePage() {
             setShowConfirmModal(true);
           }}
           disabled={!isValidAmount || isSubmitting}
-          className="flex-1 bg-primary disabled:bg-border text-white py-4 rounded-xl font-semibold"
+          className="flex-1 py-4 bg-primary text-white rounded-2xl font-semibold disabled:opacity-40"
         >
           확인
         </button>
@@ -551,7 +531,7 @@ export function SubscribePage() {
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-text-secondary">청약대행증거금</span>
+              <span className="text-text-secondary">청약대행증거금(101%)</span>
               <span className="font-semibold text-text-primary">
                 USD{" "}
                 {subscriptionFee.toLocaleString("en-US", {
@@ -565,7 +545,7 @@ export function SubscribePage() {
           <div className="flex gap-3">
             <button
               onClick={() => setShowConfirmModal(false)}
-              className="flex-1 py-4 bg-surface text-text-primary rounded-xl font-semibold"
+              className="flex-1 py-4 bg-surface rounded-2xl font-semibold text-text-secondary"
             >
               취소
             </button>
@@ -574,7 +554,7 @@ export function SubscribePage() {
                 setShowConfirmModal(false);
                 setShowPinScreen(true);
               }}
-              className="flex-1 py-4 bg-primary text-white rounded-xl font-semibold"
+              className="flex-1 py-4 bg-primary text-white rounded-2xl font-semibold"
             >
               확인
             </button>

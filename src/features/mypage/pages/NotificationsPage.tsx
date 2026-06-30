@@ -10,6 +10,10 @@ const TYPE_ICON: Record<string, string> = {
   IDLE_DOLLAR: '/icons/notification_dollar.svg',
 }
 
+const TARGET_TYPE_ICON: Record<string, string> = {
+  CARD: '/icons/notification_card.svg',
+}
+
 const TARGET_PATH: Record<string, (id: number | null, notificationType: string) => string | undefined> = {
   IPO: (id, type) => id == null ? undefined : type === 'IPO_ALLOCATION' ? `/ipo/${id}/result` : `/ipo/${id}`,
   RETURN_PLAN: (id) => id == null ? undefined : `/return-plan/result/${id}`,
@@ -33,8 +37,8 @@ function NotifCard({ n, onRead }: { n: Notification; onRead: (id: number) => voi
     >
       <div className="flex items-start gap-3">
         <div className="w-[42px] h-[42px] flex-shrink-0">
-          {TYPE_ICON[n.notificationType]
-            ? <img src={TYPE_ICON[n.notificationType]} alt="" className="w-full h-full" />
+          {(TYPE_ICON[n.notificationType] || TARGET_TYPE_ICON[n.targetType ?? ''])
+            ? <img src={TYPE_ICON[n.notificationType] || TARGET_TYPE_ICON[n.targetType ?? '']} alt="" className="w-full h-full" />
             : <div className="w-full h-full rounded-full bg-surface flex items-center justify-center text-xl">🔔</div>
           }
         </div>

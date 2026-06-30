@@ -17,6 +17,8 @@ import {
 import solBankIcon from "@/assets/common/shinhan-bank.svg";
 import { useHomeAssets } from "@/features/home/hooks/useHomeAssets";
 
+const TRACK_COLORS = ['#C5D1F5', '#DFCDFF', '#C8F2FB']
+
 const ACCOUNTS: [AllocationAccount, AllocationAccount, AllocationAccount] = [
   {
     id: "cma",
@@ -122,14 +124,14 @@ export function ReturnPlanPendingPage() {
                   </>
                 );
               })()}
-              <span className="text-base font-bold text-text-primary">
+              <span className="ml-2 text-base font-bold text-text-primary">
                 {formatUsd(refundAmount)}
               </span>
               <span className="text-base text-text-secondary">가 리턴돼요!</span>
             </p>
           </div>
 
-          <div className="h-2 bg-surface-bg" />
+          <div className="h-[13px] bg-surface-bg" />
 
           {!isEditing && (
             <div className="flex items-center gap-2 mt-6 px-4">
@@ -178,12 +180,12 @@ export function ReturnPlanPendingPage() {
         </section>
 
         {!isEditing && (
-          <div className="px-4 py-8 bg-surface-bg space-y-3">
+          <div className="px-4 pt-4 pb-8 bg-surface-bg space-y-3">
             {ACCOUNTS.map((acc, i) => {
               const ratio = ratios[i]
               const amount = ((refundAmount * ratio) / 100).toFixed(2)
               return (
-                <div key={acc.id} className="rounded-2xl px-5 py-4 bg-white">
+                <div key={acc.id} className="rounded-2xl px-4 py-3 bg-white">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[i] }} />
@@ -208,14 +210,14 @@ export function ReturnPlanPendingPage() {
                       </div>
                     )}
                   </div>
-                  <div className="h-1 rounded-full" style={{ backgroundColor: `${ZONE_COLORS[i]}33` }}>
+                  <div className="h-1 rounded-full" style={{ backgroundColor: `${TRACK_COLORS[i]}4D` }}>
                     <div className="h-1 rounded-full transition-all duration-300" style={{ width: `${connected[i] ? ratio : 0}%`, backgroundColor: ZONE_COLORS[i] }} />
                   </div>
                 </div>
               )
             })}
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 mt-3">
               <span className="w-3.5 h-3.5 rounded-full border border-text-tertiary flex items-center justify-center flex-shrink-0">
                 <span className="text-[8px] text-text-tertiary font-bold leading-none">!</span>
               </span>
@@ -239,7 +241,7 @@ export function ReturnPlanPendingPage() {
         )}
       </div>
 
-      <div className="px-4 pb-8 pt-3 bg-white">
+      <div className="px-5 py-4 bg-white border-t border-border">
         <button
           onClick={handleToggleEdit}
           disabled={updateRatios.isPending || !plan || isPastDeadline}

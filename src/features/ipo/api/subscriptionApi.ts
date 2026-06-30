@@ -21,6 +21,7 @@ export interface SubscriptionRes {
   confirmedOfferPrice: number | null
   listingDate: string | null
   resultStatus: string | null
+  logoUrl: string | null
 }
 
 export interface SubscriptionCancelRes {

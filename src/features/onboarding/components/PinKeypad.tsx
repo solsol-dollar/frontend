@@ -37,14 +37,6 @@ export function PinKeypad({ onEnter, onBack, error }: Props) {
   return (
     <div className="mobile-container flex flex-col h-screen">
       <div className="flex-1 flex flex-col bg-white">
-        <div className="px-4 pt-4">
-          <button onClick={onBack} className="p-1 -ml-1">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="#111111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-
         <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6">
           <div className="text-center">
             <h2 className="text-xl font-bold text-text-primary">신한인증서</h2>

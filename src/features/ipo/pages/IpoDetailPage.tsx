@@ -168,9 +168,11 @@ function NewsScoreGauge({ score }: { score: number }) {
   }, [score])
 
   const getMessage = (s: number) => {
-    if (s >= 70) return '긍정적인 흐름이에요!'
+    if (s >= 80) return '매우 긍정적인 흐름이에요!'
+    if (s >= 60) return '긍정적인 흐름이에요!'
     if (s >= 40) return '중립적인 상황이에요'
-    return '부정적인 반응이 있어요'
+    if (s >= 20) return '부정적인 반응이 있어요'
+    return '매우 부정적인 반응이 있어요'
   }
 
   return (
@@ -388,7 +390,7 @@ export function IpoDetailPage() {
             status={status}
             statusClassName={getSubscriptionStatusBadgeClass(status)}
             secondaryText={dday || undefined}
-            secondaryClassName={dday ? (status === '청약예정' ? 'text-[#3045BB]' : 'text-[#CA3D40]') : undefined}
+            secondaryClassName={dday ? 'text-[#CA3D40]' : undefined}
           />
         </section>
 
@@ -627,7 +629,7 @@ export function IpoDetailPage() {
             className="fixed inset-0 bg-black/40 z-20"
             onClick={() => setShowScoreInfo(false)}
           />
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white rounded-t-[20px] z-30 px-5 pb-5">
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-[20px] z-30 px-5 pb-5">
             <div className="flex justify-center pt-3 pb-2">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>
@@ -639,16 +641,24 @@ export function IpoDetailPage() {
               <p className="text-[13px] font-semibold text-[#111827] mb-2">점수 기준</p>
               <div className="flex flex-col gap-[6px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-bold text-[#CA3D40]">70~100</span>
-                  <span className="text-[12px] text-[#6B7280]">긍정 이슈</span>
+                  <span className="text-[12px] font-bold text-[#CA3D40] w-[56px] shrink-0">80 이상</span>
+                  <span className="text-[12px] text-[#6B7280]">매우 긍정</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-bold text-[#111827]">40~69</span>
-                  <span className="text-[12px] text-[#6B7280]">중립 이슈</span>
+                  <span className="text-[12px] font-bold text-[#E07070] w-[56px] shrink-0">60 ~ 79</span>
+                  <span className="text-[12px] text-[#6B7280]">긍정</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-bold text-[#3B82F6]">0~39</span>
-                  <span className="text-[12px] text-[#6B7280]">부정 이슈</span>
+                  <span className="text-[12px] font-bold text-[#9AA0AB] w-[56px] shrink-0">40 ~ 59</span>
+                  <span className="text-[12px] text-[#6B7280]">중립</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] font-bold text-[#60A5FA] w-[56px] shrink-0">20 ~ 39</span>
+                  <span className="text-[12px] text-[#6B7280]">부정</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] font-bold text-[#1565C0] w-[56px] shrink-0">20 미만</span>
+                  <span className="text-[12px] text-[#6B7280]">매우 부정</span>
                 </div>
               </div>
             </div>
