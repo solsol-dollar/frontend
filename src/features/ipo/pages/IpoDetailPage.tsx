@@ -10,7 +10,7 @@ import {
   getSubscriptionStatusBadgeClass,
   type SubscriptionStatus,
 } from '@/features/ipo/utils/subscriptionStatus'
-import { useIpoDetail, useToggleFavorite, useIpoNews, useIpoScore, useIpoFinancials } from '@/features/ipo/hooks/useIpo'
+import { useIpoDetail, useToggleFavorite, useIpoTopNews, useIpoScore, useIpoFinancials } from '@/features/ipo/hooks/useIpo'
 import { useSubscriptionList } from '@/features/ipo/hooks/useSubscriptions'
 import { generateLogoColor } from '@/features/ipo/utils/ipoUtils'
 import { ClosedIpoDetailPage } from '@/features/ipo/pages/ClosedIpoDetailPage'
@@ -252,7 +252,11 @@ export function IpoDetailPage() {
 
   const { data, isLoading, isError } = useIpoDetail(ipoId)
   const { mutate: toggleFav } = useToggleFavorite()
-  const { data: newsData } = useIpoNews(ipoId)
+  const { data: topNewsData } = useIpoTopNews(ipoId)
+  const topNewsList = useMemo(() => [
+    ...(topNewsData?.data?.pre ?? []),
+    ...(topNewsData?.data?.post ?? []),
+  ], [topNewsData])
   const { data: scoreData } = useIpoScore(ipoId)
   const score = scoreData?.data
   const { data: financialsData } = useIpoFinancials(ipoId)
@@ -297,7 +301,7 @@ export function IpoDetailPage() {
 
   const ipo = data.data
 
-  if (ipo.ipoStatus === 'CLOSED') {
+  if (ipo.ipoStatus === 'CLOSED' && score?.postScore != null) {
     return <ClosedIpoDetailPage ipoId={ipoId} ipo={ipo} />
   }
 
@@ -433,7 +437,7 @@ export function IpoDetailPage() {
                   style={{ animation: 'moli-rise-detail 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards, moli-float 2.5s ease-in-out 0.9s infinite' }}
                 />
               </div>
-              <div className="relative flex-1 bg-[#F0EFFE] rounded-[12px] px-3 py-[10px]">
+              <div className="relative bg-[#F0EFFE] rounded-[12px] px-3 py-[10px]" style={{ maxWidth: 'calc(100% - 54px)' }}>
                 <div
                   className="absolute left-[-7px] top-1/2 -translate-y-1/2 w-0 h-0"
                   style={{
@@ -460,7 +464,7 @@ export function IpoDetailPage() {
           </div>
 
           {(() => {
-            const sources = [...new Set((newsData?.data ?? []).map((n) => n.source))].slice(0, 4)
+            const sources = [...new Set(topNewsList.map((n) => n.source))].slice(0, 4)
             if (sources.length === 0) return null
             return (
               <button
@@ -500,7 +504,7 @@ export function IpoDetailPage() {
 
           {showNewsList && (
             <div className="overflow-visible">
-              {(newsData?.data ?? []).map((n) => (
+              {topNewsList.map((n) => (
                 <button
                   key={n.id}
                   onClick={() => navigate(`/ipo/${ipoId}/news/${n.id}`, { state: { news: n } })}

@@ -11,7 +11,7 @@ import {
   getSubscriptionStatusBadgeClass,
 } from "@/features/ipo/utils/subscriptionStatus";
 import { cn } from "@/lib/utils";
-import { useIpoDetail } from "@/features/ipo/hooks/useIpo";
+import { useIpoDetail, useToggleFavorite } from "@/features/ipo/hooks/useIpo";
 import {
   useCreateSubscription,
   useSubscriptionList,
@@ -25,7 +25,6 @@ export function SubscribePage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const ipoId = Number(id);
-  const [liked, setLiked] = useState(false);
   const [amount, setAmount] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState<React.ReactNode | null>(
@@ -42,6 +41,7 @@ export function SubscribePage() {
     isError,
     refetch: refetchIpoDetail,
   } = useIpoDetail(ipoId);
+  const { mutate: toggleFav } = useToggleFavorite();
   const { data: assets, isLoading: isAssetsLoading } = useHomeAssets();
   const { mutateAsync: createSubscription, isPending: isSubmitting } =
     useCreateSubscription();
@@ -258,15 +258,15 @@ export function SubscribePage() {
         showMypage={false}
         rightAction={
           <button
-            onClick={() => setLiked((v) => !v)}
-            aria-label={liked ? "관심 해제" : "관심 등록"}
+            onPointerDown={() => toggleFav({ ipoId, isFavorite: ipoDetail.isFavorite })}
+            aria-label={ipoDetail.isFavorite ? "관심 IPO 해제" : "관심 IPO 등록"}
             className="p-3 -mr-3"
           >
             <svg width="22" height="20" viewBox="-1 -0.5 19 17" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M16.2503 2.40774C15.4111 0.899217 14.004 0 12.4854 0C10.2345 0 9.03662 1.52736 8.49986 2.50765C7.9631 1.52736 6.76523 0 4.51431 0C2.99575 0 1.5894 0.900036 0.749377 2.40774C-0.258193 4.21846 -0.249095 6.54102 0.77288 8.62036C2.26869 11.662 5.5939 14.3342 7.44301 15.6552C7.76446 15.8845 8.1314 16 8.49986 16C8.86832 16 9.23526 15.8845 9.55671 15.6552C11.4051 14.3342 14.731 11.662 16.2268 8.62036C17.2496 6.54102 17.2579 4.21846 16.2503 2.40774Z"
-                fill={liked ? '#CA3D40' : '#001936'}
-                fillOpacity={liked ? 1 : 0.31}
+                fill={ipoDetail.isFavorite ? '#CA3D40' : '#001936'}
+                fillOpacity={ipoDetail.isFavorite ? 1 : 0.31}
               />
             </svg>
           </button>

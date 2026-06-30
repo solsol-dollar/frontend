@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { useCountUp } from '../hooks/useCountUp'
 import { useReturnPlans } from '../hooks/useReturnPlans'
-import { useReturnPlanSummary } from '../hooks/useReturnPlanSummary'
+import { useReturnPlanDetail } from '../hooks/useReturnPlanDetail'
 
 const formatUsd = (n: number) =>
   `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -11,27 +11,23 @@ const formatUsd = (n: number) =>
 export function ReturnPlanPage() {
   const navigate = useNavigate()
   const { data: returnPlans = [] } = useReturnPlans()
-  const { data: summary } = useReturnPlanSummary()
 
-  const securitiesAmount = summary?.securitiesAmount ?? 0
-  const savingsAmount = summary?.savingsAmount ?? 0
-  const accountAmount = summary?.accountAmount ?? 0
+  const SUMMARY_LABELS = ['CMA 계좌', '외화적립예금', '체인지업 예금']
 
-  const amount0 = useCountUp(securitiesAmount)
-  const amount1 = useCountUp(savingsAmount)
-  const amount2 = useCountUp(accountAmount)
-  const amounts = [amount0, amount1, amount2]
-
-  const SUMMARY_LABELS = ['외화예수금', '외화적금', '외화통장']
-
-  const history = returnPlans.map((plan) => ({
-    id: plan.returnPlanId,
-    name: plan.sourceCompanyName,
-    ticker: plan.sourceTicker,
-    date: plan.refundDate ? plan.refundDate.slice(0, 10).replace(/-/g, '.') : '예정',
-    amount: formatUsd(plan.totalRefundAmount),
-    distributed: plan.planStatus === 'EXECUTED',
-  }))
+  const history = [...returnPlans]
+    .sort((a, b) => {
+      if (!a.refundDate) return -1
+      if (!b.refundDate) return 1
+      return b.refundDate.localeCompare(a.refundDate)
+    })
+    .map((plan) => ({
+      id: plan.returnPlanId,
+      name: plan.sourceCompanyName,
+      ticker: plan.sourceTicker,
+      date: plan.refundDate ? plan.refundDate.slice(0, 10).replace(/-/g, '.') : '예정',
+      amount: formatUsd(plan.totalRefundAmount),
+      distributed: plan.planStatus === 'EXECUTED',
+    }))
 
   const nextPending = returnPlans
     .filter((plan) => plan.planStatus !== 'EXECUTED')
@@ -50,6 +46,17 @@ export function ReturnPlanPage() {
   const lastExecuted = returnPlans
     .filter((plan) => plan.planStatus === 'EXECUTED')
     .sort((a, b) => (b.refundDate ?? '').localeCompare(a.refundDate ?? ''))[0]
+
+  const { data: lastExecutedDetail, isLoading: isDetailLoading } = useReturnPlanDetail(lastExecuted?.returnPlanId ?? NaN)
+
+  const securitiesAmount = lastExecutedDetail?.allocations.find((a) => a.destinationType === 'SECURITIES')?.amount ?? 0
+  const savingsAmount = lastExecutedDetail?.allocations.find((a) => a.destinationType === 'SAVINGS')?.amount ?? 0
+  const accountAmount = lastExecutedDetail?.allocations.find((a) => a.destinationType === 'DEPOSIT')?.amount ?? 0
+
+  const amount0 = useCountUp(securitiesAmount)
+  const amount1 = useCountUp(savingsAmount)
+  const amount2 = useCountUp(accountAmount)
+  const amounts = [amount0, amount1, amount2]
 
   return (
     <div className="mobile-container h-dvh flex flex-col bg-surface-bg">
@@ -72,7 +79,10 @@ export function ReturnPlanPage() {
               {SUMMARY_LABELS.map((label, i) => (
                 <div key={label} className="flex-1 bg-surface-bg rounded-2xl py-6 px-3 text-left">
                   <p className="text-sm text-text-tertiary">{label}</p>
-                  <p className="text-sm font-bold text-text-primary mt-1">{formatUsd(amounts[i])}</p>
+                  {isDetailLoading
+                    ? <div className="h-4 w-14 mt-1 rounded-md bg-gray-200 animate-pulse" />
+                    : <p className="text-sm font-bold text-text-primary mt-1">{formatUsd(amounts[i])}</p>
+                  }
                 </div>
               ))}
             </div>
