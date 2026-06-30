@@ -7,11 +7,10 @@ function shuffle(arr: number[]) {
 
 interface Props {
   onEnter: (pin: string) => void
-  onBack: () => void
   error?: string | null
 }
 
-export function PinKeypad({ onEnter, onBack, error }: Props) {
+export function PinKeypad({ onEnter, error }: Props) {
   const [pin, setPin] = useState<number[]>([])
   const [nums, setNums] = useState(() => shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]))
 

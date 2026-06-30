@@ -50,7 +50,6 @@ export function LoginPage() {
       <PinKeypad
         key={pinKey}
         onEnter={handlePinEnter}
-        onBack={() => setStep('splash')}
         error={pinError}
       />
     )
