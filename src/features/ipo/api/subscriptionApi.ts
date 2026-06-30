@@ -19,6 +19,7 @@ export interface SubscriptionRes {
   offerPriceMin: number
   offerPriceMax: number
   confirmedOfferPrice: number | null
+  subscriptionEndDate: string | null
   listingDate: string | null
   resultStatus: string | null
   logoUrl: string | null

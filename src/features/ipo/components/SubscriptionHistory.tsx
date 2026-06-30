@@ -416,7 +416,8 @@ function toSubscription(
     canCancel:
       sub.subscriptionStatus === "REQUESTED" &&
       !hasAllocationResult &&
-      !listingDayReached,
+      !listingDayReached &&
+      (sub.subscriptionEndDate == null || dayjs().isBefore(dayjs(sub.subscriptionEndDate).hour(17).minute(0).second(0))),
   };
 }
 
