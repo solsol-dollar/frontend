@@ -59,6 +59,7 @@ interface Subscription {
   id: number;
   company: string;
   ticker: string;
+  logoUrl: string | null;
   logoColor: string;
   status: StatusType;
   amount: string;
@@ -388,6 +389,7 @@ function toSubscription(
     id: sub.subscriptionId,
     company: sub.companyName,
     ticker: sub.ticker,
+    logoUrl: sub.logoUrl ?? null,
     logoColor: generateLogoColor(sub.ticker),
     status,
     amount: `${sub.currency} ${sub.subscriptionAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
@@ -702,13 +704,14 @@ export function SubscriptionHistory() {
             return (
               <div
                 key={sub.id}
-                className="bg-white rounded-2xl shadow-sm overflow-hidden"
+                className="bg-white rounded-[12px] pt-[17.5px] pl-[17px] pr-[17px] pb-[22px] transition-all duration-200 active:transition-none active:scale-[0.97] active:bg-[#F2F3F5] select-none"
               >
-                <div className="p-4">
-                  <div className="mb-4">
+                <div>
+                  <div className="mb-[13px]">
                     <IpoStockHeader
                       avatarText={getAbbr(sub.company)}
                       avatarColor={sub.logoColor}
+                      logoUrl={sub.logoUrl}
                       name={sub.company}
                       ticker={sub.ticker}
                       status={sub.status}
@@ -791,7 +794,7 @@ export function SubscriptionHistory() {
 
                 {/* 버튼 영역 */}
                 {sub.status === "청약신청" && sub.canCancel && (
-                  <div className="px-4 pb-4 flex gap-2">
+                  <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => setCancelTarget(sub.id)}
                       className="flex-1 py-3 rounded-xl text-sm font-semibold text-text-secondary bg-[#F0F1F4]"
@@ -801,9 +804,8 @@ export function SubscriptionHistory() {
                   </div>
                 )}
 
-
                 {sub.status === "배정완료" && (
-                  <div className="px-4 pb-4 flex gap-2">
+                  <div className="mt-4 flex gap-2">
                     {!isRevealed ? (
                       <button
                         onClick={() => setScratchTarget(sub.id)}
@@ -865,7 +867,7 @@ export function SubscriptionHistory() {
         aria-hidden={!showSheet}
         {...(!showSheet ? { inert: "" } : {})}
         className={cn(
-          "fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-2xl z-[60] transition-transform duration-300 ease-out h-[70dvh] flex flex-col",
+          "fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-mobile bg-white rounded-t-2xl z-[60] transition-transform duration-300 ease-out h-auto max-h-[70dvh] flex flex-col",
           showSheet ? "translate-y-0" : "translate-y-full",
         )}
       >
@@ -913,13 +915,13 @@ export function SubscriptionHistory() {
 
             {draft.periodMode === "기간별" && (
               <div className="mb-5">
-                <div className="grid grid-cols-4 gap-2 mb-2">
+                <div className="grid grid-cols-4 gap-2 mb-4">
                   {QUICK_PRESETS.map((p) => (
                     <button
                       key={p}
                       onClick={() => setDraft((d) => ({ ...d, preset: p }))}
                       className={cn(
-                        "py-2.5 rounded-xl text-sm font-semibold border transition-colors",
+                        "py-1.5 rounded-xl text-sm font-semibold border transition-colors",
                         draft.preset === p
                           ? "border-primary text-primary"
                           : "border-border text-text-secondary bg-white",

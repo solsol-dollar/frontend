@@ -142,6 +142,12 @@ export function IpoStockHeader({
           <img src="/icons/IPO_ready.svg" alt="청약가능" width={50} height={17} className="mt-[1px]" />
         ) : status === '청약예정' ? (
           <img src="/icons/IPO_upcoming.svg" alt="청약예정" width={50} height={17} className="mt-[1px]"/>
+        ) : status === '청약신청' ? (
+          <img src="/icons/IPO_end2.svg" alt="청약신청" width={50} height={17} className="mt-[1px]" />
+        ) : status === '배정완료' ? (
+          <img src="/icons/IPO_complete.svg" alt="배정완료" width={50} height={17} className="mt-[1px]" />
+        ) : status === '취소완료' ? (
+          <img src="/icons/IPO_cancel.svg" alt="취소완료" width={50} height={17} className="mt-[1px]" />
         ) : (
           <span
             className={cn(
