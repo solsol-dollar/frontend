@@ -36,16 +36,13 @@ const app = initializeApp({
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 })
 
-let messaging: ReturnType<typeof getMessaging> | null = null
-try {
-  messaging = getMessaging(app)
-} catch {}
+const messaging = getMessaging(app)
 
 function toSafePath(url: unknown): string {
   return typeof url === 'string' && /^\/(?!\/)/.test(url) ? url : '/home'
 }
 
-if (messaging) onBackgroundMessage(messaging, (payload) => {
+onBackgroundMessage(messaging, (payload) => {
   const { title, body } = payload.notification ?? {}
   const url = toSafePath(payload.data?.url)
   return Promise.all([

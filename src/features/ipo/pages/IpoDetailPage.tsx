@@ -591,7 +591,7 @@ export function IpoDetailPage() {
       <div className="px-5 py-4 bg-white border-t border-border shrink-0">
         {status === '청약종료' ? (
           <button
-            onClick={() => navigate(`/securities/stocks/${id}`, { state: { tab: '호가' } })}
+            onClick={() => navigate('/securities')}
             className="w-full bg-primary text-white py-4 rounded-xl font-semibold text-base"
           >
             주식 구매하기
