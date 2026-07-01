@@ -175,7 +175,7 @@ export function ReturnPlanPage() {
           >
             <div>
               <p className="text-[13px] font-medium text-text-tertiary mb-0">놀고있는 예수금도!</p>
-              <p className="text-base font-bold text-text-primary">리턴 플랜</p>
+              <p className="text-base font-bold text-text-primary">예수금 리턴 플랜</p>
             </div>
             <div className="flex items-center justify-between">
               <img src="/icons/returnPlan_icon.svg" width={42} height={42} alt="" />

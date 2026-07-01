@@ -63,7 +63,7 @@ export function MyPage() {
 
   return (
     <div className="page-content min-h-screen bg-surface-bg">
-      <Header title="마이페이지" showNotification showSearch showMypage={false} />
+      <Header title="마이페이지" showNotification showMypage={false} />
 
       <p className="mx-5 mt-6 mb-3 text-xs font-medium text-text-tertiary">내 계좌</p>
       <div className="mx-4 bg-white rounded-2xl overflow-hidden">
