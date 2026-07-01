@@ -38,6 +38,10 @@ export default defineConfig(({ mode }) => {
         injectManifest: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         },
+        devOptions: {
+          enabled: true,
+          type: 'module',
+        },
       }),
     ],
     server: {
