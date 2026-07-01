@@ -56,9 +56,9 @@ const TRACK_COLORS = ['#C5D1F5', '#DFCDFF', '#C8F2FB']
 const DEST_TYPES = ['SECURITIES', 'SAVINGS', 'DEPOSIT'] as const
 
 const ACCOUNTS = [
-  { id: 'cma',     name: '신한투자증권 CMA 계좌',      desc: '다음 IPO 대기금 · 해외주식 · ETF', legend: 'CMA 계좌',    type: 'CMA'     as const },
-  { id: 'valueup', name: '신한 Value-up 외화적립예금', desc: '연 3.2% · 3개월 이상',             legend: '외화적립예금', type: 'SAVINGS'  as const },
-  { id: 'chainup', name: '신한 외화 체인지업 예금',    desc: '체크카드로 해외소비를 간편하게',   legend: '체인지업 예금', type: 'DEPOSIT'  as const },
+  { id: 'cma',     name: '신한투자증권 CMA 계좌',      desc: '다음 IPO 대기금 · 해외주식 · ETF', legend: '신한투자증권 CMA 계좌',    type: 'CMA'     as const },
+  { id: 'valueup', name: '신한 Value-up 외화적립예금', desc: '연 3.2% · 3개월 이상',             legend: '신한 Value-up 외화적립예금', type: 'SAVINGS'  as const },
+  { id: 'chainup', name: '신한 외화 체인지업 예금',    desc: '체크카드로 해외소비를 간편하게',   legend: '신한 외화 체인지업 예금', type: 'DEPOSIT'  as const },
 ]
 
 function DynamicRangeSlider({

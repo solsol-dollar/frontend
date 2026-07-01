@@ -76,9 +76,9 @@ export function ReturnPlanPage() {
   const hasDeposit = homeAssets?.accounts?.some((a) => a.accountType === 'DEPOSIT') ?? false
 
   const SUMMARY_ACCOUNTS = [
-    { label: 'CMA 계좌', connected: true, navigateTo: null },
-    { label: '외화적립예금', connected: hasSavings, navigateTo: '/mypage/product/valueup' },
-    { label: '체인지업 예금', connected: hasDeposit, navigateTo: '/mypage/product/changeup' },
+    { label: '신한투자증권 CMA 계좌', connected: true, navigateTo: null },
+    { label: '신한 Value-up 외화적립예금', connected: hasSavings, navigateTo: '/mypage/product/valueup' },
+    { label: '신한 외화 체인지업 예금', connected: hasDeposit, navigateTo: '/mypage/product/changeup' },
   ]
 
   const securitiesAmount = lastExecutedDetail?.allocations.find((a) => a.destinationType === 'SECURITIES')?.amount ?? 0

@@ -18,6 +18,8 @@ export function useReturnPlans(params?: UseReturnPlansParams, options?: { enable
   return useQuery({
     queryKey: ['returnPlans', resolvedParams],
     enabled: options?.enabled ?? true,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
     queryFn: async () => {
       const res = await ledgerApi.get('/api/ledger/api/v1/return-plans', {
         params: resolvedParams,
