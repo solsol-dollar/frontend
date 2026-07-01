@@ -12,9 +12,16 @@ const app = initializeApp({
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 })
 
-export const messaging = getMessaging(app)
+const isFCMSupported =
+  typeof window !== 'undefined' &&
+  'serviceWorker' in navigator &&
+  'PushManager' in window &&
+  'Notification' in window
+
+export const messaging = isFCMSupported ? getMessaging(app) : null
 
 export async function registerPushToken(): Promise<void> {
+  if (!messaging) return
   if (!('serviceWorker' in navigator) || !('Notification' in window)) return
   if (Notification.permission === 'denied') return
 
@@ -36,6 +43,7 @@ export async function registerPushToken(): Promise<void> {
     })
     if (!token) return
     await serviceApi.post('/api/service/api/v1/mypage/push-subscriptions', { fcmToken: token })
+    console.info('[FCM] 토큰 등록 성공:', token)
   } catch (err) {
     console.warn('[FCM] 토큰 등록 실패:', err)
   }
