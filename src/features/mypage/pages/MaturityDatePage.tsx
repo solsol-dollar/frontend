@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Calendar } from 'lucide-react'
 import { useCreateSavingsAccount } from '@/features/mypage/hooks/useMyPage'
+import { Toast } from '@/components/common/Toast'
 
 const ITEM_H = 44
 const VISIBLE = 5
@@ -90,15 +91,20 @@ export function MaturityDatePage() {
   const returnTo: string | undefined = state?.returnTo
 
   const now = new Date()
-  const defaultYear = `${now.getFullYear() + 1}년`
-  const defaultMonth = `${now.getMonth() + 1}월`
-  const defaultDay = `${now.getDate()}일`
+  const targetDate = new Date(now)
+  targetDate.setMonth(targetDate.getMonth() + 3)
+
+  const defaultYear = `${targetDate.getFullYear()}년`
+  const defaultMonth = `${targetDate.getMonth() + 1}월`
+  const defaultDay = `${targetDate.getDate()}일`
 
   const [year, setYear] = useState(defaultYear)
   const [month, setMonth] = useState(defaultMonth)
   const [day, setDay] = useState(defaultDay)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<string>('')
+  const [showToast, setShowToast] = useState(false)
   const createSavings = useCreateSavingsAccount()
 
   const days = getDaysInMonth(year, month)
@@ -117,12 +123,24 @@ export function MaturityDatePage() {
   }, [])
 
   const handleConfirm = async () => {
-    setSheetOpen(false)
-    setError(null)
     const y = year.replace('년', '')
     const m = month.replace('월', '').padStart(2, '0')
     const d = day.replace('일', '').padStart(2, '0')
     const maturityDate = `${y}-${m}-${d}`
+
+    const selectedDate = new Date(Number(y), Number(m) - 1, Number(d))
+    const minDate = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate())
+    minDate.setHours(0, 0, 0, 0)
+    selectedDate.setHours(0, 0, 0, 0)
+
+    if (selectedDate.getTime() < minDate.getTime()) {
+      setToastMessage('만기일은 오늘 기준 최소 3개월 이후여야 합니다.')
+      setShowToast(true)
+      return
+    }
+
+    setSheetOpen(false)
+    setError(null)
     try {
       const result = await createSavings.mutateAsync(maturityDate)
       navigate(`/mypage/product/${productId}/complete`, {
@@ -193,6 +211,12 @@ export function MaturityDatePage() {
           </button>
         </div>
       </div>
+
+      <Toast 
+        message={toastMessage} 
+        visible={showToast} 
+        onClose={() => setShowToast(false)} 
+      />
     </div>
   )
 }
