@@ -137,7 +137,7 @@ export function TransferHistoryPage() {
                   <div className="flex flex-col">
                     <span className="text-sm text-text-sub">달러</span>
                     <span className="text-sm font-semibold text-text-primary">
-                      ${(liveUsdBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      ${(liveUsdAvailableBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>
