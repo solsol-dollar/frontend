@@ -54,7 +54,7 @@ export function TransferHistoryPage() {
   const navigate = useNavigate()
   const {
     accountIds = [],
-    accountName = 'CMA 계좌',
+    accountName = '신한투자증권 CMA 계좌',
     accountNumber = '',
     accountType = 'SECURITIES',
     usdBalance,
@@ -160,7 +160,7 @@ export function TransferHistoryPage() {
               <ActionButtons
                 labels={['채우기', '옮기기']}
                 onPress={[
-                  () => cmaAccountId && navigate('/home/fill', { state: { fixedFromAccountId: cmaAccountId, fixedFromName: 'CMA 계좌', fixedFromBalance: `$${cmaBalance.toFixed(2)}`, toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } }),
+                  () => cmaAccountId && navigate('/home/fill', { state: { fixedFromAccountId: cmaAccountId, fixedFromName: '신한투자증권 CMA 계좌', fixedFromBalance: `$${cmaBalance.toFixed(2)}`, toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } }),
                   () => accountIds[0] && navigate('/home/transfer', { state: { fromAccountId: accountIds[0], sourceName: accountName, sourceBalance: `$${(balance ?? 0).toFixed(2)}` } }),
                 ]}
               />
@@ -179,7 +179,7 @@ export function TransferHistoryPage() {
                 ${(balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
               <button
-                onClick={() => cmaAccountId && navigate('/home/fill', { state: { fixedFromAccountId: cmaAccountId, fixedFromName: 'CMA 계좌', fixedFromBalance: `$${cmaBalance.toFixed(2)}`, toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } })}
+                onClick={() => cmaAccountId && navigate('/home/fill', { state: { fixedFromAccountId: cmaAccountId, fixedFromName: '신한투자증권 CMA 계좌', fixedFromBalance: `$${cmaBalance.toFixed(2)}`, toAccountId: accountIds[0], destName: accountName, destBalance: `$${(balance ?? 0).toFixed(2)}` } })}
                 className="w-full py-3 text-sm text-text-sub bg-surface-bg rounded-xl transition-all duration-75 active:scale-[0.97] active:bg-[#E2E4E8] select-none"
               >
                 채우기

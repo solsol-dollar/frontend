@@ -168,17 +168,17 @@ function DualRangeSlider({
 function AccountLegend() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 break-keep">
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[0] }} />
-        <span className="text-xs text-text-secondary">CMA 계좌</span>
+        <span className="text-[11px] tracking-tight text-text-secondary">신한투자증권 CMA 계좌</span>
       </div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 break-keep">
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[1] }} />
-        <span className="text-xs text-text-secondary">외화적립예금</span>
+        <span className="text-[11px] tracking-tight text-text-secondary">신한 Value-up 외화적립예금</span>
       </div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 break-keep">
         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: ZONE_COLORS[2] }} />
-        <span className="text-xs text-text-secondary">체인지업 예금</span>
+        <span className="text-[11px] tracking-tight text-text-secondary">신한 외화 체인지업 예금</span>
       </div>
     </div>
   );
@@ -352,7 +352,7 @@ function AllocationAccountList({
         const amount = formatDollar((totalAmount * ratio) / 100);
         const color = ACCOUNT_COLORS[acc.id] ?? ZONE_COLORS[i];
         return (
-          <div key={acc.id} className="rounded-[16px] px-5 py-4" style={{ backgroundColor: '#F4F5F8' }}>
+          <div key={acc.id} className="rounded-2xl px-4 py-3 bg-white">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
@@ -392,7 +392,7 @@ function LockedAccountCard({ account }: { account: LockedAccount }) {
   const color = ZONE_COLORS[colorIndex];
 
   return (
-    <div className="rounded-[16px] px-5 py-4" style={{ backgroundColor: '#F4F5F8' }}>
+    <div className="rounded-2xl px-4 py-3 bg-white">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
@@ -488,7 +488,7 @@ export function ReturnPlanAllocationSection({
       </section>
       )}
 
-      <section className="px-4 pt-5 pb-5 bg-white">
+      <section className="px-4 pt-5 pb-5 bg-surface-bg">
         <AllocationAccountList
           accounts={accounts}
           ratios={ratios}

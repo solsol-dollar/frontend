@@ -111,6 +111,8 @@ interface PageResponse {
 export function useTransactions(accountIds: number[], filter: ApiFilter) {
   const query = useInfiniteQuery({
     queryKey: ['transactions', accountIds, filter],
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
     queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams()
       accountIds.forEach((id) => params.append('accountId', String(id)))

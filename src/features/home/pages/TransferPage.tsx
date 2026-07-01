@@ -31,7 +31,7 @@ export function TransferPage() {
     ...(assets?.securities && assets.securities.usdAccountId !== fromAccountId
       ? [{
           accountId: assets.securities.usdAccountId,
-          displayName: 'CMA 계좌',
+          displayName: '신한투자증권 CMA 계좌',
           accountName: '신한투자증권 CMA 계좌',
           accountNumber: assets.securities.virtualAccountNumber 
             ? `가상계좌 ${assets.securities.virtualAccountNumber}` 

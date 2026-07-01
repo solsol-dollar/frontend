@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Check } from 'lucide-react'
 import { Header } from '@/components/common/Header'
 import { cn } from '@/lib/utils'
 import { MonthPickerSheet } from '../components/MonthPickerSheet'
@@ -26,56 +26,53 @@ const formatUsd = (n: number) => `$${n.toLocaleString('en-US', { minimumFraction
 
 export function ReturnPlanHistoryPage() {
   const navigate = useNavigate()
+  const [viewMode, setViewMode] = useState<'all' | 'monthly'>('all')
+  const [viewModeOpen, setViewModeOpen] = useState(false)
+  const [year, setYear] = useState<number>(new Date().getFullYear())
+  const [month, setMonth] = useState<number>(new Date().getMonth() + 1)
   const [tab, setTab] = useState<'DONE' | 'UPCOMING'>('DONE')
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const [indicator, setIndicator] = useState({ left: 0, width: 0 })
   const [pickerOpen, setPickerOpen] = useState(false)
-
-  useLayoutEffect(() => {
-    const idx = tab === 'DONE' ? 0 : 1
-    const el = tabRefs.current[idx]
-    if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth })
-  }, [tab])
-  const [year, setYear] = useState(new Date().getFullYear())
-  const [month, setMonth] = useState(new Date().getMonth() + 1)
 
   const { data: returnPlans = [] } = useReturnPlans()
 
   const items = returnPlans
-    .filter((plan) => plan.refundDate)
-    .map((plan) => {
-      const [itemYear, itemMonth] = plan.refundDate!.split('-').map(Number)
+    .filter((p) => p.refundDate)
+    .map((p) => {
+      const [y, m] = p.refundDate!.split('-').map(Number)
       return {
-        id: plan.returnPlanId,
-        date: plan.refundDate!.replace(/-/g, '.'),
-        year: itemYear,
-        month: itemMonth,
-        name: plan.sourceCompanyName,
-        ticker: plan.sourceTicker,
-        logoUrl: plan.sourceLogoUrl ?? null,
-        amount: formatUsd(plan.totalRefundAmount),
-        rawAmount: plan.totalRefundAmount,
-        status: (plan.planStatus === 'EXECUTED' ? 'DONE' : 'UPCOMING') as 'DONE' | 'UPCOMING',
+        id: p.returnPlanId,
+        date: p.refundDate!.replace(/-/g, '.'),
+        year: y,
+        month: m,
+        name: p.sourceCompanyName,
+        ticker: p.sourceTicker,
+        logoUrl: p.sourceLogoUrl ?? null,
+        amount: formatUsd(p.totalRefundAmount),
+        rawAmount: p.totalRefundAmount,
+        status: (p.planStatus === 'EXECUTED' ? 'DONE' : 'UPCOMING') as 'DONE' | 'UPCOMING',
       }
     })
 
-  const itemsInMonth = items.filter((item) => item.year === year && item.month === month)
-  const doneInMonth = itemsInMonth.filter((item) => item.status === 'DONE')
-  const upcomingInMonth = itemsInMonth.filter((item) => item.status === 'UPCOMING')
+  const filtered = viewMode === 'all'
+    ? items
+    : items.filter((item) => item.year === year && item.month === month)
+
+  const done = filtered.filter((i) => i.status === 'DONE')
+  const upcoming = filtered.filter((i) => i.status === 'UPCOMING')
 
   const SUMMARY = [
-    { label: '총 분배액', value: formatUsd(doneInMonth.reduce((sum, item) => sum + item.rawAmount, 0)) },
-    { label: '총 실행', value: `${doneInMonth.length}회` },
-    { label: '예정 건수', value: `${upcomingInMonth.length}건` },
+    { label: '총 분배액', value: formatUsd(done.reduce((s, i) => s + i.rawAmount, 0)) },
+    { label: '총 실행', value: `${done.length}회` },
+    { label: '예정 건수', value: `${upcoming.length}건` },
   ]
 
-  const grouped = itemsInMonth
-    .filter((item) => item.status === tab)
-    .reduce<Record<string, typeof itemsInMonth>>((acc, item) => {
-      if (!acc[item.date]) acc[item.date] = []
-      acc[item.date].push(item)
-      return acc
-    }, {})
+  const grouped = (tab === 'DONE' ? done : upcoming).reduce<Record<string, typeof items>>((acc, item) => {
+    if (!acc[item.date]) acc[item.date] = []
+    acc[item.date].push(item)
+    return acc
+  }, {})
+
+
 
   return (
     <div className="mobile-container flex flex-col h-screen overflow-hidden bg-white">
@@ -84,14 +81,14 @@ export function ReturnPlanHistoryPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 pt-4 pb-5">
           <button
-            onClick={() => setPickerOpen(true)}
-            className="flex items-center gap-1 text-xl font-bold text-text-primary"
+            onClick={() => setViewModeOpen(true)}
+            className="flex items-center gap-1 text-[22px] font-bold text-text-primary"
           >
-            {year}년 {month}월
-            <ChevronDown size={20} />
+            {viewMode === 'all' ? '전체' : '월별'}
+            <ChevronDown size={24} />
           </button>
 
-          <div className="flex items-center gap-2 mt-4">
+          <div className="flex items-center gap-2 mt-5">
             {SUMMARY.map((s) => (
               <div key={s.label} className="flex-1 bg-surface-bg rounded-2xl py-3 px-3 text-left">
                 <p className="text-xs text-text-tertiary">{s.label}</p>
@@ -103,20 +100,25 @@ export function ReturnPlanHistoryPage() {
 
         <div className="h-[13px] bg-surface-bg" />
 
-        <div className="px-4 pt-3 pb-2 flex justify-end">
-          <div className="relative flex bg-surface-bg rounded-lg p-0.5">
-            <div
-              className="absolute top-0.5 bottom-0.5 rounded-md bg-white transition-all duration-200 ease-in-out"
-              style={{ left: indicator.left, width: indicator.width }}
-            />
-            {(['DONE', 'UPCOMING'] as const).map((t, i) => (
+        <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+          {viewMode === 'monthly' ? (
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="flex items-center gap-1 text-base font-bold text-text-primary"
+            >
+              {year}년 {month}월
+              <ChevronDown size={18} />
+            </button>
+          ) : <div />}
+
+          <div className="flex bg-surface-bg rounded-full p-0.5">
+            {(['DONE', 'UPCOMING'] as const).map((t) => (
               <button
                 key={t}
-                ref={el => { tabRefs.current[i] = el }}
                 onClick={() => setTab(t)}
                 className={cn(
-                  'relative z-10 px-3 py-0.5 rounded-md text-[12px] transition-colors duration-200',
-                  tab === t ? 'text-black font-semibold' : 'text-[#999EA4] font-medium',
+                  'px-3.5 py-1 rounded-full text-[13px] font-medium transition-colors duration-200',
+                  tab === t ? 'bg-white text-text-primary font-semibold shadow-sm' : 'text-text-tertiary',
                 )}
               >
                 {t === 'DONE' ? '완료' : '예정'}
@@ -126,35 +128,32 @@ export function ReturnPlanHistoryPage() {
         </div>
 
         <div className="mt-2">
+          {Object.keys(grouped).length === 0 && (
+            <div className="flex items-center justify-center py-20">
+              <p className="text-sm text-text-tertiary">리턴 내역이 없어요</p>
+            </div>
+          )}
           {Object.entries(grouped)
             .sort(([a], [b]) => b.localeCompare(a))
             .map(([date, dateItems]) => (
-            <div key={date}>
-              <p className="px-4 pt-4 pb-1 text-sm text-text-tertiary">{date}</p>
-              {dateItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() =>
-                    navigate(
-                      item.status === 'DONE'
-                        ? `/return-plan/result/${item.id}`
-                        : `/return-plan/pending/${item.id}`,
-                    )
-                  }
-                  className="w-full flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 text-left"
-                >
-                  <LogoAvatar logoUrl={item.logoUrl} ticker={item.ticker} />
-                  <div className="flex-1">
-                    <p className="text-base font-semibold text-text-primary">{item.name}</p>
-                    <p className="text-sm text-text-tertiary">
-                      {item.ticker} · {item.date}
-                    </p>
-                  </div>
-                  <p className="text-base font-bold text-text-primary">{item.amount}</p>
-                </button>
-              ))}
-            </div>
-          ))}
+              <div key={date}>
+                <p className="px-4 pt-4 pb-1 text-sm text-text-tertiary">{date}</p>
+                {dateItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => navigate(item.status === 'DONE' ? `/return-plan/result/${item.id}` : `/return-plan/pending/${item.id}`)}
+                    className="w-full flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 text-left"
+                  >
+                    <LogoAvatar logoUrl={item.logoUrl} ticker={item.ticker} />
+                    <div className="flex-1">
+                      <p className="text-base font-semibold text-text-primary">{item.name}</p>
+                      <p className="text-sm text-text-tertiary">{item.ticker} · {item.date}</p>
+                    </div>
+                    <p className="text-base font-bold text-text-primary">{item.amount}</p>
+                  </button>
+                ))}
+              </div>
+            ))}
         </div>
       </div>
 
@@ -169,6 +168,44 @@ export function ReturnPlanHistoryPage() {
           setPickerOpen(false)
         }}
       />
+
+      {/* ViewMode Sheet */}
+      <>
+        <div
+          className={cn(
+            'fixed inset-0 z-50 bg-black/40 transition-opacity duration-300',
+            viewModeOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          )}
+          onClick={() => setViewModeOpen(false)}
+        />
+        <div
+          className={cn(
+            'fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[60] transition-transform duration-300 ease-out',
+            viewModeOpen ? 'translate-y-0' : 'translate-y-[calc(100%+1rem)] pointer-events-none'
+          )}
+        >
+          <div className="flex justify-center pt-3 pb-2">
+            <div className="w-10 h-1 rounded-full bg-border" />
+          </div>
+          <div className="px-5 pb-7 pt-3 flex flex-col gap-2">
+            <p className="text-sm font-bold text-text-primary mb-2">조회 기준 선택</p>
+            <button
+              onClick={() => { setViewMode('all'); setViewModeOpen(false); }}
+              className="w-full py-4 text-left text-base font-semibold text-text-primary border-b border-surface-bg flex items-center justify-between"
+            >
+              전체
+              {viewMode === 'all' && <Check size={20} className="text-primary" />}
+            </button>
+            <button
+              onClick={() => { setViewMode('monthly'); setViewModeOpen(false); }}
+              className="w-full py-4 text-left text-base font-semibold text-text-primary flex items-center justify-between"
+            >
+              월별
+              {viewMode === 'monthly' && <Check size={20} className="text-primary" />}
+            </button>
+          </div>
+        </div>
+      </>
     </div>
   )
 }
