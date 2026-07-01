@@ -76,9 +76,9 @@ export function ReturnPlanPage() {
   const hasDeposit = homeAssets?.accounts?.some((a) => a.accountType === 'DEPOSIT') ?? false
 
   const SUMMARY_ACCOUNTS = [
-    { label: '신한투자증권 CMA 계좌', connected: true, navigateTo: null },
-    { label: '신한 Value-up 외화적립예금', connected: hasSavings, navigateTo: '/mypage/product/valueup' },
-    { label: '신한 외화 체인지업 예금', connected: hasDeposit, navigateTo: '/mypage/product/changeup' },
+    { label: '신한투자증권\nCMA 계좌', connected: true, navigateTo: null },
+    { label: '신한 Value-up\n외화적립예금', connected: hasSavings, navigateTo: '/mypage/product/valueup' },
+    { label: '신한 외화\n체인지업 예금', connected: hasDeposit, navigateTo: '/mypage/product/changeup' },
   ]
 
   const securitiesAmount = lastExecutedDetail?.allocations.find((a) => a.destinationType === 'SECURITIES')?.amount ?? 0
@@ -111,12 +111,12 @@ export function ReturnPlanPage() {
               {SUMMARY_ACCOUNTS.map((acc, i) => (
                 <div
                   key={acc.label}
-                  className="flex-1 bg-surface-bg rounded-2xl py-6 px-3 text-left"
+                  className="flex-1 w-0 min-w-0 bg-surface-bg rounded-2xl py-6 px-3 text-left"
                   onClick={() => !acc.connected && acc.navigateTo && navigate(acc.navigateTo)}
                   style={{ cursor: !acc.connected ? 'pointer' : 'default' }}
                 >
                   <div className="flex items-center gap-1 min-w-0">
-                    <p className="text-sm text-text-tertiary truncate">{acc.label}</p>
+                    <p className="text-sm text-text-tertiary whitespace-pre-line">{acc.label}</p>
                     {!acc.connected && (
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
                         미연동
