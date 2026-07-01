@@ -12,20 +12,22 @@ export function usePushNotification() {
   useEffect(() => {
     registerPushToken()
 
-    const unsubscribe = onMessage(messaging, (payload) => {
-      console.info('[FCM] 포그라운드 메시지:', payload)
+    const unsubscribe = messaging
+      ? onMessage(messaging, (payload) => {
+          console.info('[FCM] 포그라운드 메시지:', payload)
 
-      const title = payload.notification?.title ?? '알림'
-      const body = payload.notification?.body
+          const title = payload.notification?.title ?? '알림'
+          const body = payload.notification?.body
 
-      if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then((sw) => {
-          sw.showNotification(title, { body, icon: '/icons/appLogo.png', data: { url: toSafePath(payload.data?.url) } })
+          if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then((sw) => {
+              sw.showNotification(title, { body, icon: '/icons/appLogo.png', data: { url: toSafePath(payload.data?.url) } })
+            })
+          }
+
+          qc.invalidateQueries({ queryKey: ['mypage', 'notifications'] })
         })
-      }
-
-      qc.invalidateQueries({ queryKey: ['mypage', 'notifications'] })
-    })
+      : () => {}
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
