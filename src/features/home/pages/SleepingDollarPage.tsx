@@ -93,7 +93,7 @@ export function SleepingDollarPage() {
             onClick={() => navigate('/home/transfer', {
               state: {
                 fromAccountId: assets?.securities?.usdAccountId,
-                sourceName: 'CMA 계좌',
+                sourceName: '신한투자증권 CMA 계좌',
                 sourceBalance: `$${(assets?.securities?.usdAvailableBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
                 toAccountId: savingsAccount.accountId,
               },

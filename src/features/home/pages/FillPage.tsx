@@ -31,7 +31,7 @@ export function FillPage() {
     ...(assets?.securities
       ? [{
           accountId: assets.securities.usdAccountId,
-          displayName: 'CMA 계좌',
+          displayName: '신한투자증권 CMA 계좌',
           accountName: '신한투자증권 CMA 계좌',
           accountNumber: assets.securities.virtualAccountNumber 
             ? `가상계좌 ${assets.securities.virtualAccountNumber}` 
@@ -62,7 +62,7 @@ export function FillPage() {
   }, [isFixed])
 
   const selected = isFixed
-    ? { accountId: fixedFromAccountId!, displayName: fixedFromName ?? 'CMA 계좌', accountName: fixedFromName ?? 'CMA 계좌', accountNumber: '', balance: parseFloat((fixedFromBalance ?? '$0').replace(/[^0-9.]/g, '')) }
+    ? { accountId: fixedFromAccountId!, displayName: fixedFromName ?? '신한투자증권 CMA 계좌', accountName: fixedFromName ?? '신한투자증권 CMA 계좌', accountNumber: '', balance: parseFloat((fixedFromBalance ?? '$0').replace(/[^0-9.]/g, '')) }
     : sourceAccounts.find((a) => a.accountId === selectedId) ?? null
 
   const { chars, amount, pushChar, popChar } = useAnimatedInput()

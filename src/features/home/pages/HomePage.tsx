@@ -198,7 +198,7 @@ export function HomePage() {
                     onClick={() => navigate('/home/transfer/history', {
                       state: {
                         accountIds: [assets.securities.usdAccountId, assets.securities.krwAccountId],
-                        accountName: 'CMA 계좌',
+                        accountName: '신한투자증권 CMA 계좌',
                         accountNumber: assets.securities.accountNumberMasked,
                         usdBalance: assets.securities.usdAvailableBalance,
                         usdAvailableBalance: assets.securities.usdAvailableBalance,

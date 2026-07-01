@@ -97,7 +97,7 @@ export function MonthPickerSheet({ open, year, month, onClose, onConfirm }: Prop
       <div
         className={cn(
           'fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-[398px] bg-white rounded-3xl z-[60] transition-transform duration-300 ease-out',
-          open ? 'translate-y-0' : 'translate-y-[calc(100%+1rem)]',
+          open ? 'translate-y-0' : 'translate-y-[calc(100%+1rem)] pointer-events-none',
         )}
       >
         <div className="flex justify-center pt-3 pb-2">
