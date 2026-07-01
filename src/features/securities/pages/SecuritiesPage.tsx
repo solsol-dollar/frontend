@@ -244,7 +244,7 @@ export function SecuritiesPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const rawTab = searchParams.get('tab') as Tab | null
-  const tab: Tab = rawTab && VALID_TABS.includes(rawTab) ? rawTab : 'MY홈'
+  const tab: Tab = rawTab && VALID_TABS.includes(rawTab) ? rawTab : '해외'
 
   const setTab = (t: Tab) => setSearchParams({ tab: t }, { replace: true })
 

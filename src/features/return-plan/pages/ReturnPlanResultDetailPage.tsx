@@ -54,6 +54,9 @@ export function ReturnPlanResultDetailPage() {
               <p className="text-base font-bold text-text-primary">{plan?.sourceCompanyName ?? '불러오는 중...'}</p>
               <p className="text-sm text-text-tertiary">
                 {plan?.sourceTicker ?? '-'} · {plan?.refundDate ?? '-'}
+                {plan?.executedAt && (
+                  <> · {plan.executedAt.slice(11, 16)}</>
+                )}
               </p>
             </div>
           </div>

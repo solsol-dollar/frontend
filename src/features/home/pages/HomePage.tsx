@@ -215,7 +215,7 @@ export function HomePage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-text-secondary truncate">신한투자증권 CMA 계좌</p>
                       <p className="text-sm font-bold text-text-primary mt-0.5">
-                        ${assets.securities.usdAvailableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        ${assets.securities.totalUsdBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                   </AccountRow>

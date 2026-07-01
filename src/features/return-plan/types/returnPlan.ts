@@ -21,6 +21,7 @@ export interface ReturnPlanResponse {
   sourceCompanyName: string
   sourceLogoUrl: string | null
   refundDate: string | null
+  executedAt: string | null
   subscriptionAmount: number | null
   allocationRate: number | null
   allocatedAmount: number | null
