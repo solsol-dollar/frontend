@@ -111,7 +111,7 @@ export function ReturnPlanPage() {
               {SUMMARY_ACCOUNTS.map((acc, i) => (
                 <div
                   key={acc.label}
-                  className="flex-1 bg-surface-bg rounded-2xl py-6 px-3 text-left"
+                  className="flex-1 w-0 min-w-0 bg-surface-bg rounded-2xl py-6 px-3 text-left"
                   onClick={() => !acc.connected && acc.navigateTo && navigate(acc.navigateTo)}
                   style={{ cursor: !acc.connected ? 'pointer' : 'default' }}
                 >
