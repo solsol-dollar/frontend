@@ -115,8 +115,8 @@ export function ReturnPlanPage() {
                   onClick={() => !acc.connected && acc.navigateTo && navigate(acc.navigateTo)}
                   style={{ cursor: !acc.connected ? 'pointer' : 'default' }}
                 >
-                  <div className="flex items-center gap-1 min-w-0">
-                    <p className="text-sm text-text-tertiary whitespace-pre-line">{acc.label}</p>
+                  <div className="flex items-start gap-1 min-w-0">
+                    <p className="text-[11px] leading-tight text-text-tertiary whitespace-pre-line">{acc.label}</p>
                     {!acc.connected && (
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#FEF3C7', color: '#D97706' }}>
                         미연동
